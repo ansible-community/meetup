@@ -1,6 +1,7 @@
 ---
 name: Submit a talk
-about: Tell us about a talk you'd like to give
+description: Tell us about a talk you'd like to give
+
 body:
 - type: markdown
   attributes:
