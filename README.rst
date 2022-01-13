@@ -15,7 +15,7 @@ through the issues_.
 If you'd like to see a presentation about something and it isn't there, feel
 free to create a new issue!
 
-.. _issues: https://github.com/ansible-community/ansible-community-meetup/issues
+.. _issues: https://github.com/ansible-community/meetup/issues
 
 Submitting a talk
 =================
@@ -26,7 +26,7 @@ The discussion regarding dates will take place in the GitHub issue
 
 Otherwise, submissions might be kept for the next meetup.
 
-.. _here: https://github.com/ansible-community/ansible-community-meetup/issues/new/choose
+.. _here: https://github.com/ansible-community/meetup/issues/new/choose
 
 
 Contributing
@@ -34,4 +34,4 @@ Contributing
 
 Contributing to the repository is as easy as submitting a `pull request`_ !
 
-.. _pull request: https://github.com/ansible-community/ansible-community-meetup/pulls
+.. _pull request: https://github.com/ansible-community/meetup/pulls
