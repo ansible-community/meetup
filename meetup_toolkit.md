@@ -8,8 +8,19 @@ If you want to contribute, please follow our Contributor Guideline [here](https:
 ## Table of contents
 
 <!-- toc -->
-- [Applications](#applications)
+- [Milestones](#milestones)
   * [Gain awareness of Ansible meetups](#ginawarenessofansiblemeetups)
-  * [Cryptocurrencies](#cryptocurrencies)
-  * [Database](#database)
-  * [Emulators](#emulators)
+  * [Start Planning](#startplanning)
+  * [On the day of the event](#onthedayoftheevent)
+  * [After the event](#aftertheevent)
+- [Gain awareness of Ansible meetups](#ginawarenessofansiblemeetups)
+  * [What is an Ansible Meetup?](#whatisanansiblemeetup?)
+  * [How to become a member of the meetup?](#howtobecomeamemberofthemeetup?)
+  *  [Start Planning](#startplanning)
+  *  [Start Planning](#startplanning)
+  * [Start Planning](#startplanning)
+  * [Start Planning](#startplanning)
+  * [Start Planning](#startplanning)
+  * [Start Planning](#startplanning)
+  * [Start Planning](#startplanning)
+  * [Start Planning](#startplanning)
