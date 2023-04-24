@@ -8,3 +8,8 @@ If you want to contribute, please follow our Contributor Guideline [here](https:
 ## Table of contents
 
 <!-- toc -->
+- [Applications](#applications)
+  * [Gain awareness of Ansible meetups](#ginawarenessofansiblemeetups)
+  * [Cryptocurrencies](#cryptocurrencies)
+  * [Database](#database)
+  * [Emulators](#emulators)
