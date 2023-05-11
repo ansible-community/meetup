@@ -67,3 +67,10 @@ If you want to contribute, please follow our Contributor Guideline [here](https:
   * [Presentation Deck Formats](#presentationdeckformats)
 - [Important Links](#importantlinks)
 
+<!-- tocstop -->
+
+# Gain awareness of Ansible meetups
+
+## What is an Ansible Meetup?
+
+Ansible meetup is a gathering of a small to medium-sized group of Systems Engineers, DevOps and SREs. Where they talk about their Automation journey focusing on Ansible, it is a place to teach and learn from each other. Meetup provides a platform for upstream and downstream to meet and share ideas.
