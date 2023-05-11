@@ -110,3 +110,78 @@ We want to be sure that meetup organizers are committed to building a strong loc
 
 Secure a date and location for your first meetup! We will help you by spreading the word on social media, reaching out to potential speakers and sponsors in your area, and suggesting new and interesting Ansible content on a regular basis.
 
+## Who can become an organizer?
+
+Anyone from the wider Ansible community who is committed to run an Ansible meetup group and plan/organize meetups can become an organizer. The fundamental understanding of the Open Source community, its working, and the belief in this ethos is essential to be an efficient community builder. Some knowledge about Ansible is always a plus.
+
+## Ansible Community Code of Conduct
+
+https://docs.ansible.com/ansible/latest/community/code_of_conduct.html
+
+# Start planning
+
+Now you seem ready and confident to run an Ansible meetup group. Amazing, here is what you have to do.
+
+## Mode of the meetup
+
+There are two main ways to conduct a meetup, Online and In-person.
+
+### Online Meetup
+
+The following is a checklist for having an online meetup
+
+    - Platform to host the meetup
+    - Fix a date and time
+    - Speaker outreach
+    - Social media promotion plans
+    - Platform to have a conversation with the attendees, speakers, and organizers
+
+An online meetup allows you to connect to a broader audience living in different time zones along with the regular meetup group members.  The organizers may want to promote the event on the social media platforms of the time zones coinciding with the event timing to extend the reach of the group.
+
+### In Person meetup
+
+The following is a checklist for having a in person meetup
+
+    - Venue to host the meetup
+    - Fix a date and time for the meetup
+    - Speaker outreach
+    - Sponsorship Scout
+    - Social media promotion plans
+    - Platform to have a conversation with the attendees, speakers, and organizers
+
+
+## Finding/selecting speaker(s)
+
+Selecting the topics forms the core of any meetup group. Before looking for speakers, if the organizing pays heed to these points, that will be helpful.
+
+What kind of audience are you expecting in the meetup? What is their experience with Ansible and with Automation in general?
+
+Here are a few place for speaker outreach :
+      1. Social media, email
+      2. Community events
+      3. Github contributions
+      4. Ansible Community Communication platform
+
+While reaching out to the speakers, one has to be careful to refrain from spamming people to give talks at the meetups. If you know the person or someone who can introduce them, that would be wonderful. And if not, a personal touch to the message is necessary for the person to know you, your intention, and your ideas, so they can make a reasoned decision about accepting or declining the invite. Here are some template messages which might be helpful in this process.
+
+## Planning tools/platforms
+
+In addition to the meetup.com group, we can create a repo for your meetup group on https://github.com/ansible-community/
+
+You can use the repo to:
+
+1. Get talk ideas and proposals for upcoming meetups from your meetup group
+2. Upload and share presentation slides / code samples from speakers
+3. Create an issue per event to gather feedback from attendees
+
+
+## Session ideas
+
+1. What is Ansible?
+2. Ansible 101
+3. Writing your first playbook
+4. How to contribute to Ansible?
+5. From Playbook to Rulebook (presentaion for EDA)
+6. Ansible Ecosystem
+
+
