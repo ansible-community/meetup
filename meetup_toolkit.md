@@ -83,7 +83,7 @@ One can be a member of an Ansible meetup group by
 
 Check the list of current Ansible meetups. If there is already a meetup in your area, join it and register for an upcoming event.
 
-2. Presenting at the meetup
+### Presenting at the meetup
 
 Do you want to present at an Ansible meetup? Do you have an idea for a session? Feel free to reach out to the meetup group either by
 
@@ -102,7 +102,7 @@ Want to host a meeting at your organization? Then please reach out
  - via social media
  - send us an [email](meetup@ansible.com)
 
-4. Organizing a meetup
+### Organizing a meetup
 
 No Ansible meetup in your area? Send us an [email](meetup@ansible.com) introducing yourself. Be sure to include a link to your profile at meetup.com.
 
