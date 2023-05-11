@@ -44,7 +44,7 @@ If you want to contribute, please follow our Contributor Guideline [here](https:
   * [Past Talks](#)
 - [Post Event Activities](#)
   * [Feedback](#)
--  [Resources](#)
+- [Resources](#)
   * [Community Contributions to the Resources Repository](#communitycontributionstotheresourcesrepository)
   * [Email templates](#emailtemplates)
   * [Speaker Outreach for the first time](speakeroutreachforthefirsttime)
