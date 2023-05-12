@@ -34,7 +34,6 @@ If you want to contribute, please follow our Contributor Guideline [here](https:
   * [Promotion](#promotion)
   * [Bullhorn](#bullhorn)
   * [Social Media Promotion](#social-media-promotion)
-  * [Swag](#swag)
 - [During the Event](#during-the-event)
   * [Guidelines](#guidelines)
   * [Strict Guidelines](#strict-guidelines)
@@ -63,8 +62,6 @@ If you want to contribute, please follow our Contributor Guideline [here](https:
   * [Post Templates Pre-Event](#post-templates-pre-event)
   * [Post Temaplate during the event](#post-temaplate-duringthe-event)
   * [Post Temaplate after the event](#post-temaplate-after-the-event)
-- [Presentation Decks/Templates](#presentation-decks/templates)
-  * [Presentation Deck Formats](#presentation-deck-formats)
 - [Important Links](#important-links)
 
 <!-- tocstop -->
@@ -636,12 +633,12 @@ https://www.ansible.com/logos
 
 ## Important Links
 
-https://www.ansible.com/community/events/ansible-meetups
-https://www.ansible.com/logos
-https://github.com/ansible-community/meetup
-https://www.meetup.com/topics/ansible/
-https://github.com/ansible/ambassadors
-https://www.meetup.com/topics/ansible/all/
-https://github.com/ansible/community/wiki/Outreach
+- https://www.ansible.com/community/events/ansible-meetups
+- https://www.ansible.com/logos
+- https://github.com/ansible-community/meetup
+- https://www.meetup.com/topics/ansible/
+- https://github.com/ansible/ambassadors
+- https://www.meetup.com/topics/ansible/all/
+- https://github.com/ansible/community/wiki/Outreach
 
 
