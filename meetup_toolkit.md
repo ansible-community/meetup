@@ -53,7 +53,7 @@ Ansible meetup is a gathering of a small to medium-sized group of Systems Engine
 
 ## How to become a member of the meetup?
 
-One can be a member of an Ansible meetup group by
+One can be a member of an Ansible meetup group by:
 
 ### Attending the meetups
 
@@ -73,8 +73,8 @@ Meetup organizers always look for good presenters to enrich their events and mee
 
 ### Hosting a meetup
 
-Want to host a meeting at your organization? Then please reach out
- - by commenting on the meetup page of the local meetup
+Want to host a meetup at your organization? Then please reach out
+ - by commenting on a meetup page of a local meetup
  - via social media
  - send us an [email](meetup@ansible.com)
 
@@ -98,7 +98,7 @@ https://docs.ansible.com/ansible/latest/community/code_of_conduct.html
 
 Now you seem ready and confident to run an Ansible meetup group. Amazing, here is what you have to do.
 
-## Mode of the meetup
+## Mode of meetup
 
 There are two main ways to conduct a meetup, Online and In-person.
 
