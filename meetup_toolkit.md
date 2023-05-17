@@ -5,24 +5,15 @@ A curated list of documents and resources to help the meetup organizers to plan 
 We would love to have contributions from you.
 If you want to contribute, please follow our Contributor Guideline [here](https://docs.ansible.com/ansible/latest/community/contributor_path.html).
 
-## Table of contents
-
-<!-- toc -->
-- [Meetup Organizers' Toolkit](#meetup-organizers-toolkit)
-  - [Table of contents](#table-of-contents)
-- [Milestones](#milestones)
-
-<!-- tocstop -->
-
 # Milestones
 
-1. [Gain awareness of Ansible meetups]
-2. [Start planning]
-3. [During the Event]
-4. [Post Event Activities]
+1. [Gain awareness of Ansible meetups](./milestones/gain_awareness_of_ansible_meetups.md)
+2. [Start planning](./milestones/start_planning.md)
+3. [During the Event](./milestones/during_the_event.md)
+4. [Post Event Activities]((./milestones/post_event_activities.md)
 5. [Resources](./resources)
 
-Here are some example emails, social media posts to help the organizers with the different set communication while planning and excuting the meetup. The community members are welcome to share their ideas and contribute to the resources in the by sending a Pull Request [`ansible-community/meetup` Github repository](https://github.com/ansible-community/meetup).
+Resource section contains some example emails, social media posts to help the organizers with the different set communication while planning and excuting the meetup. The community members are welcome to share their ideas and contribute to the resources in the by sending a Pull Request [`ansible-community/meetup` Github repository](https://github.com/ansible-community/meetup).
 
 A. Email Templates
 
