@@ -1,8 +1,8 @@
-Hello,
+Hello {recipient's name},
 
 I am {name} , co-organizer at Ansible {place/city of the meetup} Meetup [0].
 
-Ansible is an open-source community project sponsored by Red Hat [1]. It is the simplest way to automate IT. Ansible delivers simple IT automation that ends repetitive tasks and frees up DevOps teams for more strategic work. Ansible Community [2] is a gathering of a small group of Systems Engineers, DevOps, and SREs to discuss their automation journey focusing on Ansible. Ansible {place/city of the meetup} meetup is a platform for upstream and downstream to meet each other to share knowledge and Ansible stories. We meet every month/once in two months to talk about the above said topics and ideas.
+Ansible is an open-source community project sponsored by Red Hat [1]. It is the simplest way to automate IT. Ansible delivers simple IT automation that ends repetitive tasks and frees up DevOps teams for more strategic work. Ansible Community [2] is a gathering of a small group of Systems Engineers, DevOps, and SREs to discuss their automation journey focusing on Ansible. Ansible {place/city of the meetup} Meetup is a place for Ansible users and developers of all types to meet each other, share knowledge and swap Ansible stories. We meet every month/once in two months to talk about the above-mentioned topics and ideas.
 
 We are looking for sponsors currently to support our group. There are three ways to sponsor us :
 

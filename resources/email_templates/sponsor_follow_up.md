@@ -1,4 +1,4 @@
-Hello,
+Hello {recipient's name},
 
 This is {name} again.
 

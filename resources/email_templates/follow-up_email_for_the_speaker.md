@@ -1,12 +1,13 @@
-Hello {name},
+Hello {recipient's name},
 
-This is {name} again.
+I'm {your name} and am writing to follow up about the speaking opportunity as part of an Ansible community event.
 
-Have you had a chance to look at the email I sent on {date}? I am attaching the last email here for your reference.
+I was previously in touch and have included the previous email for your reference.
 
 Please let me know if you need further information.
 
-We are looking forward to your reply.
+We look forward to hearing from you soon.
 
-Thank you
+Thank you,
+
 {your_name}

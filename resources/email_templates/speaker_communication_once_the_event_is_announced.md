@@ -1,4 +1,4 @@
-Hello {name},
+Hello {recipient's name},
 
 We have announced the event. Please review the meetup page [0] and let me know if you want anything edited.
 

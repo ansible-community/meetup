@@ -1,4 +1,4 @@
-Hello,
+Hello {recipient's name},
 
 Thank you for confirming the venue for our Ansible {place/city of the meetup} meetup on {date}.
 

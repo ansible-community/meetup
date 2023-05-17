@@ -1,4 +1,4 @@
-Hello,
+Hello {recipient's name},
  
 I am {name} , co-organizer at Ansible {place/city of the meetup} Meetup [0].
 

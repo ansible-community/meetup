@@ -1,4 +1,4 @@
-Hello {name},
+Hello {recipient's name},
 
 It is great to hear back from you. And thank you for agreeing to sponsor our Ansible {place of the meetup} group.
 
