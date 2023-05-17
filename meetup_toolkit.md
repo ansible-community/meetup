@@ -210,7 +210,7 @@ The following is a checklist for having a in person meetup
 
 ## Finding speaker
 
-Selecting the topics forms the core of any meetup group. Before looking for speakers, if the organizing pays heed to these points, that will be helpful.
+Selecting the topics forms the core of any meetup group. Before looking for speakers, if the organizer pays heed to these points, that will be helpful.
 
 What kind of audience are you expecting in the meetup? What is their experience with Ansible and with Automation in general?
 
@@ -245,7 +245,7 @@ You can use the repo to:
 
 ## Venue Scout
 
-Any in-person event can not happen without a venue. After confirming the speaker(s), a venue is the next most important thing to secure. There are some templates in the email template section which might be helpful in the journey of venue scout.
+Any in-person event can not happen without a venue. There are some templates in the resources  section which might be helpful in the journey of venue scout.
 
 ## Sponsor Scout
 
@@ -257,16 +257,16 @@ Promotions help us to create awareness about the event. This is an important too
 
 ### Bullhorn
 
-The Bullhorn is our newsletter for the Ansible contributor community. Read past issues on the official [Bullhorn’s wiki page](https://github.com/ansible/community/wiki/News#the-bullhorn). Bullhorn gives the reach to spread your message across in the Ansible Community Worldwide.
+The Bullhorn is our newsletter for the Ansible contributor community. Read past issues on the official [Bullhorn’s wiki page](https://github.com/ansible/community/wiki/News#the-bullhorn).The Bullhorn gives you the reach to spread your message across in the Ansible Community worldwide.
 
 But how to promote your event in Bullhorn?
 
-Simply hop into [#social:ansible.com (the Ansible Social room on Matrix)](https://matrix.to/#/#social:ansible.com) and leave a message, tagging `@newsbot`. Posts to be made in markdown format.
+Simply hop into [#social:ansible.com (the Ansible Social room on Matrix)](https://matrix.to/#/#social:ansible.com) and leave a message, tagging `@newsbot`. Posts should be in Markdown format.
 
 
 ### Social Media Promotion
 
-Social media plays an important role there. There are some social media post templates in the Resources Section below to help you with the sponsor scout. Ansible has social media presence in the following platforms
+Social media plays an important role in raising awareness of your event. There are some social media post templates in the Resources Section below to help you with the sponsor scout. Ansible has social media presence in the following platforms
 
 [Linked](https://www.linkedin.com/company/ansible/)
 [LinkedIn Ansible User groups](https://www.linkedin.com/groups/4648083/)
@@ -298,12 +298,11 @@ Now the Big day is here, the day of the event. And you are all ready for it 🙂
 
 1. Time Management
 
-Start and end the event on time. This creates a good practice and
-impression of the meetup group.
+Start and end the event on time.Ensure speakers also keep to their time allowance, especially if you have multiple speakers - this is respectful to people's time, especially the latter speakers in the agenda.
 
 2. Round table introduction
 
-A round table introduction before the meetup helps us to create a network with the attendees. This helps the organizers to know them, their work and experience level better. Manier times you might get your future speaker, organizer or volunteer for the group from there. Therefore be frank in asking for help.
+A round table introduction before the meetup helps us to create a network with the attendees. This helps the organizers to know them, their work and experience level better. Many times you might get your future speaker, organizer or volunteer for the group from there. Therefore be frank in asking for help.
 
 3. Feedback session
 
@@ -321,8 +320,8 @@ It is advisable to plan the next event, the date, venue and brief agenda at the 
 
 6. How to connect with the Ansible Community?
 
-Encourage the attendees to join the Ansible Community Matrix channel and show them how to join Matrix if they are not there.
-Join the Ansible Community Matrix space, find a regional channel they can connect in. Start a local telegram/Signal/WhatsApp group with the attendees.
+Encourage the attendees to join the Ansible Community [Matrix channel](https://docs.ansible.com/ansible/latest/community/communication.html#general-channels) and show them how to join Matrix if they are not there.
+Join the Ansible Community Matrix space, find a regional channel they can connect in. You may start a private Matrix room with the attendees to be connected.
 
 ## Presentation Templates
 
@@ -339,7 +338,7 @@ https://www.youtube.com/@AnsibleCommunity/channels
 ## Gathering Feedback
 
 
-It is essential to gather feedback from the participants about the meet at the end of the meetup.It gives us insght on how we, the meetup organizers can improve the meetup content and in any and every way. Presently we use the following platforms to gather feedback :
+It is essential to gather feedback from the participants about the meet at the end of the meetup.It gives the insight to the organizers on how the meetup organizers can improve the meetup content and in any and every way. Presently there are the following platforms to gather feedback :
 
 - meetup.com (Feedback tool)
 - Email
@@ -348,7 +347,7 @@ It is essential to gather feedback from the participants about the meet at the e
 
 ## Plan for the next meetup
 
-Decide on the frequency of the meetup you as a group want to have it and then plan for the meetup as soon as possible after the current meetup is over. It gives attendees time in advance to plan for the meetup. Also encourage attendees to share the content for the meetup topic using any of the abovementioned tools and platforms. The meetup groups at liberty to use their preffered platform for communication. In helps to keep the connection alive as well.
+Decide on the frequency of the meetup you as a group want to have it and then plan for the meetup as soon as possible after the current meetup is over. It gives attendees time in advance to plan for the meetup. Also encourage attendees to share the content for the meetup topic using any of the abovementioned tools and platforms. The meetup groups at liberty to use their preffered platform for communication. The private Matrix room helps to keep the connection alive and continue with the conversation.
 
 # Resources
 
