@@ -34,13 +34,13 @@ Selecting the topics forms the core of any meetup group. Before looking for spea
 
 What kind of audience are you expecting in the meetup? What is their experience with Ansible and with Automation in general?
 
-Here are a few place for speaker outreach :
+Here are a few places for speaker outreach :
       1. Social media, email
       2. Community events
       3. Github contributions
       4. Ansible Community Communication platform
 
-While reaching out to the speakers, one has to be careful to refrain from spamming people to give talks at the meetups. If you know the person or someone who can introduce them, that would be wonderful. And if not, a personal touch to the message is necessary for the person to know you, your intention, and your ideas, so they can make a reasoned decision about accepting or declining the invite. Here are some template messages which might be helpful in this process.
+While reaching out to the speakers, one has to be careful to refrain from spamming people to give talks at the meetups. If you know the person or someone who can introduce them, that would be wonderful. And if not, a personal touch to the message is necessary for the person to know you, your intention, and your ideas, so they can make a reasoned decision about accepting or declining the invite. There are some [template messages](./resources/email_templates) in the resource section// which might be helpful in this process.
 
 ## Planning tools
 
@@ -63,7 +63,7 @@ You can use the repo to:
 6. Ansible Ecosystem
 
 
-## Venue Scout
+## Finding a Venue
 
 Any in-person event can not happen without a venue. There are some templates in the resources  section which might be helpful in the journey of venue scout.
 

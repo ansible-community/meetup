@@ -1,32 +1,31 @@
 ## Guidelines
 
-Now the Big day is here, the day of the event. And you are all ready for it 🙂. Now here are the Guidelines to follow  during the day of the meetup. These are some steps that, if you follow it, will make your life easier as an organizer.
+Now the big day is here, the day of the event. And you are all ready for it 🙂. Here are the guidelines for the day of the  meetup that can make your life easier as an organizer. These are some steps that, if you follow it, will make your life easier as an organizer.
 
 **Strict Guidelines****
 
-1. Follow the Ansible Community Code of Conduct at all times during the event.
-2. Be Inclusive
+1. Follow the Ansible Community Code of Conduct at all times during the event. Read about the Code of Conduct in the [resource section](./resources/ansible_community_code_of_conduct.md) prior the event. It helps the organizer to understand the ethos of the Ansible Community. 
+2. Be Inclusive.
 3. Take care of the Security concerns.
 4. Make sure to announce the name of the person of contact in case of CoC violation.
 5. Mode of communication in case of CoC complaints.
 6. Make sure that you have a First Aid kit ready.
-7. Ask for permission of the attendees, speakers and volunteers  to be photographed.
+7. Ask all attendees, speakers, and volunteers for photography permissions.
 8. Ask for permission of the attendees, speakers and volunteers  to be tagged in Social Media.
 
 **Good to follow Guidelines
 
 1. Time Management
 
-Start and end the event on time.Ensure speakers also keep to their time allowance, especially if you have multiple speakers - this is respectful to people's time, especially the latter speakers in the agenda.
+Start and end the event on time. Ensure speakers also keep to their time allowance, especially if you have multiple speakers - this is respectful to people's time, especially the latter speakers in the agenda.
 
 2. Round table introduction
 
-A round table introduction before the meetup helps us to create a network with the attendees. This helps the organizers to know them, their work and experience level better. Many times you might get your future speaker, organizer or volunteer for the group from there. Therefore be frank in asking for help.
+A round table introduction before the meetup helps us to create a network with the attendees. This helps organizers get to know attendees and their work and experience levels. You can often find future speakers, organizers, or volunteers among the event attendees so it is always worth asking for help.
 
 3. Feedback session
 
-An honest and frank feedback session at the end of the meetup is essential. Encourage the participants to comment on the meetup page or fill up the meetup.com feedback form for giving their feedback.You can ask the following questions in there :
-
+An honest and frank feedback session at the end of the meetup is essential. Encourage the participants to comment on the meetup page or fill up the meetup.com feedback form for giving their feedback. You can ask the following questions in there :
 
 - How was the event ?
 - Was it helpful for the attedees?

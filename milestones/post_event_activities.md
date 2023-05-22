@@ -14,7 +14,7 @@ Decide on the frequency of the meetup you as a group want to have it and then pl
 
 # Resources
 
-Here are some example emails, social media posts to help the organizers with the different set communication while planning and excuting the meetup. The community members are welcome to share their ideas and contribute to the resources in the by sending a Pull Request [`ansible-community/meetup` Github repository](https://github.com/ansible-community/meetup).
+Here are some example emails and social media posts intended to help the organizers with the different set communication while planning and executing the meetup. The community members are welcome to share their ideas and contribute to the resources in the by sending a Pull Request to the [`ansible-community/meetup` Github repository](https://github.com/ansible-community/meetup).
 
 ## Email Templates
 
