@@ -1,0 +1,106 @@
+---
+site_name: Ansible Meetup Toolkit Documentation
+site_url: https://meetuptoolkit.readthedocs.io/
+repo_url: https://github.com/ansible/meetup
+edit_uri: blob/main/docs
+strict: true
+use_directory_urls: false
+
+theme:
+  name: "ansible"
+  features:
+    - content.code.copy
+    - content.action.edit
+    - navigation.expand
+    - navigation.sections
+    - navigation.instant
+    - navigation.indexes
+    - navigation.tracking
+    - toc.integrate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      primary: teal
+      accent: blue
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      accent: blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+nav:
+  - Home: meetup_toolkit.md
+  - Milestones:
+      - milestones/gain_awareness_of_ansible_meetups.md
+      - milestones/start_planning.md
+      - milestones/during_the_event.md
+      - milestones/post_event_activities.md
+  #- Contributors Guide: 
+  #- Resources:
+     # - Email templates:
+      #   - resources/email_templates/speaker_outreach_for_the_first_time.md
+       #  - resources/email_templates/follow-up_email_for_the_speaker.md
+       #  - resources/email_templates/once_the_speaker_confirms_for_the_talk.md
+      #   - resources/email_templates/speaker_communication_once_the_event_is_announced.md
+      #   - resources/email_templates/venue_scout_for_the_first_time.md
+       #  - resources/email_templates/venue_scout_follow_up.md
+      #   - resources/email_templates/venue_scout_post_confirmation.md
+       #  - resources/email_templates/sponsor_reaching_out_for_the_first_time.md
+       #  - resources/email_templates/sponsor_follow_up.md
+      #   - resources/email_templates/sponsor_venue_post_confirmation.md
+       #  - resources/email_templates/sponsor_food_post_confirmation.md
+       #  - resources/email_templates/sponsor_supporter_post_confirmation.md
+     # - Social media most templates:
+     # - Pre-event post templates:
+      #- During event post templates:
+      #- resources/important_links.md
+      #- resources/logo.md
+
+exclude_docs:
+  README.md
+
+plugins:
+  - autorefs
+  - markdown-exec
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths: [src]
+          options:
+            # Sphinx is for historical reasons, but we could consider switching if needed
+            # https://mkdocstrings.github.io/griffe/docstrings/
+            docstring_style: sphinx
+            merge_init_into_class: yes
+            show_submodules: yes
+          import:
+            - url: https://docs.ansible.com/ansible/latest/objects.inv
+              domains: [py, std]
+
+markdown_extensions:
+  - admonition
+  - def_list
+  - footnotes
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences
+  - pymdownx.magiclink:
+      repo_url_shortener: true
+      repo_url_shorthand: true
+      social_url_shorthand: true
+      social_url_shortener: true
+      user: facelessuser
+      repo: pymdown-extensions
+      normalize_issue_symbols: true
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      toc_depth: 2
+      permalink: true
