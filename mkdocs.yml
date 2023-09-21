@@ -68,19 +68,6 @@ plugins:
   - autorefs
   - markdown-exec
   - search
-  - mkdocstrings:
-      handlers:
-        python:
-          paths: [src]
-          options:
-            # Sphinx is for historical reasons, but we could consider switching if needed
-            # https://mkdocstrings.github.io/griffe/docstrings/
-            docstring_style: sphinx
-            merge_init_into_class: yes
-            show_submodules: yes
-          import:
-            - url: https://docs.ansible.com/ansible/latest/objects.inv
-              domains: [py, std]
 
 markdown_extensions:
   - admonition
