@@ -39,26 +39,27 @@ nav:
       - milestones/start_planning.md
       - milestones/during_the_event.md
       - milestones/post_event_activities.md
-  #- Contributors Guide: 
-  #- Resources:
-     # - Email templates:
-      #   - resources/email_templates/speaker_outreach_for_the_first_time.md
-       #  - resources/email_templates/follow-up_email_for_the_speaker.md
-       #  - resources/email_templates/once_the_speaker_confirms_for_the_talk.md
-      #   - resources/email_templates/speaker_communication_once_the_event_is_announced.md
-      #   - resources/email_templates/venue_scout_for_the_first_time.md
-       #  - resources/email_templates/venue_scout_follow_up.md
-      #   - resources/email_templates/venue_scout_post_confirmation.md
-       #  - resources/email_templates/sponsor_reaching_out_for_the_first_time.md
-       #  - resources/email_templates/sponsor_follow_up.md
-      #   - resources/email_templates/sponsor_venue_post_confirmation.md
-       #  - resources/email_templates/sponsor_food_post_confirmation.md
-       #  - resources/email_templates/sponsor_supporter_post_confirmation.md
-     # - Social media most templates:
-     # - Pre-event post templates:
-      #- During event post templates:
-      #- resources/important_links.md
-      #- resources/logo.md
+  - Contributors Guide: 
+      - contributing/contributing.md
+  - Resources:
+      - Email templates:
+         - resources/email_templates/speaker_outreach_for_the_first_time.md
+         - resources/email_templates/follow-up_email_for_the_speaker.md
+         - resources/email_templates/once_the_speaker_confirms_for_the_talk.md
+         - resources/email_templates/speaker_communication_once_the_event_is_announced.md
+         - resources/email_templates/venue_scout_for_the_first_time.md
+         - resources/email_templates/venue_scout_follow_up.md
+         - resources/email_templates/venue_scout_post_confirmation.md
+         - resources/email_templates/sponsor_reaching_out_for_the_first_time.md
+         - resources/email_templates/sponsor_follow_up.md
+         - resources/email_templates/sponsor_venue_post_confirmation.md
+         - resources/email_templates/sponsor_food_post_confirmation.md
+         - resources/email_templates/sponsor_supporter_post_confirmation.md
+      - Social media most templates:
+         - resources/social_media_post_templates/pre_event_post_templates.md
+         - resources/social_media_post_templates/during_event_post_templates.md
+      - resources/important_links.md
+      - resources/logo.md
 
 exclude_docs:
   README.md

@@ -40,7 +40,7 @@ Here are a few places for speaker outreach :
       3. Github contributions
       4. Ansible Community Communication platform
 
-While reaching out to the speakers, one has to be careful to refrain from spamming people to give talks at the meetups. If you know the person or someone who can introduce them, that would be wonderful. And if not, a personal touch to the message is necessary for the person to know you, your intention, and your ideas, so they can make a reasoned decision about accepting or declining the invite. There are some [template messages](./resources/email_templates) in the resource section// which might be helpful in this process.
+While reaching out to the speakers, one has to be careful to refrain from spamming people to give talks at the meetups. If you know the person or someone who can introduce them, that would be wonderful. And if not, a personal touch to the message is necessary for the person to know you, your intention, and your ideas, so they can make a reasoned decision about accepting or declining the invite. See the Email templates section which might be helpful in this process.
 
 ## Planning tools
 
@@ -90,7 +90,7 @@ Social media plays an important role in raising awareness of your event. There a
 
 [Linked](https://www.linkedin.com/company/ansible/)
 [LinkedIn Ansible User groups](https://www.linkedin.com/groups/4648083/)
-[Mastodon](@ansible@fosstodon.org)
+[Mastodon](https://fosstodon.org/@ansible)
 [Twitter](https://twitter.com/ansible)
 
 

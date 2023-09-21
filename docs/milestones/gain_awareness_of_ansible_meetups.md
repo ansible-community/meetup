@@ -27,11 +27,11 @@ Meetup organizers always look for good presenters to enrich their events and mee
 Want to host a meetup at your organization? Then please reach out
  - by commenting on a meetup page of a local meetup
  - via social media
- - send us an [email](meetup@ansible.com)
+ - send us an [email](mailto:meetup@ansible.com)
 
 ### Organizing a meetup
 
-No Ansible meetup in your area? Send us an [email](meetup@ansible.com) introducing yourself. Be sure to include a link to your profile at meetup.com.
+No Ansible meetup in your area? Send us an [email](mailto:meetup@ansible.com) introducing yourself. Be sure to include a link to your profile at meetup.com.
 
 We want to be sure that meetup organizers are committed to building a strong local community of Ansible users. After a brief discussion, we will create the Ansible meetup group in your area, appoint you as a co-organizer, and announce your new group to the world.
 
@@ -43,6 +43,6 @@ Anyone from the wider Ansible community who is committed to run an Ansible meetu
 
 ## Ansible Community Code of Conduct
 
-Read about the Ansible Community Code of Conduct [here](./resources/ansible_community_code_of_conduct.md)
+All Ansible Meetups must comply with the [Ansible Community Code of Conduct](ttps://docs.ansible.com/ansible/devel/community/code_of_conduct.html).
 
 
