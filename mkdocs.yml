@@ -33,7 +33,7 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
 nav:
-  - Home: meetup_toolkit.md
+  - Home: index.md
   - Milestones:
       - milestones/gain_awareness_of_ansible_meetups.md
       - milestones/start_planning.md
