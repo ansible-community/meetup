@@ -59,7 +59,7 @@ You can use the repo to:
 2. Ansible 101
 3. Writing your first playbook
 4. How to contribute to Ansible?
-5. From Playbook to Rulebook (presentaion for EDA)
+5. From Playbook to rulebook (presentation for EDA)
 6. Ansible Ecosystem
 
 

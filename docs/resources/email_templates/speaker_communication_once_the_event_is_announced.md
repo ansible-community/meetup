@@ -6,7 +6,7 @@ Feel free to promote the event on social media, and you can tag us :). The relev
 
 - [LinkedIn group](https://www.linkedin.com/groups/4648083/)
 - [LinkedIn Ansible](https://www.linkedin.com/company/ansible/)
-- [Mastodon (over Fostodon instance)](https://fosstodon.org/@ansible)
+- [Mastodon (over Fosstodon instance)](https://fosstodon.org/@ansible)
 - [Twitter](https://twitter.com/ansible)
 
 See you at the event.

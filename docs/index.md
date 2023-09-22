@@ -14,4 +14,4 @@ If you want to contribute, see our [Contributor Guide](contributing/contributing
 
 ## Resources
 
-Resource section contains some example emails, social media posts, and other important links to help the organizers with the different set communication while planning and excuting the meetup. The community members are welcome to share their ideas and contribute to the resources in the by sending a Pull Request in the [`ansible-community/meetup` Github repository](https://github.com/ansible-community/meetup).
+Resource section contains some example emails, social media posts, and other important links to help the organizers with the different set communication while planning and executing the meetup. The community members are welcome to share their ideas and contribute to the resources in the by sending a Pull Request in the [`ansible-community/meetup` Github repository](https://github.com/ansible-community/meetup).

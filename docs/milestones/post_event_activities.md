@@ -10,7 +10,7 @@ It is essential to gather feedback from the participants about the meet at the e
 
 ## Plan for the next meetup
 
-Decide on the frequency of the meetup you as a group want to have it and then plan for the meetup as soon as possible after the current meetup is over. It gives attendees time in advance to plan for the meetup. Also encourage attendees to share the content for the meetup topic using any of the abovementioned tools and platforms. The meetup groups at liberty to use their preffered platform for communication. The private Matrix room helps to keep the connection alive and continue with the conversation.
+Decide on the frequency of the meetup you as a group want to have it and then plan for the meetup as soon as possible after the current meetup is over. It gives attendees time in advance to plan for the meetup. Also encourage attendees to share the content for the meetup topic using any of the above mentioned tools and platforms. The meetup groups at liberty to use their preferred platform for communication. The private Matrix room helps to keep the connection alive and continue with the conversation.
 
 # Resources
 
@@ -33,7 +33,7 @@ Here are some example emails and social media posts intended to help the organiz
 
 ## Promotional post templates
 
-Here are some very basic social media post templates. Feel free to be creative, informative and fun with the posts. Reach out the speakers for their prespectives as well on the topic which they are going to take.
+Here are some very basic social media post templates. Feel free to be creative, informative and fun with the posts. Reach out the speakers for their perspectives as well on the topic which they are going to take.
 
 - [Promotion Pre-Event : post templates](../resources/social_media_post_templates/during_event_post_templates.md)
 - [Promotion during the event : post templates](../resources/social_media_post_templates/pre_event_post_templates.md)

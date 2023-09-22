@@ -28,7 +28,7 @@ A round table introduction before the meetup helps us to create a network with t
 An honest and frank feedback session at the end of the meetup is essential. Encourage the participants to comment on the meetup page or fill up the meetup.com feedback form for giving their feedback. You can ask the following questions in there :
 
 - How was the event ?
-- Was it helpful for the attedees?
+- Was it helpful for the attendees?
 - How can the meetup improve?
 - What are the topics you would like to hear more about in future sessions?
 
