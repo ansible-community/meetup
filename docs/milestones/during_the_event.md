@@ -4,7 +4,7 @@ Now the big day is here, the day of the event. And you are all ready for it 🙂
 
 **Strict Guidelines****
 
-1. Follow the Ansible Community Code of Conduct at all times during the event. Read about the Code of Conduct in the [resource section](./resources/ansible_community_code_of_conduct.md) prior the event. It helps the organizer to understand the ethos of the Ansible Community. 
+1. Follow the Ansible Community Code of Conduct at all times during the event. Read about the [Ansible Code of Conduct](ttps://docs.ansible.com/ansible/devel/community/code_of_conduct.html) prior the event. It helps the organizer to understand the ethos of the Ansible Community. 
 2. Be Inclusive.
 3. Take care of the Security concerns.
 4. Make sure to announce the name of the person of contact in case of CoC violation.
