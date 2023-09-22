@@ -17,3 +17,7 @@ I will look forward to your answer.
 
 Thank you,
 {your_name}
+
+[0] link for the Meetup
+[1] https://www.ansible.com/
+[2] https://www.ansible.com/community

@@ -1,45 +1,52 @@
-## What is an Ansible Meetup?
+# What is an Ansible Meetup?
 
-Ansible meetup is a gathering of a small to medium-sized group of Systems Engineers, DevOps and SREs. Where they talk about their Automation journey focusing on Ansible, it is a place to teach and learn from each other. Meetup provides a platform for upstream and downstream to meet and share ideas.
+An [Ansible Meetup](https://www.meetup.com/topics/ansible/) is a gathering of a small to medium-sized group of Systems Engineers, DevOps, and SREs. Attendees talk about their automation journey, focusing on Ansible. Meetups are a place to teach and learn from each other. Meetups provide a platform for the open source community and customers to meet and share ideas.
 
-## How to become a member of the meetup?
+Ansible Meetups are a group effort. A successful Meetup needs:
 
-One can be a member of an Ansible meetup group by:
+* Attendees - to learn, share, and network with other Ansible enthusiasts.
+* Presenters - to give talks or facilitate discussions during the event.
+* Meetup hosts - to provide the venue where the Meetup will happen if it is not an on-line only event.
+* Meetup organizers - to find a venue to host the Meetup, coordinate presenters, and plan and execute the Meetup.
 
-### Attending the meetups
+## Attending a Meetup
 
-Check the list of current Ansible meetups. If there is already a meetup in your area, join it and register for an upcoming event.
+To find and join a local Meetup:
 
-### Presenting at the meetup
-
-Do you want to present at an Ansible meetup? Do you have an idea for a session? Feel free to reach out to the meetup group either by
-
-- Commenting on the meetup page itself.
-- Contacting the organizers via meetup.com direct messages.
-- Open an issue at the [Github repo of the meetup group](https://github.com/ansible-community/?q=meetup) (if available).
-- Share your idea at [#ansible-social](https://matrix.to/#/#social:ansible.com) Matrix room or one of the [regional rooms](https://matrix.to/#/#ansible-regional:matrix.org).
+1. Search the list of [Ansible Meetups](https://www.meetup.com/topics/ansible/) for one near you.
+2. Optionally, click **Join Group** to join that Meetup.
+3. Find the next Meetup event in that group and click **Attend** or follow the registration instructions.
 
 
-Meetup organizers always look for good presenters to enrich their events and meetup groups. So do not hold back from sharing your ideas.
+## Presenting at the Meetup
 
-### Hosting a meetup
+Do you want to present at an Ansible Meetup? Do you have an idea for a session? Use one the following options to reach out to the Meetup group with your presentation idea:
 
-Want to host a meetup at your organization? Then please reach out
- - by commenting on a meetup page of a local meetup
- - via social media
- - send us an [email](mailto:meetup@ansible.com)
+- Comment on the Meetup page itself.
+- Contact the organizers through Meetup.com direct messages.
+- Open an issue at the [Github repo of the meetup group](https://github.com/ansible-community/?q=meetup) for that Meetup (if available).
+- Share your idea in the [#ansible-social](https://matrix.to/#/#social:ansible.com) Matrix room or one of the [regional rooms](https://matrix.to/#/#ansible-regional:matrix.org).
 
-### Organizing a meetup
 
-No Ansible meetup in your area? Send us an [email](mailto:meetup@ansible.com) introducing yourself. Be sure to include a link to your profile at meetup.com.
+Meetup organizers always look for good presenters to enrich their events and Meetup groups, so do not hold back from sharing your ideas.
 
-We want to be sure that meetup organizers are committed to building a strong local community of Ansible users. After a brief discussion, we will create the Ansible meetup group in your area, appoint you as a co-organizer, and announce your new group to the world.
+## Hosting a Meetup
 
-Secure a date and location for your first meetup! We will help you by spreading the word on social media, reaching out to potential speakers and sponsors in your area, and suggesting new and interesting Ansible content on a regular basis.
+Meetup hosts provide the venue where the Meetup event happens.
 
-## Who can become an organizer?
+Want to host a meetup at your organization? Reach out to the Meetup organizer in your area by any of the methods listed above or send us an [email](mailto:meetup@ansible.com) and we can help you make the connection to your local Meetup organizer.
 
-Anyone from the wider Ansible community who is committed to run an Ansible meetup group and plan/organize meetups can become an organizer. The fundamental understanding of the Open Source community, its working, and the belief in this ethos is essential to be an efficient community builder. Some knowledge about Ansible is always a plus.
+## Organizing a Meetup
+
+No Ansible Meetup in your area? Send us an [email](mailto:meetup@ansible.com) introducing yourself. Be sure to include a link to your profile at Meetup.com.
+
+We want to be sure that Meetup organizers are committed to building a strong, local community of Ansible users. After a brief discussion, we will create the Ansible Meetup group in your area, appoint you as a co-organizer, and announce your new group to the world.
+
+Secure a date and location for your first Meetup! We will help you by spreading the word on social media, reaching out to potential speakers and sponsors in your area, and suggesting new and interesting Ansible content on a regular basis.
+
+### Who can become an organizer?
+
+Anyone from the wider Ansible community who is committed to run an Ansible Meetup group and plan/organize Meetups can become an organizer. The fundamental understanding of the Open Source community, its working, and the belief in this ethos is essential to be an efficient community builder. Some knowledge about Ansible is always a plus.
 
 ## Ansible Community Code of Conduct
 

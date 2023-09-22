@@ -22,7 +22,7 @@ We are looking forward to your reply.
 
 [0] link for the Meetup
 [1] https://www.ansible.com/
-[3] https://www.ansible.com/community
+[2] https://www.ansible.com/community
 
 Thank you,
 {your name}
