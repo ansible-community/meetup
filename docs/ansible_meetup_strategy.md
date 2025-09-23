@@ -1,13 +1,13 @@
-This is the document that explains the overall strategy for the Ansible meetup. 
+This is the document that explains the overall strategy for the Ansible meetup.
 This document defines and elaborates the schema and policy for Ansible Meetup. This further explains the organization guidelines, permissions and  enablement and onbroading process of different stakeholders (organizers, co-organizers, sponspoers, attendees) to meetup.
 
-## What is Ansible meetup? 
+## What is Ansible meetup?
 
-Ansible Meetup groups are community-driven  gathering of contributors, users, IT professionals, developers, and enthusiasts—from beginners to experts—who use or are interested in Ansible automation. Its core purpose is to facilitate in-person and/or virtual learning, knowledge-sharing, and networking focused on the Ansible ecosystem. Every meetup group is to effectively act as a local extension of the global Ansible community, following the same high open source standards.  
+Ansible Meetup groups are community-driven  gathering of contributors, users, IT professionals, developers, and enthusiasts—from beginners to experts—who use or are interested in Ansible automation. Its core purpose is to facilitate in-person and/or virtual learning, knowledge-sharing, and networking focused on the Ansible ecosystem. Every meetup group is to effectively act as a local extension of the global Ansible community, following the same high open source standards.
 
 The meetup groups organizes events, carry on meetups with the following goals in minds:
 
-### Education & Skill Development	
+### Education & Skill Development
 
 Provide high-quality, informative content via  talks, demos, workshops, that helps attendees to  improve their automation skills using Ansible (and related technologies).
 
@@ -15,11 +15,11 @@ Provide high-quality, informative content via  talks, demos, workshops, that hel
 
 Create an inclusive, welcoming, and safe environment that encourages connection, collaboration, and the expansion of the local professional network. Every meetup group should adhere to the Ansible Code of Conduct.
 
-### Ecosystem Adoption	
+### Ecosystem Adoption
 
-Promote the use and adoption of new Ansible features, collections, and best practices. 
+Promote the use and adoption of new Ansible features, collections, and best practices.
 
-### Sustainability & Consistency	
+### Sustainability & Consistency
 
 Establish a robust organizational structure and a clear, repeatable process (as different steps explained in the toolkit) is to ensure meetups run consistently (e.g., monthly/bi-monthly) without relying solely on a single individual.
 
@@ -32,7 +32,7 @@ Establish a robust organizational structure and a clear, repeatable process (as 
 
 Strict adherence to the Ansible Community Code of Conduct is mandatory for all participants (organizers, sponsors, attendees). The organizer must announce the CoC contact person at every event.
 
-2. Non-Commercial Rule 
+2. Non-Commercial Rule
 
 Presentations must be educational and not a sales pitch. Sponsors may be acknowledged, but their speaking slots are earned based on technical merit, not payment.
 
@@ -46,8 +46,73 @@ Meetups must be free to attend. Any sponsorship funds collected must only cover 
 
 5. Deletion of the any meetup chapter
 
-If an Ansible meetup group does not host a meetup, event, or workshop for 3 months or more, Ansible or Red Hat may stop paying for the group after informing them by email (using the address on meetup.org). If a group remains inactive for 5 consecutive months in a calendar year, it will be deleted.
+If an Ansible meetup group does not host a meetup, event, or workshop for X + months, Ansible or Red Hat may stop paying for the group after informing them by email (using the address on meetup.org). If a group remains inactive for X consecutive months in a calendar year, it shall be deleted.
 
 6. Communication
 
-Every meetup organizers shall use the regular and/common communication medium in the Ansible ecosystem, i.e Ansible Forum, Bullhorn, Ansible Community Newsletter and the dedicated (ansible social) Matrix rooam. 
+Every meetup organizers shall use the regular and/common communication medium in the Ansible ecosystem, i.e Ansible Forum, Bullhorn, Ansible Community Newsletter and the dedicated (ansible social) Matrix rooam.
+
+
+### Stakeholders
+
+1. Organizer
+2. Co-Organizer
+3. Presenter/Speaker
+4. Sponsor
+5. Attendee
+
+### Roles and Permissions
+
+Following are the basic role and and permission of the abovementioned stakeholders.
+
+1. Organizer
+
+An organizer is the person who has the Organizer titile, resposibities and persmission in the meetup.com. They are the primary contact and resposible person for the concerned meetup group.
+They in coordination with co-organizers, community members they can lay down group strategy regarding events, talk selection, necessary communication and any other required steps for successful occurance of the event. All the duties will be performed complying with the Ansible Code of Conduct and general community guidelines.
+A co-organizer who has been successfully organized *X* amount of events, can apply to the Ansible meetup group administatrive team for the role of organizer. The organizers must help organizing *X* amount of event in a calendar year to be remain as organizer.
+
+2. Co-Organizer
+
+The co-organizer is the person who is primaryly responsible for an event and the execution thereof. Often organizer and co-organisers are the same people in real life. They does Speaker recruitment/selection, venue scouting, sponsorship outreach, social media promotion, and day-of-event logistics related to the event they are co-organizers of. All the duties will be performed complying with the Ansible Code of Conduct and general community guidelines. Co-organizer and organizer needs to be always be in sync and agreement for the sucess of the event, group and the community thereof.
+Full administrative access to the group (scheduling events, sending messages, managing attendees, accepting/removing members).
+
+A community memeber who has been successfully organized *X* amount of events, can apply to the Ansible meetup group administatrive team for the role of co-organizer. The co-organizers must help organizing *X* amount of event in a calendar year to be remain as same.
+
+
+3. Presenter/Speaker
+
+The Presenter/Speaker is the person who delivers the content in form of talks, workshops, demos and/or particiapting in the panel disucssions. They are responsible for preparing and delivering high-quality, educational content focused on Ansible and releated technologies. They should adhear to the Ansible Code of Conduct and general community guidelines.
+Co-organizer and Organizers MUST provide full support for to the Presenter/Speaker for preparation, during their presentation and thereafter the ability to share slides/recordings with the community post-event.
+
+
+4. Sponsor
+
+The sponsor porvides for food/drinks, providing a suitable venue, or covering A/V costs.
+Branding display at the event, short announcement/thank you during the event, logo on promotional materials. Any branding, sponsorship needs to be informed, vetted and permitted by Ansible, Red Hat. Conatct  Ansible Community team for the navifa=gating the process inside Red Hat.
+
+Ansible meetup **MUST NOT GURANTEE** of speaking slot or attendee list in return of sposorship. Or the sponsors can not be made Organizer or Co-Organizer as part of the sponsorship.
+
+5. Attendee
+
+Attendees are the participants and vaulable memeber of Ansible Community. They engage with speakers, networking respectfully, providing constructive feedback and all while adhering to the CoC.
+
+
+### Enablement and Onboarding Process
+
+Please refer to the different milestones in the
+
+1. Application & Vetting
+2. Training & Setup
+3. Initial Event Planning
+4. Inquiry & Review of the Sponsors
+5. Agreement for sponsorship (must be written down in the email exchange between organizers and sponspors)
+
+
+### Reward and Recognition
+
+A contributor can be rewarded and recognised via following ways :
+
+- Forum Post
+- Bullhorn post
+- Provide Forum Badge
+
