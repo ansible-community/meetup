@@ -89,7 +89,8 @@ Co-organizer and Organizers MUST provide full support for to the Presenter/Speak
 The sponsor porvides for food/drinks, providing a suitable venue, or covering A/V costs.
 Branding display at the event, short announcement/thank you during the event, logo on promotional materials. Any branding, sponsorship needs to be informed, vetted and permitted by Ansible, Red Hat. Conatct  Ansible Community team for the navifa=gating the process inside Red Hat.
 
-Ansible meetup **MUST NOT GURANTEE** of speaking slot or attendee list in return of sposorship. Or the sponsors can not be made Organizer or Co-Organizer as part of the sponsorship.
+* Ansible meetup **MUST NOT GUARANTEE** of speaking slot or attendee list in return of sponsorship.
+* A sponsors MUST NOT be granted any Meetup privileges above `member` as part of the sponsorship.
 
 5. Attendee
 
