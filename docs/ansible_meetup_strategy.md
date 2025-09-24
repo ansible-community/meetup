@@ -13,7 +13,7 @@ Provide high-quality, informative content via  talks, demos, workshops, that hel
 
 ### Community & Networking
 
-Create an inclusive, welcoming, and safe environment that encourages connection, collaboration, and the expansion of the local professional network. Every meetup group should adhere to the Ansible Code of Conduct.
+Create an inclusive, welcoming, and safe environment that encourages connection, collaboration, and the expansion of the local professional network. Every meetup group should adhere to the [Ansible Code of Conduct](https://docs.ansible.com/ansible/devel/community/code_of_conduct.html).
 
 ### Ecosystem Adoption
 
