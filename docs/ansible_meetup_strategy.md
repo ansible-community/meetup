@@ -1,4 +1,3 @@
-This is the document that explains the overall strategy for the Ansible meetup.
 This document defines and elaborates the schema and policy for Ansible Meetup. This further explains the organization guidelines, permissions and  enablement and onbroading process of different stakeholders (organizers, co-organizers, sponspoers, attendees) to meetup.
 
 ## What is Ansible meetup?
