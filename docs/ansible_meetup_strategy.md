@@ -20,8 +20,7 @@ Promote the use and adoption of new Ansible features, collections, and best prac
 
 ### Sustainability & Consistency
 
-Establish a robust organizational structure and a clear, repeatable process (as different steps explained in the toolkit) is to ensure meetups run consistently (e.g., monthly/bi-monthly) without relying solely on a single individual.
-
+Establish a robust organizational structure and a clear, repeatable process (as different steps explained in the toolkit) is to ensure meetups run consistently (e.g., monthly/quarterly) without relying solely on a single individual.
 
 ## Organization Guidelines and Permissions
 
@@ -29,7 +28,7 @@ Establish a robust organizational structure and a clear, repeatable process (as 
 
 1. Code of Conduct (CoC)
 
-Strict adherence to the Ansible Community Code of Conduct is mandatory for all participants (organizers, sponsors, attendees). The organizer must announce the CoC contact person at every event.
+Strict adherence to the [Ansible Code of Conduct](https://docs.ansible.com/ansible/devel/community/code_of_conduct.html) is mandatory for all participants (organizers, sponsors, attendees). The organizer MUST announce the CoC contact person at every event, for example as part of the introduction.
 
 2. Non-Commercial Rule
 
@@ -49,30 +48,37 @@ If an Ansible meetup group does not host a meetup, event, or workshop for X + mo
 
 6. Communication
 
-Every meetup organizers shall use the regular and/common communication medium in the Ansible ecosystem, i.e Ansible Forum, Bullhorn, Ansible Community Newsletter and the dedicated (ansible social) Matrix rooam.
+Every meetup organizers shall use the regular and/common communication medium in the Ansible ecosystem, i.e [Ansible Forum](https://forum.ansible.com/), [Bullhorn](https://forum.ansible.com/c/news/bullhorn), Ansible Community Newsletter and the dedicated [ansible social](#social:ansible.com) [Matrix room](https://hackmd.io/@ansible-community/community-matrix-faq).
+
+The auto-generated event pages should have a reply with links to slides and discussions. That is how the organizer should inform all members of the Meetup Group after the event has taken place. Following that the Forum Admin will create the `event-slides tag` in the Ansible Forum.
 
 
 ### Stakeholders
 
-1. Organizer
+1. Pro Admin
 2. Co-Organizer
-3. Presenter/Speaker
-4. Sponsor
-5. Attendee
+3. Associate Organizer
+4. Presenter/Speaker
+5. Sponsor
+6. Attendee
 
 ### Roles and Permissions
 
 Following are the basic role and and permission of the abovementioned stakeholders.
 
-1. Organizer
+1. Pro Admin
 
-An organizer is the person who has the Organizer titile, resposibities and persmission in the meetup.com. They are the primary contact and resposible person for the concerned meetup group.
-They in coordination with co-organizers, community members they can lay down group strategy regarding events, talk selection, necessary communication and any other required steps for successful occurance of the event. All the duties will be performed complying with the Ansible Code of Conduct and general community guidelines.
-A co-organizer who has been successfully organized *X* amount of events, can apply to the Ansible meetup group administatrive team for the role of organizer. The organizers must help organizing *X* amount of event in a calendar year to be remain as organizer.
+Ansible Community Team as the owner of Ansible on Meetup Pro account.
 
 2. Co-Organizer
 
-The co-organizer is the person who is primaryly responsible for an event and the execution thereof. Often organizer and co-organisers are the same people in real life. They does Speaker recruitment/selection, venue scouting, sponsorship outreach, social media promotion, and day-of-event logistics related to the event they are co-organizers of. All the duties will be performed complying with the Ansible Code of Conduct and general community guidelines. Co-organizer and organizer needs to be always be in sync and agreement for the sucess of the event, group and the community thereof.
+An co-organizer is the person who has the Organizer titile, resposibities and persmission in the meetup.com. They are the primary contact and resposible person for the concerned meetup group.
+They in coordination with co-organizers, community members they can lay down group strategy regarding events, talk selection, necessary communication and any other required steps for successful occurance of the event. All the duties will be performed complying with the Ansible Code of Conduct and general community guidelines.
+A co-organizer who has been successfully organized *X* amount of events, can apply to the Ansible meetup group administatrive team for the role of co-organizer. The organizers must help organizing *X* amount of event in a calendar year to be remain as co-organizer.
+
+2. Associate-Organizer
+
+The associate-organizer is the person who is primaryly responsible for an event and the execution thereof. Often organizer and associate-organizer are the same people in real life. They does Speaker recruitment/selection, venue scouting, sponsorship outreach, social media promotion, and day-of-event logistics related to the event they are associate-organizers of. All the duties will be performed complying with the Ansible Code of Conduct and general community guidelines. Co-organizer and associate-organizer needs to be always be in sync and agreement for the sucess of the event, group and the community thereof.
 Full administrative access to the group (scheduling events, sending messages, managing attendees, accepting/removing members).
 
 A community memeber who has been successfully organized *X* amount of events, can apply to the Ansible meetup group administatrive team for the role of co-organizer. The co-organizers must help organizing *X* amount of event in a calendar year to be remain as same.
@@ -95,7 +101,6 @@ Branding display at the event, short announcement/thank you during the event, lo
 5. Attendee
 
 Attendees are the participants and vaulable memeber of Ansible Community. They engage with speakers, networking respectfully, providing constructive feedback and all while adhering to the CoC.
-
 
 ### Enablement and Onboarding Process
 
