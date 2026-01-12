@@ -37,7 +37,7 @@ Now the big day is here, the day of the event. And you are all ready for it 🙂
 
 6. How to connect with the Ansible Community?
 
-    Encourage the attendees to join the Ansible Community [Matrix channel](https://docs.ansible.com/ansible/latest/community/communication.html#general-channels) and show them how to join Matrix if they are not there.
+    Encourage the attendees to join the Ansible Community [Matrix channel](https://docs.ansible.com/projects/ansible/latest/community/communication.html#general-channels) and show them how to join Matrix if they are not there.
     Join the Ansible Community Matrix space, find a regional channel they can connect in. You may start a private Matrix room with the attendees to be connected.
 
     Also encourage them to join the  [Ansible Community forum](https://forum.ansible.com/)

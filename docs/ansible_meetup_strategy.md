@@ -12,7 +12,7 @@ Provide high-quality, informative content via  talks, demos, workshops, that hel
 
 ### Community & Networking
 
-Create an inclusive, welcoming, and safe environment that encourages connection, collaboration, and the expansion of the local professional network. Every meetup group should adhere to the [Ansible Code of Conduct](https://docs.ansible.com/ansible/devel/community/code_of_conduct.html).
+Create an inclusive, welcoming, and safe environment that encourages connection, collaboration, and the expansion of the local professional network. Every meetup group should adhere to the [Ansible Code of Conduct](https://docs.ansible.com/projects/ansible/devel/community/code_of_conduct.html).
 
 ### Ecosystem Adoption
 
@@ -28,7 +28,7 @@ Establish a robust organizational structure and a clear, repeatable process (as 
 
 1. Code of Conduct (CoC)
 
-Strict adherence to the [Ansible Code of Conduct](https://docs.ansible.com/ansible/devel/community/code_of_conduct.html) is mandatory for all participants (organizers, sponsors, attendees). The organizer MUST announce the CoC contact person at every event, for example as part of the introduction.
+Strict adherence to the [Ansible Code of Conduct](https://docs.ansible.com/projects/ansible/devel/community/code_of_conduct.html) is mandatory for all participants (organizers, sponsors, attendees). The organizer MUST announce the CoC contact person at every event, for example as part of the introduction.
 
 2. Non-Commercial Rule
 
