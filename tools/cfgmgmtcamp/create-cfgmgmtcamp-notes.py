@@ -14,7 +14,7 @@ import json
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Callable, cast
 from urllib.error import URLError
 from urllib.request import urlopen
 
@@ -226,14 +226,17 @@ def fetch_talk_resources(
     return tuple(resources)
 
 
-def extract_talks_for_track(
-    schedule: dict[str, Any], track: str, year: int, location: str = "ghent"
+def _extract_talks(
+    schedule: dict[str, Any],
+    filter_func: Callable[[dict[str, Any]], bool],
+    year: int,
+    location: str = "ghent",
 ) -> list[TalkMetadata]:
-    """Extract all talks for specified track from schedule.
+    """Extract talks from schedule using provided filter function.
 
     Args:
         schedule: Parsed schedule JSON
-        track: Track name to filter (e.g., "Ansible")
+        filter_func: Function that takes talk_data dict and returns True to include talk
         year: Conference year
         location: Conference location (default: ghent)
 
@@ -261,8 +264,8 @@ def extract_talks_for_track(
 
         for room_name, room_data in day.get("rooms", {}).items():
             for talk_data in room_data:
-                # Skip talks that don't match our track
-                if talk_data.get("track") != track:
+                # Apply filter function to determine if talk should be included
+                if not filter_func(talk_data):
                     continue
 
                 # Extract speaker names (filter empty strings)
@@ -304,6 +307,26 @@ def extract_talks_for_track(
                 )
 
     return talks
+
+
+def extract_talks_for_track(
+    schedule: dict[str, Any], track: str, year: int, location: str = "ghent"
+) -> list[TalkMetadata]:
+    """Extract all talks for specified track from schedule.
+
+    Args:
+        schedule: Parsed schedule JSON
+        track: Track name to filter (e.g., "Ansible")
+        year: Conference year
+        location: Conference location (default: ghent)
+
+    Returns:
+        List of TalkMetadata objects for Monday and Tuesday only
+    """
+    def filter_func(talk_data: dict[str, Any]) -> bool:
+        return talk_data.get("track") == track
+
+    return _extract_talks(schedule, filter_func, year, location)
 
 
 def extract_related_talks(
@@ -325,79 +348,19 @@ def extract_related_talks(
     Returns:
         List of TalkMetadata objects from other tracks that mention the keyword
     """
-    talks = []
+    def filter_func(talk_data: dict[str, Any]) -> bool:
+        # Exclude talks from the main track
+        if talk_data.get("track") == track:
+            return False
 
-    conference_days = schedule.get("schedule", {}).get("conference", {}).get("days", [])
+        # Only include if keyword appears in title or abstract (case-insensitive)
+        title = talk_data.get("title", "")
+        abstract = talk_data.get("abstract", "")
+        keyword_lower = track_keyword.lower()
 
-    # Build date to day name mapping more safely
-    date_to_day = {}
-    for idx, day in enumerate(conference_days):
-        if idx < len(MAIN_DAYS) and "date" in day:
-            date_to_day[day["date"]] = MAIN_DAYS[idx]
+        return keyword_lower in title.lower() or keyword_lower in abstract.lower()
 
-    # Extract talks from each day/room
-    for day in conference_days:
-        date = day.get("date", "")
-        day_name = date_to_day.get(date, "Unknown")
-
-        # Only process Monday and Tuesday (Wednesday is Contributor Summit)
-        if day_name not in MAIN_DAYS:
-            continue
-
-        for room_name, room_data in day.get("rooms", {}).items():
-            for talk_data in room_data:
-                # Skip talks IN the main track
-                if talk_data.get("track") == track:
-                    continue
-
-                # Only include if keyword appears in title or abstract (case-insensitive)
-                title = talk_data.get("title", "")
-                abstract = talk_data.get("abstract", "")
-                if (
-                    track_keyword.lower() not in title.lower()
-                    and track_keyword.lower() not in abstract.lower()
-                ):
-                    continue
-
-                # Extract speaker names (filter empty strings)
-                speakers = tuple(
-                    speaker
-                    for person in talk_data.get("persons", [])
-                    if (speaker := person.get("public_name", ""))
-                )
-
-                # Extract talk code from URL
-                talk_code = ""
-                talk_url = talk_data.get("url", "")
-                if "/talk/" in talk_url:
-                    parts = talk_url.split("/talk/")
-                    if len(parts) > 1 and parts[1]:
-                        talk_code = parts[1].rstrip("/")
-
-                # Fetch resources from API
-                resources = (
-                    fetch_talk_resources(talk_code, year, location=location)
-                    if talk_code
-                    else ()
-                )
-
-                talks.append(
-                    TalkMetadata(
-                        title=talk_data.get("title", ""),
-                        speakers=speakers,
-                        abstract=talk_data.get("abstract", ""),
-                        start_time=talk_data.get("start", ""),
-                        url=talk_data.get("url", ""),
-                        talk_code=talk_code,
-                        resources=resources,
-                        room=room_name,
-                        date=date,
-                        day_name=day_name,
-                        track=talk_data.get("track", ""),
-                    )
-                )
-
-    return talks
+    return _extract_talks(schedule, filter_func, year, location)
 
 
 def list_talks(talks: list[TalkMetadata]) -> None:
