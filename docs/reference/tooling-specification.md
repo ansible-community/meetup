@@ -444,8 +444,8 @@ The separate `meetup-pretix-discourse-auth` plugin owns SSO signature, nonce, ra
 ### Attack and Misconfiguration Model
 
 - A Pretix lookup returning an error or unknown status is never treated as proof that an event does not exist; the operation stops with `ApiError`.
-- A city slug must match `^[a-z]+$` and be registered in `CITIES`. The same slug and canonical Pretix team name must be added to the auth repo's `CITY_TEAM_NAME_BY_SLUG`; deploy both repos before provisioning or event creation.
-- The auth plugin accepts only exact `^meetup-organisers-([a-z]+)$` Forum group claims for city access. Staff privileges come only from Pretix's `Ansible Meetup Staff` team or Pretix-managed `is_staff`; Forum claims cannot grant them. Organizer, staff-team, and Pretix staff accounts require a signed `confirmed_2fa=true` assertion. Every claimed organiser group must resolve to a unique Pretix team or that organizer login is denied.
+- A city slug must match `^[a-z]+$`, be registered in `CITIES`, and equal its Pretix team display-name suffix normalized with Unicode NFKD, retaining only ASCII letters and lowercasing (`New York` → `newyork`, `São Paulo` → `saopaulo`). Update and deploy this tooling registry before provisioning or event creation. The auth plugin is city agnostic and resolves existing city teams dynamically; adding a city requires no edits or release in `pretix-discourse-auth`.
+- The auth plugin accepts only exact `^meetup-organisers-([a-z]+)$` Forum group claims for city access. Staff privileges come only from Pretix's `Ansible Meetup Staff` team or Pretix-managed `is_staff`; Forum claims cannot grant them. Organizer, staff-team, and Pretix staff accounts require a signed `confirmed_2fa=true` assertion. Every claimed organiser group must resolve to a unique Pretix team or that organizer login is denied; missing teams, duplicate teams, and normalization collisions fail closed.
 - The auth callback limits requests to 10 weighted attempts per client IP per 60 seconds; signature and nonce failures count twice. Rate-limit state uses the shared Pretix cache and fails closed if the cache is unavailable.
 - Discourse groups are reconciled by name on every provisioning run. Organiser groups are hidden (level 4), have staff-only member lists (level 3), and are managed by Forum admins; attendee groups and their member lists are staff-only (level 3). Organiser group permissions and moderator assignments are removed from every category except that group's own city subcategory. City Pretix teams are reconciled to the exact canonical event slug pattern; the Pretix-only staff team retains access to all events and is never populated by Forum claims. Provisioning errors are fatal.
 - Non-local `PRETIX_URL` values must use HTTPS so API tokens are not sent over cleartext HTTP.
@@ -636,7 +636,7 @@ The `teams` list endpoint is paginated via `pretix_list_all`. Other list endpoin
 
 ### Hardcoded Cities Registry
 
-The `CITIES` tuple is defined in source code. Adding a new city requires a code change in this repo and a matching `CITY_TEAM_NAME_BY_SLUG` entry in the auth repo, followed by deployment of both. There is no database, config file, or API for dynamic city management.
+The `CITIES` tuple is defined in source code. Adding a new city requires a code change and deployment in this repo, followed by provisioning of its Forum group and Pretix team. The auth plugin resolves city teams dynamically and requires no city-specific code change or release. There is no database, config file, or API for dynamic city management.
 
 ### Social Media Output
 

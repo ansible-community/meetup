@@ -127,7 +127,7 @@ If `external_id` or `email` is missing/empty, reject.
 #### Step 6: Group parsing
 - Ignore all group claims except names fully matching `^meetup-organisers-([a-z]+)$`; malformed names using the organiser prefix reject the callback.
 - The city slug must contain lowercase ASCII letters only; hyphens, spaces, and numbers are not accepted.
-- Resolve the slug through the explicit `CITY_TEAM_NAME_BY_SLUG` mapping and require exactly one team with that canonical display name; do not infer names with title casing or normalization.
+- Resolve the slug dynamically against existing city teams named `Ansible Meetup Organisers - {city}` within the configured Pretix organizer. The prefix must match exactly. Normalize the display-name suffix with Unicode NFKD, discard every character except ASCII letters, then lowercase; the result must equal the claimed slug. For example, `New York` resolves to `newyork` and `São Paulo` to `saopaulo`. Require exactly one match, including across normalization collisions; missing or ambiguous teams reject the callback before user provisioning.
 - A user is privileged when they have a valid exact city claim, already belong to a city organiser team or `Ansible Meetup Staff`, or already have Pretix-owned `is_staff=true`. The Forum cannot grant staff-team membership or alter the Pretix staff flag.
 
 #### Step 7: Positive 2FA assertion
@@ -206,9 +206,9 @@ Team.objects.filter(organizer=ORGANIZER, name__in=expected_team_names)
 ```
 
 **Add to teams:**
-- For each regex-captured city slug, resolve the exact canonical team name from `CITY_TEAM_NAME_BY_SLUG` and require exactly one team with that name.
+- For each regex-captured city slug, dynamically resolve exactly one matching city team from the existing `Ansible Meetup Organisers - {city}` teams within the configured organizer. Missing or ambiguous matches reject login.
 - Reject the organizer login before user provisioning if the organizer setting is missing/invalid or any group has no unique Pretix team.
-- Query pretix for teams matching those exact names **within the configured organizer**.
+- Query Pretix for resolved team identities **within the configured organizer**.
 - Add the user to each found team (idempotent — `team.members` is a simple M2M; `add()` is safe to call repeatedly).
 - A missing claimed team rejects login before user provisioning; no partial city access is granted.
 
@@ -348,7 +348,7 @@ api_username = system
 organizer = ansible-meetups
 ```
 
-Group policy is fixed in code: only exact `^meetup-organisers-([a-z]+)$` claims present in `CITY_TEAM_NAME_BY_SLUG` map to city teams. The active mapping currently contains `london` and `barcelona`; it duplicates the tooling repo's `CITIES` registry and is a release contract. Add every new city slug and exact canonical Pretix team name in both repositories before provisioning. The hardcoded Pretix-only team `Ansible Meetup Staff` is the other privileged class; its membership is never synchronized from Discourse. `require_2fa=true` is always sent and cannot be disabled.
+The auth plugin is city agnostic: exact `^meetup-organisers-([a-z]+)$` claims resolve dynamically to existing city Pretix teams within the configured organizer. There is no city allowlist or duplicated `CITIES` registry in the plugin. Adding a city requires updating the tooling registry and provisioning its Forum group and Pretix team; it does not require edits or a release in `pretix-discourse-auth`. Missing or ambiguous team matches reject organiser login before user provisioning. The hardcoded Pretix-only team `Ansible Meetup Staff` is the other privileged class; its membership is never synchronized from Discourse. `require_2fa=true` is always sent and cannot be disabled.
 
 ### 4.5 Data model
 
@@ -426,7 +426,7 @@ The rebuild must include:
 - Nonce: valid, missing from session, mismatched, already consumed (replay), expired (>10 min), and future-dated.
 - Payload decoding: valid, invalid base64, invalid UTF-8, missing fields, `failed=true`.
 - Group parsing: exact `meetup-organisers-london`, malformed suffixes, unrelated groups, mixed case, and automatic Discourse groups.
-- City/team mapping: lowercase slug resolves through the explicit constant to exactly one provisioned Pretix team; unknown, missing, or duplicate team rejects organizer login; no `.title()` derivation.
+- Dynamic city/team resolution: lowercase slug resolves to exactly one provisioned city team within the configured organizer, including a newly provisioned city absent from plugin source. The managed prefix must match exactly; normalize the display-name suffix with Unicode NFKD, retain only ASCII letters, then lowercase (`New York` → `newyork`, `São Paulo` → `saopaulo`). Missing teams, duplicate teams, or normalization collisions reject organizer login before user provisioning; no `.title()` derivation or city allowlist.
 - 2FA enforcement: exact positive `confirmed_2fa=true` for city organisers and existing Pretix staff-team members; missing/false claim rejected.
 - RTBF detection: email ending with `@anonymized.invalid`, normal email, edge cases.
 - Enrichment API: HTTP 200 with correct fields, 200 with missing fields, 401, 403, 500, timeout, invalid JSON.
@@ -546,7 +546,7 @@ When `get_or_create_for_backend` raises `EmailAddressTakenError`, the user is lo
 | Discourse outage blocks all pretix logins | Medium | High — no organizer can log in | Both the SSO flow and the enrichment API depend on Discourse. Document this dependency. Consider a break-glass local admin account. |
 | Discourse API key is rotated without updating pretix config | Medium | High — enrichment fails, all users fail-closed (R9) | Monitoring/alerting on enrichment API errors (R14 specifically). Document the key rotation procedure. |
 | SSO secret mismatch after rotation | Low | High — all logins fail with signature mismatch (R2) | Coordinate secret rotation procedure. Consider supporting dual secrets during rotation. |
-| Pretix team missing or duplicated for a claimed city | High | High — login is rejected before user provisioning | Provisioning creates/reconciles every registered city team. The auth plugin fails closed if an organizer claim has no unique mapped team. |
+| Pretix team missing or duplicated for a claimed city | High | High — login is rejected before user provisioning | Provisioning creates/reconciles every registered city team. The auth plugin fails closed if an organizer claim has no unique matching team. |
 | Config changes require process restart | Guaranteed | Low | Document clearly. |
 
 ### 7.2 Security risks
@@ -583,7 +583,7 @@ When the Discourse Admin API enrichment call fails for any reason (network error
 
 ### Q3: Team provisioning — DECIDED
 
-The tooling provisioning script creates and reconciles Forum groups, categories, city teams, and the Pretix-only `Ansible Meetup Staff` team. For a new city, operators must update both the tooling repo's explicit `CITIES` record and this repo's `CITY_TEAM_NAME_BY_SLUG` mapping, deploy both, then run provisioning. The script owns team permissions and event scope; Pretix admins alone manage staff-team members. The auth plugin rejects organizer claims unless the corresponding city team exists under the configured Pretix organizer. Attendee logins do not require a city team.
+The tooling provisioning script creates and reconciles Forum groups, categories, city teams, and the Pretix-only `Ansible Meetup Staff` team. For a new city, operators update the tooling repo's explicit `CITIES` record, deploy that change, then run provisioning. The auth plugin resolves city teams dynamically and requires no city-specific edits or release. The script owns team permissions and event scope; Pretix admins alone manage staff-team members. The auth plugin rejects organizer claims unless the corresponding city team exists under the configured Pretix organizer. Attendee logins do not require a city team.
 
 ---
 

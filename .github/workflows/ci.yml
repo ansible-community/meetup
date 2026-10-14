@@ -34,6 +34,6 @@ jobs:
       - name: Check formatting
         run: uv run ruff format --check tools/common tools/events tools/environment tools/attendees tools/meetup_pro tests
       - name: Type check
-        run: uv run pyright tools/common/ansible_events_lib.py tools/environment/provision_environment.py
+        run: uv run pyright --verbose tools/
       - name: Build documentation
         run: uv run mkdocs build --strict

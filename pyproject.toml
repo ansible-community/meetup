@@ -41,3 +41,7 @@ testpaths = ["tests"]
 [tool.pyright]
 pythonVersion = "3.13"
 typeCheckingMode = "standard"
+include = ["tools"]
+exclude = ["tools/cfgmgmtcamp"]
+venvPath = "."
+venv = ".venv"
