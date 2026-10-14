@@ -4,7 +4,10 @@ The Ansible Community Meetup documentation is maintained in the open in [ansible
 
 ## Make a documentation change
 
-1. Open an issue or discussion if the change needs coordination, especially when it changes Meetup policy or shared service behavior.
+1. [Report documentation feedback](https://github.com/ansible-community/meetup/issues/new/choose)
+   if a guide is unclear, outdated, or missing. Open a discussion when the
+   change needs coordination, especially when it changes Meetup policy or
+   shared service behavior.
 2. Edit the relevant Markdown page. Prefer improving the existing guide over adding a second page that covers the same task.
 3. Preview locally from the repository root:
 
