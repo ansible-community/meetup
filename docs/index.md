@@ -1,22 +1,15 @@
-# Meetup Organizers' Toolkit
+# Ansible Meetups
 
-This document guides you through the process of organizing an Ansible Meetup and includes a curated list of resources to help the meetup organizers plan and execute Ansible meetups.
+Ansible Meetups are community events for learning, sharing practical experience, and meeting people interested in Ansible. The Ansible Community Forum is the home for event information and discussion. Pretix handles registration.
 
+Choose the guide for what you want to do:
 
-## Milestones
+- **Attending?** [Find an event and RSVP](attendees/find-and-rsvp.md), then [join the discussion and follow up](attendees/participate-and-follow-up.md).
+- **Organising?** Learn [what the role involves](organisers/role.md), then follow the guides to [set up](organisers/setup-a-meetup.md), [promote](organisers/promote-a-meetup.md), run [event day](organisers/event-day.md), and [follow up](organisers/after-the-meetup.md).
+- **Ansible Community Team?** Start with [team responsibilities](community-team/index.md), [provisioning](community-team/provisioning.md), [adding a city](community-team/adding-a-city.md), and [creating an event](community-team/creating-an-event.md).
 
-This section leads you step by step on how to plan and run an Ansible Meetup:
+Read the [Meetup strategy](ansible_meetup_strategy.md) for the purpose and shared expectations. The [glossary](glossary.md) explains common terms. Technical details live in the [tooling specification](reference/tooling-specification.md) and [Pretix–Discourse authentication specification](reference/pretix-discourse-auth-specification.md).
 
-1. [Gain awareness of Ansible meetups](./milestones/gain_awareness_of_ansible_meetups.md)
-2. [Start planning](./milestones/start_planning.md)
-3. [During the Event](./milestones/during_the_event.md)
-4. [Post Event Activities](./milestones/post_event_activities.md)
+> **How the services fit together:** The Forum event topic is the canonical event information page. It links to Pretix for RSVP; Pretix links back to the Forum topic. Event details do not synchronize between them. The production registration service is [rsvp.ansible.com](https://rsvp.ansible.com).
 
-## Resources
-
-The Resource section contains some example emails, social media posts, and other important links to help you set up your communications for planning and executing the meetup.
-
-## Contributors
-
-We would love to have contributions from you.
-If you want to contribute, see our [Contributor Guide](contributing/contributing.md).
+The temporary [Meetup Pro migration guides](legacy/meetup_pro/member-migration.md) are kept separate from current attendee and organiser instructions.
