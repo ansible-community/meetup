@@ -15,4 +15,4 @@ Organisers make local Ansible community activity sustainable, inclusive, and use
 
 Events must follow the [Ansible Community Code of Conduct](https://docs.ansible.com/projects/ansible/devel/community/code_of_conduct.html), be welcoming and accessible, and remain free to attend. Sponsorship supports event costs; it does not buy a speaking slot or access to attendee data. Contact the Ansible Community Team before making sponsorship commitments.
 
-The Community Team creates city spaces and event registrations, manages organiser access, and provides operational support. Organisers maintain the event's Forum topic and deliver the local event.
+The Community Team creates city spaces and event registrations, manages organiser access, and provides operational support. For a new city, they update and provision the tooling registry; the city agnostic Pretix auth plugin needs no city-specific edit or release. Organisers maintain the event's Forum topic and deliver the local event.

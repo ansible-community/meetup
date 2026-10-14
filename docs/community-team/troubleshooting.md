@@ -13,6 +13,7 @@ Start by identifying which part is failing: Forum content or permissions, Pretix
 - Verify the Pretix event is public, free, and has available capacity.
 - Check the Forum-to-Pretix RSVP link and the Pretix-to-Forum backlink independently.
 - Confirm the auth plugin configuration and authentication requirements in its [specification](../reference/pretix-discourse-auth-specification.md).
+- For an organiser login failure, verify the `meetup-organisers-{city}` claim resolves to exactly one city team under the configured Pretix organizer. Missing or ambiguous teams deny login; reconcile provisioning and naming. Adding a city does not require an auth plugin edit or release.
 
 ## Provisioning failure
 
