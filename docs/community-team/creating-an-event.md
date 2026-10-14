@@ -9,7 +9,13 @@ Ask the organiser for the city, title, date, start/end time and time zone, forma
 ## Create and review
 
 1. Confirm that the city has been [provisioned](adding-a-city.md) and the organiser has access.
-2. Run the event creation command documented in the [tooling specification](../reference/tooling-specification.md), using the production Pretix URL `https://rsvp.ansible.com` when creating a production event.
+2. Configure `PRETIX_URL=https://rsvp.ansible.com` for production, then run the event creation module from the repository root. Replace the example values with the approved event details:
+
+   ```console
+   uv run python -m tools.events.create_event --city london --date 2026-10-31T18:00:00 --capacity 100 --organiser FORUM_USERNAME
+   ```
+
+   See the [tooling specification](../reference/tooling-specification.md) for all options and validation rules.
 3. Review the created Forum topic, event widget, Pretix registration page, and backlink.
 4. Check that the Forum topic's RSVP link opens the matching Pretix event and that the Pretix event links back to the topic.
 5. Give the organiser the Forum topic URL and appropriate dashboard access; ask them to complete the topic and verify public-facing details before promotion.

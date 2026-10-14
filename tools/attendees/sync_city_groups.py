@@ -226,7 +226,7 @@ def reconcile(*, apply: bool, prune: bool) -> int:
 def main() -> None:
     """Parse CLI options and reconcile attendee group membership."""
     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-    pre_flight_checks(require_discourse=True)
+    pre_flight_checks(require_discourse=True, require_pretix=False)
 
     parser = argparse.ArgumentParser(description="Reconcile meetup-attendee-* groups from user_event_cities field")
     mode = parser.add_mutually_exclusive_group(required=True)

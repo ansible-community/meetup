@@ -30,7 +30,7 @@ The system is operated by the Ansible Community Team via CLI scripts. Local orga
 | **Pretix** | Event ticketing, RSVP, QR codes, check-in | REST API v1 (`/api/v1/`) | Token-based (`Authorization: Token {token}`) |
 | **Discourse** | Identity (SSO), forum, group permissions, event content | REST API (`/posts.json`, `/admin/groups.json`, etc.) | Global API key (`Api-Key` + `Api-Username` headers) |
 
-All outbound API requests use configured Requests clients with the `Ansible-pretix-discourse-auth/0.1.0 (+https://github.com/ansible-community/meetup-pretix-discourse-auth)` User-Agent. Pretix and Discourse requests use a 10-second timeout. Meetup Pro token requests use 10 seconds and GraphQL requests use 30 seconds, with a 60-second wait before retrying a rate-limited request. Redirects are disabled so credentials are not forwarded to another URL.
+The Forum/Pretix tools use reusable Requests clients with shared base URLs, headers, and 10-second timeouts. Redirects are disabled so credentials are not forwarded to another URL. Meetup Pro OAuth uses a separate 10-second client; Meetup GraphQL uses a 30-second client. Discourse retries HTTP 429 responses up to three times (four attempts total), honoring `Retry-After` or Discourse wait metadata and otherwise using exponential backoff. Meetup GraphQL waits 60 seconds after HTTP 429 and retries indefinitely until the response is no longer 429. Other non-200 Meetup GraphQL responses are logged and returned as an empty object without retrying.
 
 ### Trust Model
 
@@ -47,15 +47,28 @@ All outbound API requests use configured Requests clients with the `Ansible-pret
 | **Local Organizer** | Scoped: view attendees + check in for their city only | Discourse SSO → Pretix dashboard (mapped via `meetup-organisers-{city}` group → Pretix Team) |
 | **Attendee** | RSVP only: register for events, receive QR code | Discourse SSO → Pretix checkout |
 
-### Environment Variables
+### Configuration: environment variables and constants
 
-| Variable | Required By | Default | Purpose |
+The Forum/Pretix tools read these environment variables in `tools/common/ansible_events_lib.py`; the event, provisioning, and attendee scripts import that shared configuration:
+
+| Variable | Required | Default | Used for |
 |---|---|---|---|
-| `PRETIX_URL` | All scripts | `http://localhost:8000` | HTTPS required except localhost/loopback development URLs. Production: `https://rsvp.ansible.com`. |
-| `PRETIX_API_TOKEN` | All scripts | *(none — required)* | Pretix API authentication |
-| `DISCOURSE_URL` | All scripts | `https://forum.ansible.com` | Discourse instance base URL |
-| `DISCOURSE_API_KEY` | All scripts | *(none — required)* | Discourse API authentication |
-| `DISCOURSE_API_USER` | All scripts | `system` | Default Discourse API username |
+| `PRETIX_URL` | No | `http://localhost:8000` | Pretix base URL. Non-local URLs must use HTTPS. Production: `https://rsvp.ansible.com`. |
+| `PRETIX_API_TOKEN` | Yes | None | Pretix API authentication. |
+| `DISCOURSE_API_KEY` | For Forum operations | None | Discourse API authentication. |
+
+`tools/attendees/sync_city_groups` requires only the Forum key; it does not call Pretix. `DISCOURSE_URL=https://forum.ansible.com`, `DISCOURSE_API_USER=system`, the API timeout, and the User-Agent are constants in the shared library, not environment variables.
+
+The Meetup Pro export tools use a separate set of credentials, required only by `tools/meetup_pro/meetup_list_groups` and `tools/meetup_pro/meetup_list_organisers`:
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `MEETUP_CLIENT_KEY` | Yes | OAuth client key. |
+| `MEETUP_SIGNING_KEY_ID` | Yes | Key identifier used in the signed OAuth assertion. |
+| `MEETUP_MEMBER_ID` | Yes | Meetup member ID used as the assertion subject. |
+| `MEETUP_PRIVATE_KEY` | Yes | Path to the private key file used to sign the OAuth assertion. |
+
+Do not put credentials or private keys in source control, documentation, terminal transcripts, or exported reports.
 
 ---
 
@@ -154,11 +167,17 @@ A hidden Pretix event (`ansible-meetup-template-v6`) that is never published. Al
 
 ## 4. Core Workflows
 
-### 4.1 Environment Reconciliation (`provision_environment.py`)
+### 4.1 Environment Reconciliation (`tools.environment.provision_environment`)
 
 **Purpose:** Reconcile Pretix and Discourse resources to desired state. Resources are resolved by stable name, created if absent, and updated when security-relevant settings drift.
 
-**Prerequisites:** `PRETIX_API_TOKEN` and `DISCOURSE_API_KEY` environment variables set. Discourse's `enable_category_group_moderation` setting must be enabled; provisioning fails before making changes if it is disabled or cannot be read.
+**Prerequisites:** Set `PRETIX_API_TOKEN` and `DISCOURSE_API_KEY`. Discourse's `enable_category_group_moderation` setting must be enabled; provisioning fails before making changes if it is disabled or cannot be read.
+
+Run it from the repository root after configuring the environment:
+
+```console
+uv run python -m tools.environment.provision_environment
+```
 
 Provisioning runs in this order. It performs pre-flight checks and validates the full meetup-named Discourse group inventory before making changes, then completes the Pretix setup before reconciling Discourse groups and categories.
 
@@ -211,9 +230,15 @@ Provisioning runs in this order. It performs pre-flight checks and validates the
 
 12. For each city in the `CITIES` registry, reconcile its regional subcategory by parent and name. Set `everyone` to `create_post` (level 2: view and reply, but no new topics), and grant `full` (level 1) only to that city's organiser group. Do not grant category permissions to attendee groups; they are used for notifications. Set `moderating_group_ids` to that city's organiser group. Then remove registered organiser permissions and moderator assignments from every other category, considering only meetup-named groups. Set each organiser group's default notification level to Tracking for its own subcategory and apply that default to existing group members. Add missing city options to the Discourse user field.
 
-### 4.2 Event Creation (`create_event.py`)
+### 4.2 Event Creation (`tools.events.create_event`)
 
 **Purpose:** Provision a complete meetup: Discourse topic + Pretix event + social media copy. City input must be a registered lowercase ASCII slug.
+
+Run it from the repository root. The command below is an example; choose a registered city, local date/time, capacity, and Forum username for the event:
+
+```console
+uv run python -m tools.events.create_event --city london --date 2026-10-31T18:00:00 --capacity 100 --organiser FORUM_USERNAME
+```
 
 **CLI Arguments:**
 
@@ -511,7 +536,7 @@ X and Bluesky include a fallback mechanism: if the primary text exceeds the char
 ### HTTP
 
 - **Timeout:** 10 seconds on all Pretix/Discourse API calls and urllib calls. Meetup Pro OAuth uses 10 seconds; GraphQL uses 30 seconds.
-- **Rate-limit retries:** Discourse requests retry HTTP 429 up to three times using `Retry-After`, Discourse wait metadata, or exponential backoff. Meetup GraphQL requests wait 60 seconds and retry on HTTP 429. Other failures are not retried and API wrapper errors stop the CLI.
+- **Rate-limit retries:** Discourse requests allow at most three retries after the initial request (four attempts total) for HTTP 429, using `Retry-After`, Discourse wait metadata, or exponential backoff. Meetup GraphQL requests wait 60 seconds and retry indefinitely while HTTP 429 continues. Pretix and Discourse wrapper errors stop the CLI; Meetup GraphQL logs other non-200 responses and returns an empty object without retrying.
 - **Connection pooling:** Reusable `requests.Session` clients pool connections across API requests.
 
 ### Logging
@@ -532,17 +557,16 @@ X and Bluesky include a fallback mechanism: if the primary text exceeds the char
 
 ### Code Quality
 
-- **Formatter:** ruff format (line-length 120).
-- **Linter:** ruff check with rules: `E`, `F`, `B`, `S`, `T20`, `DTZ`, `UP`, `SIM`.
-- **Import ordering:** isort with `--profile black`.
-- **Per-file ignores:**
-  - `create_event.py`: `T201` (print), `E501` (line length for social copy)
+- **Formatter:** `ruff format` (line-length 120).
+- **Linter:** `ruff check` with rules `E`, `F`, `B`, `S`, `T20`, `DTZ`, `UP`, `SIM`, and `G`.
+- **Per-file ignores:** test assertions (`S101`); event social-copy output and long lines (`T201`, `E501`); the Meetup Pro credential example (`S105`); and long organiser export output (`E501`).
+- **Import ordering:** CI does not run a separate isort check.
 
 ### Testing
 
 - **Framework:** pytest with `testpaths = ["tests"]`.
 - **Organization:** Class-based (`Test<Feature>`), methods named `test_<verb>_<condition>`.
-- **Coverage areas (43+ tests):**
+- **Coverage areas (66 test methods):**
   - `CityInfo.slug`: lowercase, spaces→hyphens, multiple spaces, empty, leading/trailing, tabs, unicode.
   - `CityInfo.field_value`: standard, multi-word, case preservation.
   - `CityInfo` frozen: immutability enforcement.
@@ -554,14 +578,18 @@ X and Bluesky include a fallback mechanism: if the primary text exceeds the char
 
 ### Dependencies
 
-- **Runtime:** `requests>=2.32`.
-- **Documentation:** Python functions and methods include Google-style docstrings; parameters and return values are documented when useful.
-- **Dev:** `pytest>=8`, `pytest-cov>=6`, `ruff>=0.11`, `isort>=6`, `pyright>=1.1`.
-- **Build:** Hatchling.
-- **Package manager:** uv (with `uv.lock` committed).
+- **Runtime:** `requests>=2.32` and `PyJWT>=2.10` (used by the temporary Meetup Pro OAuth exporters).
+- **Development group:** `pyright>=1.1`, `pytest>=8`, `ruff>=0.11`, and `types-requests>=2.32`.
+- **Documentation group:** `mkdocs>=1.6` and `mkdocs-ansible>=0.1`.
+- **Package manager and lock:** uv with `uv.lock`; `tool.uv.package = false`, so this tools-and-docs repository is not built as an installable Python package.
 - **Python:** `>=3.13`.
-- **CLI layout:** Runnable project commands live under `scripts/`; there is no top-level scaffold entry point.
+- **CLI layout:** Active tools are Python modules under `tools/common/`, `tools/events/`, `tools/environment/`, `tools/attendees/`, and `tools/meetup_pro/`. The existing `tools/cfgmgmtcamp/` utility is separate from the Meetup tool workflows.
+- **Docstrings:** Python functions and methods should use Google-style docstrings where appropriate; CI does not run a docstring-specific checker.
 - **Discourse theme component:** Event JSON-LD source and metadata are maintained in this repository at `discourse-theme/event-jsonld/`.
+
+### Continuous integration
+
+GitHub Actions uses `astral-sh/setup-uv@v5` to select Python 3.13, then runs `uv sync --locked --all-groups`. On pull requests and pushes to `main` or `master`, it runs `pytest`, Ruff lint and format checks on the Meetup tool modules and tests, Pyright on `tools/common/ansible_events_lib.py` and `tools/environment/provision_environment.py`, and `mkdocs build --strict`. CI does not build a Python wheel and does not include `tools/cfgmgmtcamp/` in its Python checks.
 
 ---
 
@@ -582,26 +610,15 @@ The Pretix checkout flow for authenticated attendees is:
 - Edits are stored ONLY in Pretix. The Discourse profile is NEVER modified.
 - Uses `name_scheme: "full"` — single text field, not given/family split.
 
-**Settings enforced on template (all cloned events inherit):**
-
-| Setting | Value | Effect |
-|---|---|---|
-| `max_items_per_order` | `1` | Prevents bulk RSVP |
-| `invoice_address_asked` | `false` | No billing address form |
-| `attendee_names_asked` | `true` | Name field visible at checkout |
-| `attendee_names_required` | `true` | Name is mandatory |
-| `attendee_emails_asked` | `false` | Email from SSO, not asked again |
-| `name_scheme` | `"full"` | Single name field |
-| `order_email_asked_twice` | `false` | No "confirm email" step |
-| `payment_term_last` | `null` | No payment deadline |
+**The checkout settings are enforced on the template and inherited by cloned events; see the master template table in Section 3.3. The event creation workflow also adjusts the event quota to the requested capacity.**
 
 ---
 
 ## 11. Implicit Assumptions & Shortcuts
 
-### No Retry or Backoff Logic
+### Retry boundaries
 
-All API calls are fire-once. If a request fails due to a transient network error or rate limit, the operation fails. There is no exponential backoff, circuit breaker, or retry queue.
+Pretix requests and non-429 Forum/Meetup failures are not retried. Forum API requests retry HTTP 429 at most three times after the initial attempt; if rate limiting persists, the command fails. Meetup GraphQL waits 60 seconds and retries HTTP 429 indefinitely; other non-200 responses are logged and produce an empty object. There is no general retry queue or circuit breaker.
 
 ### Recovery after Partial Failure
 
@@ -625,10 +642,6 @@ The `CITIES` tuple is defined in source code. Adding a new city requires a code 
 
 Social media copy is printed to stdout. There is no file output, clipboard integration, or API posting. The operator manually copies and pastes into each platform.
 
-### Continuous Integration
-
-GitHub Actions runs the behavior tests and package build on Python 3.13 and 3.14. Static analysis runs Ruff lint and formatting checks on `scripts/` and `tests/`, plus Pyright on Python 3.13. The `setup-uv` action selects the Python runtime for each job.
-
 ### Event Duration Fixed at 3 Hours
 
 `create_event.py` hardcodes `end_dt = dt + timedelta(hours=3)`. There is no CLI argument for event duration.
@@ -647,7 +660,7 @@ The script attempts compensating cleanup if Pretix event creation fails. If the 
 
 ### Q2: Scale & Pagination
 
-**How many cities will this system support at maturity?** Teams listing is now paginated via `pretix_list_all`. Other list endpoints (`items`, `quotas`, `event_meta_properties`) still assume <50 results per page. If 50+ cities: consider async/concurrent provisioning in day0.
+**How many cities will this system support at maturity?** The current implementation performs sequential reconciliation. See “Partial Pagination” above for list-endpoint limits to consider as the city count grows.
 
 ### Q3: Cities Registry Storage
 

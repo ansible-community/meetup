@@ -91,16 +91,25 @@ RTBF_EMAIL_SUFFIX = "@anonymized.invalid"
 class ApiClient:
     """Reusable Requests session with shared API URL, headers, and timeout."""
 
-    def __init__(self, base_url: str, headers: dict[str, str | None], timeout: int) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        headers: dict[str, str | None],
+        timeout: int,
+        *,
+        append_trailing_slash: bool = True,
+    ) -> None:
         """Initialize a reusable API session.
 
         Args:
             base_url: Root URL used to resolve relative endpoint paths.
             headers: Default headers; entries with `None` values are omitted.
             timeout: Request timeout in seconds.
+            append_trailing_slash: Whether to ensure relative endpoint paths end in `/`.
         """
         self.base_url = base_url.rstrip("/") + "/"
         self.timeout = timeout
+        self.append_trailing_slash = append_trailing_slash
         self.session = requests.Session()
         self.session.headers.update({key: value for key, value in headers.items() if value is not None})
         self.session.headers["User-Agent"] = HTTP_USER_AGENT
@@ -120,7 +129,9 @@ class ApiClient:
             url = endpoint
         else:
             path, separator, query = endpoint.partition("?")
-            path = path.rstrip("/") + "/"
+            path = path.rstrip("/")
+            if self.append_trailing_slash and path:
+                path += "/"
             url = urljoin(self.base_url, path.lstrip("/"))
             if separator:
                 url = f"{url}?{query}"
@@ -133,6 +144,7 @@ PRETIX_CLIENT = ApiClient(
     f"{PRETIX_URL}/api/v1/organizers/{ORGANIZER_SLUG}/",
     {"Authorization": f"Token {PRETIX_API_TOKEN}" if PRETIX_API_TOKEN else None, "Content-Type": "application/json"},
     API_REQUEST_TIMEOUT_SECONDS,
+    append_trailing_slash=True,
 )
 DISCOURSE_CLIENT = ApiClient(
     DISCOURSE_URL,
@@ -143,6 +155,7 @@ DISCOURSE_CLIENT = ApiClient(
         "Accept": "application/json",
     },
     API_REQUEST_TIMEOUT_SECONDS,
+    append_trailing_slash=False,
 )
 
 
@@ -272,22 +285,25 @@ def discourse_city_category_id(city_name: str) -> int:
     return matches[0]["id"]
 
 
-def pre_flight_checks(*, require_discourse: bool = True) -> None:
+def pre_flight_checks(*, require_discourse: bool = True, require_pretix: bool = True) -> None:
     """Validate required API environment variables are set.
 
     Args:
         require_discourse: When False, skip the DISCOURSE_API_KEY check
             (for scripts that only use Pretix).
+        require_pretix: When False, skip the Pretix token and URL checks
+            (for scripts that only use Discourse).
     """
     missing = []
-    if not PRETIX_API_TOKEN:
+    if require_pretix and not PRETIX_API_TOKEN:
         missing.append("PRETIX_API_TOKEN")
     if require_discourse and not DISCOURSE_API_KEY:
         missing.append("DISCOURSE_API_KEY")
-    parsed = urlparse(PRETIX_URL)
-    if parsed.scheme != "https" and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
-        logger.error("PRETIX_URL must use HTTPS outside localhost/loopback")
-        missing.append("secure PRETIX_URL")
+    if require_pretix:
+        parsed = urlparse(PRETIX_URL)
+        if parsed.scheme != "https" and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
+            logger.error("PRETIX_URL must use HTTPS outside localhost/loopback")
+            missing.append("secure PRETIX_URL")
     if missing:
         logger.error("Missing required environment variables: %s", ", ".join(missing))
         sys.exit(1)

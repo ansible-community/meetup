@@ -180,6 +180,36 @@ class TestDiscourseReqUrlBuilding:
         url = self._build_url("admin/groups.json")
         assert url.endswith("/admin/groups.json")
 
+    def test_json_endpoint_has_no_trailing_slash(self, monkeypatch):
+        from tools.common import ansible_events_lib
+
+        client = ansible_events_lib.ApiClient("https://forum.example", {}, timeout=7, append_trailing_slash=False)
+        request = Mock(return_value=Mock(status_code=200))
+        monkeypatch.setattr(client.session, "request", request)
+
+        client.request("POST", "posts.json")
+
+        assert request.call_args.args == ("POST", "https://forum.example/posts.json")
+
+    def test_client_can_preserve_trailing_slash_for_pretix(self, monkeypatch):
+        from tools.common import ansible_events_lib
+
+        client = ansible_events_lib.ApiClient(
+            "https://pretix.example/api/v1/organizers/ansible-meetups/",
+            {},
+            timeout=7,
+            append_trailing_slash=True,
+        )
+        request = Mock(return_value=Mock(status_code=200))
+        monkeypatch.setattr(client.session, "request", request)
+
+        client.request("GET", "events")
+
+        assert request.call_args.args == (
+            "GET",
+            "https://pretix.example/api/v1/organizers/ansible-meetups/events/",
+        )
+
 
 class TestPreFlightChecks:
     @patch.dict("os.environ", {"PRETIX_API_TOKEN": "test", "DISCOURSE_API_KEY": "test"})
@@ -203,6 +233,13 @@ class TestPreFlightChecks:
 
         importlib.reload(ansible_events_lib)
         ansible_events_lib.pre_flight_checks(require_discourse=False)
+
+    @patch.dict("os.environ", {"DISCOURSE_API_KEY": "test"}, clear=True)
+    def test_passes_without_pretix_credentials_when_not_required(self) -> None:
+        from tools.common import ansible_events_lib
+
+        importlib.reload(ansible_events_lib)
+        ansible_events_lib.pre_flight_checks(require_pretix=False)
 
 
 class TestCityInfoDerivedProperties:
