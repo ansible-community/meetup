@@ -97,10 +97,9 @@ A frozen, slotted dataclass representing a meetup city.
 **Current Registry (immutable tuple):**
 
 `CITIES` is assembled from the Meetup Pro city groups and historic locations in
-[`tools/common/ansible_event_cities.py`](../../tools/common/ansible_event_cities.py).
-Country-level Meetup Pro groups are recorded separately and are not treated as
-event cities. The source file keeps each section sorted by region, country, and
-city.
+`tools/common/ansible_event_cities.py`. Country-level Meetup Pro groups are
+recorded separately and are not treated as event cities. The source file keeps
+each section sorted by region, country, and city.
 
 **Constraints:**
 - The registry is an immutable `tuple[CityInfo, ...]`. Slugs and display names must be unique.
