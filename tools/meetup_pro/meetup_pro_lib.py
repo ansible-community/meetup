@@ -72,8 +72,14 @@ class MeetupGraphQLClient:
             return self.graphql(query, variables)
         if resp.status_code != 200:
             logger.error("GraphQL request failed: HTTP %d", resp.status_code)
-            return {}
-        return resp.json()
+            raise RuntimeError(f"Meetup GraphQL request failed: HTTP {resp.status_code}")
+
+        result = resp.json()
+        errors = result.get("errors", [])
+        if errors:
+            messages = "; ".join(error.get("message", "Unknown GraphQL error") for error in errors)
+            raise RuntimeError(f"Meetup GraphQL query failed: {messages}")
+        return result
 
 
 def pre_flight_checks() -> None:

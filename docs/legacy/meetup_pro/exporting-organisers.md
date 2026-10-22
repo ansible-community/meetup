@@ -19,4 +19,6 @@ From the repository root, run the current module command:
 uv run python -m tools.meetup_pro.meetup_list_organisers
 ```
 
+The command writes `tmp/meetup-organisers.csv` by default. Pass `--output PATH` to choose another destination. The file is created with owner-only permissions.
+
 Verify export access and handling with the Community Team; reports may contain personal information. Manage current organiser permissions using [Managing organiser access](../../community-team/managing-organisers.md).
