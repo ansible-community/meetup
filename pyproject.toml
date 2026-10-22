@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Tools and documentation for Ansible Community Meetups"
 requires-python = ">=3.13"
 dependencies = [
-    "PyJWT>=2.10",
+    "PyJWT[crypto]>=2.10",
     "requests>=2.32",
 ]
 
