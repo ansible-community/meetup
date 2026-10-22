@@ -171,15 +171,15 @@ A hidden Pretix event (`ansible-meetup-template-v6`) that is never published. Al
 
 **Purpose:** Reconcile Pretix and Discourse resources to desired state. Resources are resolved by stable name, created if absent, and updated when security-relevant settings drift.
 
-**Prerequisites:** Set `PRETIX_API_TOKEN` and `DISCOURSE_API_KEY`. Discourse's `enable_category_group_moderation` setting must be enabled; provisioning fails before making changes if it is disabled or cannot be read.
+**Prerequisites:** Set the API credential for each selected phase: `PRETIX_API_TOKEN` for `--pretix` and `DISCOURSE_API_KEY` for `--forum`. Discourse's `enable_category_group_moderation` setting must be enabled for the Forum phase; provisioning fails before changing Forum resources if it is disabled or cannot be read.
 
 Run it from the repository root after configuring the environment:
 
 ```console
-uv run python -m tools.environment.provision_environment
+uv run python -m tools.environment.provision_environment --pretix --forum
 ```
 
-Provisioning runs in this order. It performs pre-flight checks and validates the full meetup-named Discourse group inventory before making changes, then completes the Pretix setup before reconciling Discourse groups and categories.
+Pass `--pretix`, `--forum`, or both to select the reconciliation phases. At least one is required; running without either prints the help text. When both are selected, provisioning completes Pretix setup before reconciling Discourse groups and categories. Each phase checks only its own API credentials, and the Forum phase validates the full meetup-named Discourse group inventory before making changes.
 
 **Phase 1: Pretix Global Settings**
 
