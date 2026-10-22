@@ -141,6 +141,7 @@ PREVIOUS_CITIES: tuple[CityInfo, ...] = (
     CityInfo("APAC", "India", "pune", "Pune", "Asia/Kolkata"),
     CityInfo("APAC", "Indonesia", "jakarta", "Jakarta", "Asia/Jakarta"),
     CityInfo("APAC", "Japan", "tokyo", "Tokyo", "Asia/Tokyo"),
+    CityInfo("APAC", "Saudi Arabia", "dhahran", "Dhahran", "Asia/Riyadh"),
     CityInfo("APAC", "South Korea", "seoul", "Seoul", "Asia/Seoul"),
     CityInfo("APAC", "Taiwan", "taipei", "Taipei", "Asia/Taipei"),
     CityInfo("APAC", "Thailand", "bangkok", "Bangkok", "Asia/Bangkok"),
@@ -170,9 +171,9 @@ PREVIOUS_CITIES: tuple[CityInfo, ...] = (
     CityInfo("EMEA", "Poland", "torun", "Toruń", "Europe/Warsaw"),
     CityInfo("EMEA", "Poland", "warsaw", "Warsaw", "Europe/Warsaw"),
     CityInfo("EMEA", "Portugal", "lisbon", "Lisbon", "Europe/Lisbon"),
+    CityInfo("EMEA", "Romania", "bucharest", "Bucharest", "Europe/Bucharest"),
     CityInfo("EMEA", "Russia", "moscow", "Moscow", "Europe/Moscow"),
     CityInfo("EMEA", "Russia", "saintpetersburg", "Saint Petersburg", "Europe/Moscow"),
-    CityInfo("EMEA", "Saudi Arabia", "dhahran", "Dhahran", "Asia/Riyadh"),
     CityInfo("EMEA", "South Africa", "johannesburg", "Johannesburg", "Africa/Johannesburg"),
     CityInfo("EMEA", "Switzerland", "geneva", "Geneva", "Europe/Zurich"),
     CityInfo("EMEA", "Switzerland", "zurich", "Zürich", "Europe/Zurich"),
@@ -199,7 +200,6 @@ PREVIOUS_CITIES: tuple[CityInfo, ...] = (
     CityInfo("NA", "USA", "dallas", "Dallas", "America/Chicago"),
     CityInfo("NA", "USA", "detroit", "Detroit", "America/Detroit"),
     CityInfo("NA", "USA", "fortworth", "Fort Worth", "America/Chicago"),
-    CityInfo("NA", "USA", "herndon", "Herndon", "America/New_York"),
     CityInfo("NA", "USA", "honolulu", "Honolulu", "Pacific/Honolulu"),
     CityInfo("NA", "USA", "houston", "Houston", "America/Chicago"),
     CityInfo("NA", "USA", "indianapolis", "Indianapolis", "America/Indiana/Indianapolis"),
@@ -209,6 +209,7 @@ PREVIOUS_CITIES: tuple[CityInfo, ...] = (
     CityInfo("NA", "USA", "melbournefl", "Melbourne, Florida", "America/New_York"),
     CityInfo("NA", "USA", "miami", "Miami", "America/New_York"),
     CityInfo("NA", "USA", "newyork", "New York", "America/New_York"),
+    CityInfo("NA", "USA", "nova", "NOVA", "America/New_York"),
     CityInfo("NA", "USA", "philadelphia", "Philadelphia", "America/New_York"),
     CityInfo("NA", "USA", "phoenix", "Phoenix", "America/Phoenix"),
     CityInfo("NA", "USA", "pittsburgh", "Pittsburgh", "America/New_York"),
@@ -216,35 +217,17 @@ PREVIOUS_CITIES: tuple[CityInfo, ...] = (
     CityInfo("NA", "USA", "richmond", "Richmond", "America/New_York"),
     CityInfo("NA", "USA", "saltlakecity", "Salt Lake City", "America/Denver"),
     CityInfo("NA", "USA", "sandiego", "San Diego", "America/Los_Angeles"),
-    CityInfo("NA", "USA", "sanfranciscobayarea", "San Francisco Bay Area", "America/Los_Angeles"),
     CityInfo("NA", "USA", "seattle", "Seattle", "America/Los_Angeles"),
+    CityInfo("NA", "USA", "sfbay", "SF Bay", "America/Los_Angeles"),
     CityInfo("NA", "USA", "tampa", "Tampa", "America/New_York"),
     CityInfo("NA", "USA", "washingtondc", "Washington DC", "America/New_York"),
 )
 
-# Comments for non-geolocatable event locations
-# =============================================
-# - "Romania" was a country-level listing with no city; Bucharest is not
-#   assumed to be its event location. The country-only entry is not registered.
-
 # Comments about typos and spelling
 # =================================
-# - The source says Boise, ID, Indonesia. Boise is in Idaho, USA; the country
-#   and region are corrected to USA and NA.
-# - The source assigns Brisbane, Australia to NA; it is listed under APAC.
-# - The source gives Indianapolis as "Indianapolis, IL"; its state is Indiana
-#   (IN), not Illinois. The registry stores country and city only.
 # - Accepted local spellings/diacritics are used for Brasília, Hà Nội, Kraków,
 #   Medellín, München, Montréal, São Paulo, Toruń, and Zürich. "Mexico City"
 #   uses the accepted English spelling.
-
-# Comments about location and timezone questions
-# ==============================================
-# - Several Meetup names identify metro areas (for example NOVA and SF Bay);
-#   the CSV's city field is used for current groups where available. The old
-#   NOVA location Herndon remains listed separately from the current McLean.
-# - Dhahran is assigned to APAC in the source; EMEA is used here for the
-#   regional field. Confirm this if the source's region taxonomy is intentional.
 
 CITIES: tuple[CityInfo, ...] = MEETUP_PRO_CITIES + PREVIOUS_CITIES
 
