@@ -15,7 +15,7 @@ Use this procedure when installing or reconciling the shared Forum and Pretix se
 3. Run the environment provisioner from the repository root:
 
    ```console
-   uv run python -m tools.environment.provision_environment
+   uv run python -m tools.environment.provision_environment --pretix --forum
    ```
 4. Review output and verify the Forum groups/categories and Pretix teams/template before creating events.
 5. Record and resolve any reported API errors; do not announce an event until the environment is reconciled.

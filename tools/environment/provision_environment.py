@@ -7,6 +7,7 @@ as new cities are added to the CITIES registry.
 
 from __future__ import annotations
 
+import argparse
 from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
@@ -948,14 +949,10 @@ def reconcile_discourse_environment(groups_by_name: dict[str, dict[str, Any]]) -
     ensure_user_field_options()
 
 
-def main() -> None:
-    """Reconcile the configured Pretix and Discourse environment."""
-    pre_flight_checks()
-
-    # Validate the complete meetup group inventory before making any changes.
-    groups_by_name = index_groups_by_name(list_discourse_groups())
-
-    logger.info("--- 1. PRETIX PROVISIONING ---")
+def reconcile_pretix() -> None:
+    """Reconcile Pretix global settings, teams, metadata, and template."""
+    pre_flight_checks(require_discourse=False, require_pretix=True)
+    logger.info("--- PRETIX PROVISIONING ---")
     reconcile_pretix_global_settings()
 
     logger.info("Reconciling Pretix teams and metadata...")
@@ -965,8 +962,31 @@ def main() -> None:
     logger.info("Reconciling Pretix template...")
     reconcile_pretix_template(all_events)
 
-    logger.info("--- 2. DISCOURSE PROVISIONING ---")
+
+def reconcile_forum() -> None:
+    """Reconcile Discourse groups and categories."""
+    pre_flight_checks(require_discourse=True, require_pretix=False)
+    # Validate the complete meetup group inventory before making any changes.
+    groups_by_name = index_groups_by_name(list_discourse_groups())
+    logger.info("--- FORUM PROVISIONING ---")
     reconcile_discourse_environment(groups_by_name)
+
+
+def main() -> None:
+    """Run the selected Pretix and/or Forum reconciliation phases."""
+    parser = argparse.ArgumentParser(description="Reconcile the meetup Pretix and Forum environment.")
+    parser.add_argument("--pretix", action="store_true", help="reconcile Pretix settings and event template")
+    parser.add_argument("--forum", action="store_true", help="reconcile Forum groups and categories")
+    args = parser.parse_args()
+
+    if not args.pretix and not args.forum:
+        parser.print_help()
+        raise SystemExit(2)
+
+    if args.pretix:
+        reconcile_pretix()
+    if args.forum:
+        reconcile_forum()
 
     logger.info("--- PROVISIONING COMPLETE ---")
 
