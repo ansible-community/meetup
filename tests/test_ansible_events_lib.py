@@ -129,6 +129,7 @@ class TestCitiesRegistry:
             "Peru",
             "Poland",
             "Portugal",
+            "Romania",
             "Russia",
             "Saudi Arabia",
             "Singapore",
@@ -162,17 +163,23 @@ class TestCitiesRegistry:
         assert {city.country for city in CITIES} == self.expected_countries
 
     @pytest.mark.parametrize(
-        ("slug", "country", "timezone"),
+        ("slug", "city_name", "region", "country", "timezone"),
         [
-            ("boise", "USA", "America/Boise"),
-            ("brisbane", "Australia", "Australia/Brisbane"),
+            ("boise", "Boise", "NA", "USA", "America/Boise"),
+            ("brisbane", "Brisbane", "APAC", "Australia", "Australia/Brisbane"),
+            ("bucharest", "Bucharest", "EMEA", "Romania", "Europe/Bucharest"),
+            ("dhahran", "Dhahran", "APAC", "Saudi Arabia", "Asia/Riyadh"),
+            ("nova", "NOVA", "NA", "USA", "America/New_York"),
+            ("sfbay", "SF Bay", "NA", "USA", "America/Los_Angeles"),
         ],
     )
     def test_corrected_locations_have_expected_country_and_timezone(
-        self, slug: str, country: str, timezone: str
+        self, slug: str, city_name: str, region: str, country: str, timezone: str
     ) -> None:
         city = get_city(slug)
         assert city is not None
+        assert city.city == city_name
+        assert city.region == region
         assert city.country == country
         assert city.timezone == timezone
 
