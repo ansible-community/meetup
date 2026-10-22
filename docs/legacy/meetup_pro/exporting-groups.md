@@ -19,4 +19,6 @@ From the repository root, run the current module command:
 uv run python -m tools.meetup_pro.meetup_list_groups
 ```
 
+The command writes `tmp/meetup-groups.csv` by default. Pass `--output PATH` to choose another destination. The file is created with owner-only permissions.
+
 Use the export only for the migration task, store it in the approved location, and limit access because it may contain personal information. For current community processes, start at [Ansible Meetups](../../index.md).

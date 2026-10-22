@@ -3,9 +3,10 @@
 
 from __future__ import annotations
 
+import argparse
 import csv
 import logging
-import sys
+from pathlib import Path
 from typing import Any
 
 from tools.meetup_pro.meetup_pro_lib import (
@@ -37,7 +38,7 @@ def fetch_all_groups(client: MeetupGraphQLClient) -> list[dict[str, Any]]:
           edges { node {
             id name urlname
             city country
-            memberships { count }
+            memberships { totalCount }
             timezone
           } }
         }
@@ -49,7 +50,12 @@ def fetch_all_groups(client: MeetupGraphQLClient) -> list[dict[str, Any]]:
 
     while True:
         data = client.graphql(query, {"urlname": PRO_NETWORK, "cursor": cursor})
-        search = data.get("data", {}).get("proNetwork", {}).get("groupsSearch", {})
+        network = data.get("data", {}).get("proNetwork")
+        if network is None:
+            raise RuntimeError(f"Meetup Pro Network '{PRO_NETWORK}' was not found or is not accessible")
+        search = network.get("groupsSearch")
+        if search is None:
+            raise RuntimeError("Meetup did not return a group search result")
 
         for edge in search.get("edges", []):
             node = edge.get("node", {})
@@ -60,22 +66,31 @@ def fetch_all_groups(client: MeetupGraphQLClient) -> list[dict[str, Any]]:
                     "urlname": node.get("urlname", ""),
                     "city": node.get("city", ""),
                     "country": node.get("country", ""),
-                    "members": node.get("memberships", {}).get("count", 0),
+                    "members": node.get("memberships", {}).get("totalCount", 0),
                     "timezone": node.get("timezone", ""),
                 }
             )
 
         page_info = search.get("pageInfo", {})
         if page_info.get("hasNextPage"):
-            cursor = page_info["endCursor"]
+            cursor = page_info.get("endCursor")
+            if not cursor:
+                raise RuntimeError("Meetup indicated another group page but returned no cursor")
         else:
             break
+
+    if not groups:
+        raise RuntimeError(f"No groups were returned for Pro Network '{PRO_NETWORK}'; check network access and name")
 
     return groups
 
 
 def main() -> None:
-    """Fetch Meetup Pro groups and write them as CSV to stdout."""
+    """Fetch Meetup Pro groups and write them as a private CSV file."""
+    parser = argparse.ArgumentParser(description="Export groups in the Ansible Meetup Pro network")
+    parser.add_argument("--output", type=Path, default=Path("tmp/meetup-groups.csv"), help="CSV output path")
+    args = parser.parse_args()
+
     pre_flight_checks()
 
     logger.info("Authenticating with Meetup API...")
@@ -85,10 +100,16 @@ def main() -> None:
     groups = fetch_all_groups(client)
     logger.info("Found %d groups", len(groups))
 
-    writer = csv.DictWriter(sys.stdout, fieldnames=["id", "name", "urlname", "city", "country", "members", "timezone"])
-    writer.writeheader()
-    for group in sorted(groups, key=lambda g: g["name"]):
-        writer.writerow(group)
+    args.output.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    with args.output.open("w", newline="", encoding="utf-8") as output_file:
+        args.output.chmod(0o600)
+        writer = csv.DictWriter(
+            output_file, fieldnames=["id", "name", "urlname", "city", "country", "members", "timezone"]
+        )
+        writer.writeheader()
+        for group in sorted(groups, key=lambda g: g["name"]):
+            writer.writerow(group)
+    logger.info("Wrote groups CSV to %s", args.output)
 
 
 if __name__ == "__main__":

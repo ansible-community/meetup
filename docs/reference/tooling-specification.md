@@ -578,7 +578,7 @@ X and Bluesky include a fallback mechanism: if the primary text exceeds the char
 
 ### Dependencies
 
-- **Runtime:** `requests>=2.32` and `PyJWT>=2.10` (used by the temporary Meetup Pro OAuth exporters).
+- **Runtime:** `requests>=2.32` and `PyJWT[crypto]>=2.10` (used by the temporary Meetup Pro OAuth exporters).
 - **Development group:** `pyright>=1.1`, `pytest>=8`, `ruff>=0.11`, and `types-requests>=2.32`.
 - **Documentation group:** `mkdocs>=1.6` and `mkdocs-ansible>=0.1`.
 - **Package manager and lock:** uv with `uv.lock`; `tool.uv.package = false`, so this tools-and-docs repository is not built as an installable Python package.
