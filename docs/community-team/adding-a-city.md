@@ -11,7 +11,7 @@ Adding a city establishes the Forum space, organiser access, and Pretix team use
 
 ## Procedure
 
-1. Add the city to the tooling's `CITIES` registry with its display name, matching normalized city slug, and time zone, following the [tooling specification](../reference/tooling-specification.md).
+1. Add the city to `tools/common/ansible_event_cities.py` with its display name, matching normalized city slug, and time zone, following the [tooling specification](../reference/tooling-specification.md).
 2. Review the diff, run the repository checks, and merge and deploy through the normal pull request workflow.
 3. [Provision the environment](provisioning.md) and verify the city category, `meetup-organisers-{city}` Forum group, and `Ansible Meetup Organisers - {city display name}` Pretix team. The auth plugin requires a unique matching city team under its configured Pretix organizer.
 4. Add the agreed organisers using [Managing organiser access](managing-organisers.md).
