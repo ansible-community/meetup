@@ -30,9 +30,9 @@ jobs:
       - name: Run tests
         run: uv run pytest
       - name: Lint
-        run: uv run ruff check tools/common tools/events tools/environment tools/attendees tools/meetup_pro tests
+        run: uv run ruff check tools/ tests/
       - name: Check formatting
-        run: uv run ruff format --check tools/common tools/events tools/environment tools/attendees tools/meetup_pro tests
+        run: uv run ruff format --check tools/ tests/
       - name: Type check
         run: uv run pyright --verbose tools/
       - name: Build documentation
