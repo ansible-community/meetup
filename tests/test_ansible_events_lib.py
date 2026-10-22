@@ -468,6 +468,66 @@ class MockResponse:
 
 
 class TestProvisioningPermissions:
+    def test_attendee_invites_reuse_matches_and_create_only_missing_city(self, monkeypatch):
+        from tools.environment import provision_environment
+
+        london = provision_environment.CITIES[0]
+        barcelona = provision_environment.CITIES[1]
+        requests = []
+
+        def request(method, endpoint, payload=None, *, run_as=None):
+            requests.append((method, endpoint, payload, run_as))
+            if method == "GET":
+                return {
+                    "invites": [
+                        {
+                            "description": f"Join Ansible {london.city}",
+                            "groups": [{"name": london.attendee_group}],
+                        },
+                        {
+                            "description": f"Join Ansible {barcelona.city}",
+                            "groups": [{"name": london.attendee_group}],
+                        },
+                    ]
+                }
+            return {"link": "https://forum.example/invites/barcelona"}
+
+        monkeypatch.setattr(provision_environment, "discourse_req", request)
+
+        provision_environment.reconcile_attendee_invites()
+
+        assert requests == [
+            ("GET", "u/gundalow/invited/pending.json", None, "gundalow"),
+            (
+                "POST",
+                "invites.json",
+                {
+                    "skip_email": True,
+                    "description": f"Join Ansible {barcelona.city}",
+                    "group_names": barcelona.attendee_group,
+                    "max_redemptions_allowed": 5_000,
+                    "expires_at": "2030-01-01",
+                },
+                "gundalow",
+            ),
+        ]
+
+    def test_attendee_invites_fail_on_malformed_pending_response_before_creation(self, monkeypatch):
+        from tools.environment import provision_environment
+
+        requests = []
+
+        def request(method, endpoint, payload=None, *, run_as=None):
+            requests.append((method, endpoint, payload, run_as))
+            return {"invites": [{"description": "Join Ansible London", "groups": "not-a-list"}]}
+
+        monkeypatch.setattr(provision_environment, "discourse_req", request)
+
+        with pytest.raises(provision_environment.ApiError, match="invalid description or groups"):
+            provision_environment.reconcile_attendee_invites()
+
+        assert requests == [("GET", "u/gundalow/invited/pending.json", None, "gundalow")]
+
     def test_discourse_group_listing_uses_paginated_directory_endpoint(self, monkeypatch):
         from tools.environment import provision_environment
 

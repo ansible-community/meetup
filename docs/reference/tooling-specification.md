@@ -225,10 +225,11 @@ Pass `--pretix`, `--forum`, or both to select the reconciliation phases. At leas
 9. Reconcile organiser group `meetup-organisers-{slug}` by exact name; set group and member-list visibility level 4 (group owners only), disable public admission and membership requests, clear automatic email-domain membership and group owners, and update its description. Forum admins manage membership.
 10. Reconcile attendee group `meetup-attendee-{slug}` by exact name; force group and member-list visibility level 3 (staff only).
 11. Reconcile the migration tracking group `meetup-migrated-attendees` with staff-only visibility (level 3).
+12. Fetch `u/gundalow/invited/pending.json` once as `gundalow`. For each city, reuse a pending invite only when both its description is `Join Ansible {city display name}` and its groups include `meetup-attendee-{slug}`. Create missing links with email delivery disabled, that attendee group, a 5,000-redemption limit, and `expires_at` set to `2030-01-01`. Invalid response data stops invite creation.
 
 **Phase 5: Discourse Subcategories and Access**
 
-12. For each city in the `CITIES` registry, reconcile its regional subcategory by parent and name. Set `everyone` to `create_post` (level 2: view and reply, but no new topics), and grant `full` (level 1) only to that city's organiser group. Do not grant category permissions to attendee groups; they are used for notifications. Set `moderating_group_ids` to that city's organiser group. Then remove registered organiser permissions and moderator assignments from every other category, considering only meetup-named groups. Set each organiser group's default notification level to Tracking for its own subcategory and apply that default to existing group members. Add missing city options to the Discourse user field.
+13. For each city in the `CITIES` registry, reconcile its regional subcategory by parent and name. Set `everyone` to `create_post` (level 2: view and reply, but no new topics), and grant `full` (level 1) only to that city's organiser group. Do not grant category permissions to attendee groups; they are used for notifications. Set `moderating_group_ids` to that city's organiser group. Then remove registered organiser permissions and moderator assignments from every other category, considering only meetup-named groups. Set each organiser group's default notification level to Tracking for its own subcategory and apply that default to existing group members. Add missing city options to the Discourse user field.
 
 ### 4.2 Event Creation (`tools.events.create_event`)
 
@@ -408,6 +409,8 @@ Same typed contract as Pretix. Duplicate creation errors are not swallowed; prov
 |---|---|---|
 | `POST` | `admin/groups.json` | Create Discourse group |
 | `POST` | `categories.json` | Create regional subcategory |
+| `GET` | `u/gundalow/invited/pending.json` | List pending invites for reconciliation |
+| `POST` | `invites.json` | Create city attendee invite link |
 | `POST` | `posts.json` | Create forum topic |
 | `PUT` | `posts/{id}.json` | Update post content |
 

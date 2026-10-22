@@ -17,7 +17,7 @@ Use this procedure when installing or reconciling the shared Forum and Pretix se
    ```console
    uv run python -m tools.environment.provision_environment --pretix --forum
    ```
-4. Review output and verify the Forum groups/categories and Pretix teams/template before creating events.
+4. Review output and verify the Forum groups, city invite links, and categories, plus Pretix teams/template before creating events.
 5. Record and resolve any reported API errors; do not announce an event until the environment is reconciled.
 
-Provisioning reconciles named groups and permissions. Review the specification before changing access behavior.
+Provisioning reconciles named groups, invite links, and permissions. City invite links add new users to the matching `meetup-attendee-{slug}` group, allow up to 5,000 redemptions, and expire on 2030-01-01. Review the specification before changing access behavior.
