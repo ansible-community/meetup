@@ -1,5 +1,5 @@
 ---
-site_name: Ansible Meetup Toolkit Documentation
+site_name: Ansible Community Meetups
 site_url: https://meetuptoolkit.readthedocs.io/
 repo_url: https://github.com/ansible-community/meetup
 edit_uri: blob/main/docs
@@ -33,33 +33,53 @@ theme:
         icon: material/brightness-4
         name: Switch to light mode
 nav:
-  - Home: index.md
-  - Milestones:
-      - milestones/gain_awareness_of_ansible_meetups.md
-      - milestones/start_planning.md
-      - milestones/during_the_event.md
-      - milestones/post_event_activities.md
-  - Contributors Guide: 
-      - contributing/contributing.md
-  - Resources:
+  - Start here: index.md
+  - Attendees:
+      - attendees/index.md
+      - Find an event and RSVP: attendees/find-and-rsvp.md
+      - Participate and follow up: attendees/participate-and-follow-up.md
+  - Organisers:
+      - organisers/index.md
+      - What it means to be an organiser: organisers/role.md
+      - Set up a Meetup: organisers/setup-a-meetup.md
+      - Promote a Meetup: organisers/promote-a-meetup.md
+      - Event day: organisers/event-day.md
+      - After the Meetup: organisers/after-the-meetup.md
+  - Ansible Community Team:
+      - community-team/index.md
+      - Provisioning: community-team/provisioning.md
+      - Adding a city: community-team/adding-a-city.md
+      - Creating an event: community-team/creating-an-event.md
+      - Managing organisers: community-team/managing-organisers.md
+      - Troubleshooting: community-team/troubleshooting.md
+  - Strategy: ansible_meetup_strategy.md
+  - Reference and contributing:
+      - Tooling specification: reference/tooling-specification.md
+      - Pretix–Discourse authentication: reference/pretix-discourse-auth-specification.md
+      - Glossary: glossary.md
+      - Contributing: contributing/contributing.md
+      - Important links: resources/important_links.md
       - Email templates:
-         - resources/email_templates/speaker_outreach_for_the_first_time.md
-         - resources/email_templates/follow-up_email_for_the_speaker.md
-         - resources/email_templates/once_the_speaker_confirms_for_the_talk.md
-         - resources/email_templates/speaker_communication_once_the_event_is_announced.md
-         - resources/email_templates/venue_scout_for_the_first_time.md
-         - resources/email_templates/venue_scout_follow_up.md
-         - resources/email_templates/venue_scout_post_confirmation.md
-         - resources/email_templates/sponsor_reaching_out_for_the_first_time.md
-         - resources/email_templates/sponsor_follow_up.md
-         - resources/email_templates/sponsor_venue_post_confirmation.md
-         - resources/email_templates/sponsor_food_post_confirmation.md
-         - resources/email_templates/sponsor_supporter_post_confirmation.md
-      - Social media most templates:
-         - resources/social_media_post_templates/pre_event_post_templates.md
-         - resources/social_media_post_templates/during_event_post_templates.md
-      - resources/important_links.md
-      - resources/logo.md
+          - resources/email_templates/speaker_outreach_for_the_first_time.md
+          - resources/email_templates/follow-up_email_for_the_speaker.md
+          - resources/email_templates/once_the_speaker_confirms_for_the_talk.md
+          - resources/email_templates/speaker_communication_once_the_event_is_announced.md
+          - resources/email_templates/venue_scout_for_the_first_time.md
+          - resources/email_templates/venue_scout_follow_up.md
+          - resources/email_templates/venue_scout_post_confirmation.md
+          - resources/email_templates/sponsor_reaching_out_for_the_first_time.md
+          - resources/email_templates/sponsor_follow_up.md
+          - resources/email_templates/sponsor_venue_post_confirmation.md
+          - resources/email_templates/sponsor_food_post_confirmation.md
+          - resources/email_templates/sponsor_supporter_post_confirmation.md
+      - Social media templates:
+          - resources/social_media_post_templates/pre_event_post_templates.md
+          - resources/social_media_post_templates/during_event_post_templates.md
+      - Logo: resources/logo.md
+  - Temporary legacy Meetup Pro migration:
+      - legacy/meetup_pro/member-migration.md
+      - legacy/meetup_pro/exporting-groups.md
+      - legacy/meetup_pro/exporting-organisers.md
 
 exclude_docs:
   README.md

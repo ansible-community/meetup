@@ -1,0 +1,39 @@
+name: CI
+
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Python and documentation checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.13"
+          enable-cache: true
+          cache-dependency-glob: uv.lock
+      - name: Install locked dependencies
+        run: uv sync --locked --all-groups
+      - name: Run tests
+        run: uv run pytest
+      - name: Lint
+        run: uv run ruff check tools/common tools/events tools/environment tools/attendees tools/meetup_pro tests
+      - name: Check formatting
+        run: uv run ruff format --check tools/common tools/events tools/environment tools/attendees tools/meetup_pro tests
+      - name: Type check
+        run: uv run pyright --verbose tools/
+      - name: Build documentation
+        run: uv run mkdocs build --strict

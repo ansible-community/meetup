@@ -1,0 +1,32 @@
+name: Documentation feedback
+description: Report unclear, outdated, or missing Meetup guidance.
+title: "docs: "
+body:
+  - type: input
+    id: page
+    attributes:
+      label: Which page or topic is this about?
+      description: Include the page URL or its path in the repository.
+      placeholder: docs/attendees/find-and-rsvp.md
+    validations:
+      required: true
+  - type: textarea
+    id: task
+    attributes:
+      label: What were you trying to do?
+      description: Describe the reader task or question.
+    validations:
+      required: true
+  - type: textarea
+    id: feedback
+    attributes:
+      label: What was unclear, outdated, or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: suggestion
+    attributes:
+      label: Suggested improvement
+      description: Optional wording or a link to relevant context.
+    validations:
+      required: false

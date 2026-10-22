@@ -1,0 +1,47 @@
+[project]
+name = "ansible-community-meetup-toolkit"
+version = "0.1.0"
+description = "Tools and documentation for Ansible Community Meetups"
+requires-python = ">=3.13"
+dependencies = [
+    "PyJWT>=2.10",
+    "requests>=2.32",
+]
+
+[dependency-groups]
+dev = [
+    "pyright>=1.1",
+    "pytest>=8",
+    "ruff>=0.11",
+    "types-requests>=2.32",
+]
+docs = [
+    "mkdocs>=1.6",
+    "mkdocs-ansible>=0.1",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "S", "T20", "DTZ", "UP", "SIM", "G"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["S101"]
+"tools/events/create_event.py" = ["T201", "E501"]
+"tools/meetup_pro/meetup_pro_lib.py" = ["S105"]
+"tools/meetup_pro/meetup_list_organisers.py" = ["E501"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.pyright]
+pythonVersion = "3.13"
+typeCheckingMode = "standard"
+include = ["tools"]
+exclude = ["tools/cfgmgmtcamp"]
+venvPath = "."
+venv = ".venv"

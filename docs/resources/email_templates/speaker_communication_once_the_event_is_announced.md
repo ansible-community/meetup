@@ -1,6 +1,6 @@
 Hello {recipient's name},
 
-We have announced the event. Please review the meetup page [0] and let me know if you want anything edited.
+We have announced the event. Please review the Forum event topic at {forum_event_url} and let me know if you want anything edited.
 
 Feel free to promote the event on social media, and you can tag us :). The relevant social media handles are the following :
 

@@ -2,4 +2,21 @@
 .DS_Store
 /site
 
+# Python-generated files
+__pycache__/
+*.py[cod]
+
+# uv environments and caches
+.venv/
+.uv-cache/
+uv-cache/
+tmp/
+
+# Test, lint, and type-check caches
+.pytest_cache/
+.ruff_cache/
+.pyright/
+.coverage
+htmlcov/
+
 tools/cfgmgmtcamp/cfgmgmtcamp.*.md

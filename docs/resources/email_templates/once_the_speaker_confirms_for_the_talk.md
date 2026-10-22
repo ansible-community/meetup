@@ -14,7 +14,7 @@ Now to plan the session can you please provide the following information, whiche
 7. The name of your organization, if you are comfortable sharing it with the public.
 8. Are you okay if I tag you on Social media? Please share your social media handles (Mastodon, Linkedin, and Twitter) if you are comfortable.
 9. The Ansible community uses Matrix as the main communication platform. Please join us on the [Ansible Social](https://matrix.to/#/#social:ansible.com) channel so we can introduce you and share details about your session with the community.
-10. Can we share your Matrix username and social media handles in the Meetup event page? It will be helpful for the attendees and broader community members to communicate with you.
+10. Can we share your Matrix username and social media handles in the Forum event topic? It will be helpful for the attendees and broader community members to communicate with you.
 
 We look forward to hearing all the details about your session. Remember that there's no pressure to share information and, if you'd rather not, please just let us know.
 
