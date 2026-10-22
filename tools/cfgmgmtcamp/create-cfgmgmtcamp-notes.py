@@ -11,19 +11,23 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, cast
-from urllib.error import URLError
-from urllib.request import urlopen
+from typing import Any, cast
+from collections.abc import Callable
 
+import requests
 from jinja2 import Template
+
+logger = logging.getLogger(__name__)
 
 # Constants
 CFP_BASE_URL = "https://cfp.cfgmgmtcamp.org"
 MAIN_DAYS = ["Monday", "Tuesday"]
 CONTRIBUTOR_SUMMIT_TALKS = 3
+REQUEST_TIMEOUT_SECONDS = 30
 
 # HackMD notes template (Jinja2)
 NOTES_TEMPLATE = """###### tags: `CfgMgmtCamp {{ year }}`
@@ -54,7 +58,11 @@ Everybody is welcome to make notes on the talks, especially any ideas, actions a
 
 by {{ talk.speakers_str }}
 
-* Slides:{% if talk.resources %}{% for resource in talk.resources %} [{{ resource.description }}]({{ resource.url }}){% if not loop.last %},{% endif %}{% endfor %}{% endif %}
+* Slides:{% if talk.resources -%}
+{% for resource in talk.resources -%}
+ [{{ resource.description }}]({{ resource.url }}){% if not loop.last %},{% endif %}
+{%- endfor %}
+{%- endif %}
 * Video:
 
 #### Abstract
@@ -103,7 +111,11 @@ The following talks from other tracks also mention {{ track }} in their title or
 
 by {{ talk.speakers_str }}
 
-* Slides:{% if talk.resources %}{% for resource in talk.resources %} [{{ resource.description }}]({{ resource.url }}){% if not loop.last %},{% endif %}{% endfor %}{% endif %}
+* Slides:{% if talk.resources -%}
+{% for resource in talk.resources -%}
+ [{{ resource.description }}]({{ resource.url }}){% if not loop.last %},{% endif %}
+{%- endfor %}
+{%- endif %}
 * Video:
 
 #### Abstract
@@ -178,21 +190,19 @@ def download_schedule(year: int, location: str = "ghent") -> dict[str, Any]:
     Returns:
         Parsed schedule data as dictionary
     """
-    print(f"Downloading schedule for {location}{year}...")
+    logger.info("Downloading schedule for %s%s...", location, year)
     url = f"{CFP_BASE_URL}/{location}{year}/schedule/export/schedule.json"
 
     try:
-        with urlopen(url) as response:
-            data = response.read().decode("utf-8")
-            return cast(dict[str, Any], json.loads(data))
-    except (URLError, IOError, json.JSONDecodeError) as e:
-        print(f"ERROR: Failed to download schedule from {url}: {e}")
+        response = requests.get(url, timeout=REQUEST_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        return cast(dict[str, Any], response.json())
+    except (requests.RequestException, json.JSONDecodeError) as e:
+        logger.info("ERROR: Failed to download schedule from %s: %s", url, e)
         sys.exit(1)
 
 
-def fetch_talk_resources(
-    talk_code: str, year: int, location: str = "ghent"
-) -> tuple[Resource, ...]:
+def fetch_talk_resources(talk_code: str, year: int, location: str = "ghent") -> tuple[Resource, ...]:
     """Fetch resources for a talk from the API.
 
     Args:
@@ -207,18 +217,19 @@ def fetch_talk_resources(
 
     try:
         api_url = f"{CFP_BASE_URL}/api/events/{location}{year}/talks/{talk_code}/"
-        with urlopen(api_url) as response:
-            data = json.loads(response.read().decode("utf-8"))
+        response = requests.get(api_url, timeout=REQUEST_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        data = response.json()
 
-            for resource_data in data.get("resources", []):
-                resource_path = resource_data.get("resource", "")
-                description = resource_data.get("description", "")
+        for resource_data in data.get("resources", []):
+            resource_path = resource_data.get("resource", "")
+            description = resource_data.get("description", "")
 
-                if resource_path:
-                    full_url = f"{CFP_BASE_URL}{resource_path}"
-                    resources.append(Resource(url=full_url, description=description))
+            if resource_path:
+                full_url = f"{CFP_BASE_URL}{resource_path}"
+                resources.append(Resource(url=full_url, description=description))
 
-    except (URLError, IOError, json.JSONDecodeError):
+    except (requests.RequestException, json.JSONDecodeError):
         # API fetch failed, continuing without resources
         # This is expected for talks that don't have uploaded resources
         pass
@@ -270,9 +281,7 @@ def _extract_talks(
 
                 # Extract speaker names (filter empty strings)
                 speakers = tuple(
-                    speaker
-                    for person in talk_data.get("persons", [])
-                    if (speaker := person.get("public_name", ""))
+                    speaker for person in talk_data.get("persons", []) if (speaker := person.get("public_name", ""))
                 )
 
                 # Extract talk code from URL
@@ -284,11 +293,7 @@ def _extract_talks(
                         talk_code = parts[1].rstrip("/")
 
                 # Fetch resources from API
-                resources = (
-                    fetch_talk_resources(talk_code, year, location=location)
-                    if talk_code
-                    else ()
-                )
+                resources = fetch_talk_resources(talk_code, year, location=location) if talk_code else ()
 
                 talks.append(
                     TalkMetadata(
@@ -323,6 +328,7 @@ def extract_talks_for_track(
     Returns:
         List of TalkMetadata objects for Monday and Tuesday only
     """
+
     def filter_func(talk_data: dict[str, Any]) -> bool:
         return talk_data.get("track") == track
 
@@ -348,6 +354,7 @@ def extract_related_talks(
     Returns:
         List of TalkMetadata objects from other tracks that mention the keyword
     """
+
     def filter_func(talk_data: dict[str, Any]) -> bool:
         # Exclude talks from the main track
         if talk_data.get("track") == track:
@@ -369,23 +376,21 @@ def list_talks(talks: list[TalkMetadata]) -> None:
     Args:
         talks: List of talk metadata
     """
-    print("\nTalk List")
-    print("=" * 80)
+    logger.info("\nTalk List")
+    logger.info("=" * 80)
 
     # Sort talks by first speaker name (or "Unknown" if no speakers)
-    sorted_talks = sorted(
-        talks, key=lambda t: t.speakers[0] if t.speakers else "Unknown"
-    )
+    sorted_talks = sorted(talks, key=lambda t: t.speakers[0] if t.speakers else "Unknown")
 
     # Calculate unique speakers
     unique_speakers = {speaker for talk in talks for speaker in talk.speakers}
 
     for talk in sorted_talks:
-        print(f"{talk.speakers_str}, {talk.title}")
+        logger.info("%s, %s", talk.speakers_str, talk.title)
 
     # Print summary
-    print("=" * 80)
-    print(f"Total: {len(unique_speakers)} unique speakers, {len(talks)} talks")
+    logger.info("=" * 80)
+    logger.info("Total: %s unique speakers, %s talks", len(unique_speakers), len(talks))
 
 
 def check_for_slides(talks: list[TalkMetadata]) -> None:
@@ -394,25 +399,23 @@ def check_for_slides(talks: list[TalkMetadata]) -> None:
     Args:
         talks: List of talk metadata
     """
-    print("\nSlide Availability Report")
-    print("=" * 80)
+    logger.info("\nSlide Availability Report")
+    logger.info("=" * 80)
 
     for talk in talks:
-        print(f"\n{talk.day_name} | {talk.start_time}")
-        print(f"  Title: {talk.title}")
-        print(f"  Presenter: {talk.speakers_str}")
+        logger.info("\n%s | %s", talk.day_name, talk.start_time)
+        logger.info("  Title: %s", talk.title)
+        logger.info("  Presenter: %s", talk.speakers_str)
 
         if talk.resources:
-            print("  Resources:")
+            logger.info("  Resources:")
             for resource in talk.resources:
-                print(f"    - ✅ [{resource.description}]({resource.url})")
+                logger.info("    - ✅ [%s](%s)", resource.description, resource.url)
         else:
-            print("  Resources: ❌ No resources")
+            logger.info("  Resources: ❌ No resources")
 
 
-def generate_notes(
-    talks: list[TalkMetadata], related_talks: list[TalkMetadata], year: int, track: str
-) -> str:
+def generate_notes(talks: list[TalkMetadata], related_talks: list[TalkMetadata], year: int, track: str) -> str:
     """Generate HackMD-ready markdown for conference notes.
 
     Args:
@@ -425,10 +428,7 @@ def generate_notes(
         Markdown content
     """
     # Extract unique rooms by day
-    rooms_by_day_sorted = {
-        day: sorted({talk.room for talk in talks if talk.day_name == day})
-        for day in MAIN_DAYS
-    }
+    rooms_by_day_sorted = {day: sorted({talk.room for talk in talks if talk.day_name == day}) for day in MAIN_DAYS}
 
     # Group talks by day for day-level headings
     talks_by_day: dict[str, list[dict[str, Any]]] = {day: [] for day in MAIN_DAYS}
@@ -437,9 +437,7 @@ def generate_notes(
             "title": talk.title,
             "speakers_str": talk.speakers_str,
             "abstract": "\n".join(line.rstrip() for line in talk.abstract.split("\n")),
-            "resources": [
-                {"description": r.description, "url": r.url} for r in talk.resources
-            ],
+            "resources": [{"description": r.description, "url": r.url} for r in talk.resources],
         }
         talks_by_day[talk.day_name].append(talk_data)
 
@@ -451,9 +449,7 @@ def generate_notes(
             "track": talk.track,
             "speakers_str": talk.speakers_str,
             "abstract": "\n".join(line.rstrip() for line in talk.abstract.split("\n")),
-            "resources": [
-                {"description": r.description, "url": r.url} for r in talk.resources
-            ],
+            "resources": [{"description": r.description, "url": r.url} for r in talk.resources],
         }
         related_talks_data.append(talk_dict)
 
@@ -471,17 +467,17 @@ def generate_notes(
 
 def main() -> None:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Generate CfgMgmtCamp notes, check for slides, or list talks"
-    )
-    parser.add_argument(
-        "--year", type=int, required=True, help="Conference year (e.g., 2026)"
-    )
+    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
+    parser = argparse.ArgumentParser(description="Generate CfgMgmtCamp notes, check for slides, or list talks")
+    parser.add_argument("--year", type=int, required=True, help="Conference year (e.g., 2026)")
     parser.add_argument(
         "--track",
         type=str,
         default="ansible",
-        help="Track name to filter talks (e.g., Ansible, Foreman, Pulp). Case-insensitive, converted to title case. Default: ansible",
+        help=(
+            "Track name to filter talks (e.g., Ansible, Foreman, Pulp). "
+            "Case-insensitive, converted to title case. Default: ansible"
+        ),
     )
 
     mode_group = parser.add_mutually_exclusive_group(required=True)
@@ -490,38 +486,34 @@ def main() -> None:
         action="store_true",
         help="Generate HackMD-ready notes file",
     )
-    mode_group.add_argument(
-        "--check-for-slides", action="store_true", help="Check slide availability"
-    )
-    mode_group.add_argument(
-        "--list-talks", action="store_true", help="List speaker names and talk titles"
-    )
+    mode_group.add_argument("--check-for-slides", action="store_true", help="Check slide availability")
+    mode_group.add_argument("--list-talks", action="store_true", help="List speaker names and talk titles")
 
     args = parser.parse_args()
 
     # Normalize track name to title case (ansible → Ansible)
     track = args.track.strip().title()
 
-    print(f"CfgMgmtCamp {args.year}")
-    print(f"Track: {track}")
+    logger.info("CfgMgmtCamp %s", args.year)
+    logger.info("Track: %s", track)
 
     # Download schedule
     schedule = download_schedule(args.year)
 
     # Extract talks (Monday & Tuesday only)
-    print("\nExtracting talks...")
+    logger.info("\nExtracting talks...")
     talks = extract_talks_for_track(schedule, track, args.year, location="ghent")
 
     if not talks:
         available = get_available_tracks(schedule)
-        print(f"ERROR: No talks found for track '{track}'")
-        print(f"Available tracks: {', '.join(available)}")
+        logger.info("ERROR: No talks found for track '%s'", track)
+        logger.info("Available tracks: %s", ", ".join(available))
         sys.exit(1)
 
     # Sort by date and start time
     talks.sort(key=lambda t: (t.date, t.start_time))
 
-    print(f"Found {len(talks)} talks")
+    logger.info("Found %s talks", len(talks))
 
     # Execute requested mode
     if args.list_talks:
@@ -530,12 +522,10 @@ def main() -> None:
         check_for_slides(talks)
     else:
         # Generate notes
-        print("\nExtracting related talks...")
+        logger.info("\nExtracting related talks...")
         track_keyword = track
-        related_talks = extract_related_talks(
-            schedule, track, track_keyword, args.year, location="ghent"
-        )
-        print(f"Found {len(related_talks)} related talks from other tracks")
+        related_talks = extract_related_talks(schedule, track, track_keyword, args.year, location="ghent")
+        logger.info("Found %s related talks from other tracks", len(related_talks))
         related_talks.sort(key=lambda t: (t.date, t.start_time))
 
         markdown = generate_notes(talks, related_talks, args.year, track)
@@ -543,10 +533,10 @@ def main() -> None:
         output_path = Path(f"cfgmgmtcamp{args.year}_{safe_track}_notes.md")
         try:
             output_path.write_text(markdown)
-            print(f"\nGenerated: {output_path.absolute()}")
-            print("Ready to upload to HackMD!")
-        except IOError as e:
-            print(f"ERROR: Failed to write {output_path}: {e}")
+            logger.info("\nGenerated: %s", output_path.absolute())
+            logger.info("Ready to upload to HackMD!")
+        except OSError as e:
+            logger.info("ERROR: Failed to write %s: %s", output_path, e)
             sys.exit(1)
 
 
