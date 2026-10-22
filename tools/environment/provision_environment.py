@@ -45,6 +45,10 @@ from tools.common.ansible_events_lib import (
 
 CATEGORY_PERMISSION_FULL = 1
 CATEGORY_PERMISSION_CREATE_POST = 2
+INVITE_API_USERNAME = "gundalow"
+INVITE_PENDING_ENDPOINT = f"u/{INVITE_API_USERNAME}/invited/pending.json"
+INVITE_MAX_REDEMPTIONS = 5_000
+INVITE_EXPIRES_AT = "2030-01-01"
 
 
 @dataclass(slots=True)
@@ -135,6 +139,50 @@ class CityForumPlan:
 def build_city_forum_plans() -> list[CityForumPlan]:
     """Build the full city-level desired state from the central CITIES registry."""
     return [CityForumPlan(city=city) for city in CITIES]
+
+
+def pending_invites_by_description(response: Mapping[str, Any]) -> set[tuple[str, str]]:
+    """Validate pending invite data and return (description, group name) pairs."""
+    invites = response.get("invites")
+    if not isinstance(invites, list):
+        raise ApiError("Discourse pending invites response is missing an invites list")
+
+    invite_targets: set[tuple[str, str]] = set()
+    for index, invite in enumerate(invites):
+        if not isinstance(invite, dict):
+            raise ApiError(f"Discourse pending invites response contains an invalid invite at index {index}")
+        description = invite.get("description")
+        groups = invite.get("groups")
+        if not isinstance(description, str) or not isinstance(groups, list):
+            raise ApiError(f"Discourse pending invite at index {index} has invalid description or groups")
+        for group in groups:
+            if not isinstance(group, dict) or not isinstance(group.get("name"), str):
+                raise ApiError(f"Discourse pending invite at index {index} contains an invalid group")
+            invite_targets.add((description, group["name"]))
+    return invite_targets
+
+
+def reconcile_attendee_invites() -> None:
+    """Create missing city invite links for their attendee groups."""
+    response = discourse_req("GET", INVITE_PENDING_ENDPOINT, run_as=INVITE_API_USERNAME)
+    invite_targets = pending_invites_by_description(response)
+
+    for city in CITIES:
+        description = f"Join Ansible {city.city}"
+        target = (description, city.attendee_group)
+        if target in invite_targets:
+            logger.info("Invite for %s already exists", city.city)
+            continue
+
+        payload = {
+            "skip_email": True,
+            "description": description,
+            "group_names": city.attendee_group,
+            "max_redemptions_allowed": INVITE_MAX_REDEMPTIONS,
+            "expires_at": INVITE_EXPIRES_AT,
+        }
+        created = discourse_req("POST", "invites.json", payload, run_as=INVITE_API_USERNAME)
+        logger.info("Created invite for %s: %s", city.city, created.get("link", "link unavailable"))
 
 
 def list_discourse_groups() -> list[dict]:
@@ -942,6 +990,8 @@ def reconcile_discourse_environment(groups_by_name: dict[str, dict[str, Any]]) -
             plan.attendee_group_settings(),
             created=plan.attendee_group_created,
         )
+
+    reconcile_attendee_invites()
 
     plans_by_category_id = {plan.category_id: plan for plan in plans if plan.category_id is not None}
     reconcile_city_category_access(categories, plans_by_category_id, groups_by_name)
