@@ -17,10 +17,10 @@ jobs:
     name: Python and documentation checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: astral-sh/setup-uv@v5
+      - uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884 # v10.3.0
         with:
           python-version: "3.13"
           enable-cache: true
@@ -37,3 +37,8 @@ jobs:
         run: uv run pyright --verbose tools/
       - name: Build documentation
         run: uv run mkdocs build --strict
+      - name: Analyze GitHub Actions workflows with zizmor
+        uses: zizmorcore/zizmor-action@85b2b9fb8e3325e7a23d7d0a9d7ba5ae0f999e3e # v0.7.1
+        with:
+          advanced-security: false
+          annotations: true
