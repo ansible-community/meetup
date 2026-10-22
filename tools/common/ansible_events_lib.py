@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-import dataclasses
 import logging
 import os
 import re
 import sys
 import time
 from collections.abc import Callable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import urljoin, urlparse
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 # External request types are supplied by the `types-requests` development dependency.
 import requests  # type: ignore[reportMissingModuleSource]
+
+if TYPE_CHECKING:
+    from tools.common.ansible_event_cities import CityInfo
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("ansible_meetups")
@@ -58,12 +59,11 @@ DISCOURSE_PARENT_CATEGORY_ID = 8
 EVENT_NAME_PREFIX = "Ansible Meetup"
 ORGANISER_TEAM_PREFIX = "Ansible Meetup Organisers"
 ORGANISERS_GROUP_PREFIX = "meetup-organisers"
-ATTENDEE_GROUP_PREFIX = "meetup-attendee"
+CITY_SLUG_RE = re.compile(r"^[a-z]+$")
 STAFF_TEAM_NAME = "Ansible Meetup Staff"
 GROUP_VISIBILITY_OWNERS_ONLY = 4
 GROUP_VISIBILITY_STAFF_ONLY = 3
 MIGRATED_GROUP_NAME = "meetup-migrated-attendees"
-CITY_SLUG_RE = re.compile(r"^[a-z]+$")
 ORGANIZERS_GROUP_RE = re.compile(r"^meetup-organisers-([a-z]+)$")
 MONTH_SLUGS = ("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec")
 EVENT_SLUG_RE = re.compile(rf"^([a-z]+)-({'|'.join(MONTH_SLUGS)})-[0-9]{{4}}$")
@@ -159,72 +159,25 @@ DISCOURSE_CLIENT = ApiClient(
 )
 
 
-@dataclasses.dataclass(frozen=True, slots=True)
-class CityInfo:
-    """A meetup city with its geographic and timezone metadata."""
-
-    region: str
-    country: str
-    slug: str
-    city: str
-    timezone: str
-
-    def __post_init__(self) -> None:
-        """Validate the city slug, labels, and IANA timezone."""
-        if not CITY_SLUG_RE.fullmatch(self.slug):
-            raise ValueError(f"City slug must contain lowercase ASCII letters only: {self.slug!r}")
-        if not self.city.strip() or not self.region.strip() or not self.country.strip():
-            raise ValueError("City display name, region, and country must not be empty")
-        try:
-            ZoneInfo(self.timezone)
-        except (ZoneInfoNotFoundError, ValueError) as exc:
-            raise ValueError(f"Invalid IANA timezone: {self.timezone!r}") from exc
-
-    @property
-    def field_value(self) -> str:
-        """Format as 'region:country:city' for Discourse user fields."""
-        return f"{self.region}:{self.country}:{self.city}"
-
-    @property
-    def event_name(self) -> str:
-        """Return the canonical event name for this city."""
-        return f"{EVENT_NAME_PREFIX} {self.city}"
-
-    @property
-    def team_name(self) -> str:
-        """Return the canonical Pretix organiser team name for this city."""
-        return f"{ORGANISER_TEAM_PREFIX} - {self.city}"
-
-    @property
-    def organiser_group(self) -> str:
-        """Return the canonical Discourse organiser group name."""
-        return f"{ORGANISERS_GROUP_PREFIX}-{self.slug}"
-
-    @property
-    def attendee_group(self) -> str:
-        """Return the canonical Discourse attendee group name."""
-        return f"{ATTENDEE_GROUP_PREFIX}-{self.slug}"
-
-
-CITIES: tuple[CityInfo, ...] = (
-    CityInfo(region="Europe", country="UK", slug="london", city="London", timezone="Europe/London"),
-    CityInfo(region="Europe", country="Spain", slug="barcelona", city="Barcelona", timezone="Europe/Madrid"),
-)
-
-if len({city.slug for city in CITIES}) != len(CITIES):
-    raise ValueError("City slugs in CITIES must be unique")
-if len({city.city.casefold() for city in CITIES}) != len(CITIES):
-    raise ValueError("City display names in CITIES must be unique")
-
-
 def get_city(name: str) -> CityInfo | None:
     """Look up a registered city slug. Returns None for malformed or unknown names."""
     if not CITY_SLUG_RE.fullmatch(name):
         return None
+    from tools.common.ansible_event_cities import CITIES
+
     for c in CITIES:
         if c.slug == name:
             return c
     return None
+
+
+def __getattr__(name: str) -> Any:
+    """Keep the former city-registry exports available to existing callers."""
+    if name in {"CITIES", "CityInfo"}:
+        from tools.common import ansible_event_cities
+
+        return getattr(ansible_event_cities, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def discourse_user_exists(username: str) -> bool:
