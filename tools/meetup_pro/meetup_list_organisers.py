@@ -156,7 +156,9 @@ def fetch_group_organisers(client: MeetupGraphQLClient, group_urlname: str) -> l
         if page_info.get("hasNextPage"):
             cursor = page_info.get("endCursor")
             if not cursor:
-                raise RuntimeError(f"Meetup indicated another membership page for '{group_urlname}' but returned no cursor")
+                raise RuntimeError(
+                    f"Meetup indicated another membership page for '{group_urlname}' but returned no cursor"
+                )
         else:
             break
 
