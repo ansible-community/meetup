@@ -225,7 +225,7 @@ Pass `--pretix`, `--forum`, or both to select the reconciliation phases. At leas
 9. Reconcile organiser group `meetup-organisers-{slug}` by exact name; set group and member-list visibility level 4 (group owners only), disable public admission and membership requests, clear automatic email-domain membership and group owners, and update its description. Forum admins manage membership.
 10. Reconcile attendee group `meetup-attendee-{slug}` by exact name; force group and member-list visibility level 3 (staff only).
 11. Reconcile the migration tracking group `meetup-migrated-attendees` with staff-only visibility (level 3).
-12. Fetch `u/gundalow/invited/pending.json` once as `gundalow`. For each city, reuse a pending invite only when both its description is `Join Ansible {city display name}` and its groups include `meetup-attendee-{slug}`. Create missing links with email delivery disabled, that attendee group, a 5,000-redemption limit, and `expires_at` set to `2030-01-01`. Invalid response data stops invite creation.
+12. Fetch `u/gundalow/invited/pending.json` once as `gundalow`. For each city, reuse a pending invite only when its description is `Join Ansible {city display name}` and its groups include both `meetup-attendee-{slug}` and `meetup-migrated-attendees`. Create missing links with email delivery disabled, both groups, a 5,000-redemption limit, and `expires_at` set to `2030-01-01`. Invalid response data stops invite creation.
 
 **Phase 5: Discourse Subcategories and Access**
 

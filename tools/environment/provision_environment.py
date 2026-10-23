@@ -141,13 +141,13 @@ def build_city_forum_plans() -> list[CityForumPlan]:
     return [CityForumPlan(city=city) for city in CITIES]
 
 
-def pending_invites_by_description(response: Mapping[str, Any]) -> set[tuple[str, str]]:
-    """Validate pending invite data and return (description, group name) pairs."""
+def pending_invites_by_description(response: Mapping[str, Any]) -> set[tuple[str, frozenset[str]]]:
+    """Validate pending invite data and return each description with its groups."""
     invites = response.get("invites")
     if not isinstance(invites, list):
         raise ApiError("Discourse pending invites response is missing an invites list")
 
-    invite_targets: set[tuple[str, str]] = set()
+    invite_targets: set[tuple[str, frozenset[str]]] = set()
     for index, invite in enumerate(invites):
         if not isinstance(invite, dict):
             raise ApiError(f"Discourse pending invites response contains an invalid invite at index {index}")
@@ -155,29 +155,34 @@ def pending_invites_by_description(response: Mapping[str, Any]) -> set[tuple[str
         groups = invite.get("groups")
         if not isinstance(description, str) or not isinstance(groups, list):
             raise ApiError(f"Discourse pending invite at index {index} has invalid description or groups")
+        group_names: set[str] = set()
         for group in groups:
             if not isinstance(group, dict) or not isinstance(group.get("name"), str):
                 raise ApiError(f"Discourse pending invite at index {index} contains an invalid group")
-            invite_targets.add((description, group["name"]))
+            group_names.add(group["name"])
+        invite_targets.add((description, frozenset(group_names)))
     return invite_targets
 
 
 def reconcile_attendee_invites() -> None:
-    """Create missing city invite links for their attendee groups."""
+    """Create missing city invite links for attendee and migration groups."""
     response = discourse_req("GET", INVITE_PENDING_ENDPOINT, run_as=INVITE_API_USERNAME)
     invite_targets = pending_invites_by_description(response)
 
     for city in CITIES:
         description = f"Join Ansible {city.city}"
-        target = (description, city.attendee_group)
-        if target in invite_targets:
+        target_groups = (city.attendee_group, MIGRATED_GROUP_NAME)
+        if any(
+            invite_description == description and set(target_groups).issubset(group_names)
+            for invite_description, group_names in invite_targets
+        ):
             logger.info("Invite for %s already exists", city.city)
             continue
 
         payload = {
             "skip_email": True,
             "description": description,
-            "group_names": city.attendee_group,
+            "group_names": ",".join(target_groups),
             "max_redemptions_allowed": INVITE_MAX_REDEMPTIONS,
             "expires_at": INVITE_EXPIRES_AT,
         }
