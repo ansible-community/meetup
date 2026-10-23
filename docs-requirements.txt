@@ -548,9 +548,9 @@ pillow==12.3.0 \
     # via
     #   cairosvg
     #   mkdocs-ansible
-platformdirs==4.13.0 \
-    --hash=sha256:1aa0b0d3f224c1f07c295121e312a5a24a180d6ae5a8425ea1784b3e3863e9c0 \
-    --hash=sha256:3dbcf4cd708f21cf876c4eaa90e58412bc4f033d87143f41b1493ff77c25b7e1
+platformdirs==4.13.1 \
+    --hash=sha256:4902b4ad355cb0b202c746b29580ab67c5c2d918e30e3d006353465b82ec3ecc \
+    --hash=sha256:ee77cf2d36d5a515b2acf68ede6434cf3a8fc70b822bb6b3264d01b96c69a8e0
     # via
     #   mkdocs-get-deps
     #   properdocs
