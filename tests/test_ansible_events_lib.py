@@ -594,6 +594,80 @@ class TestProvisioningPermissions:
             ("GET", "events/template/settings", None),
         ]
 
+    def test_template_name_scheme_is_patched_before_settings_read(self, monkeypatch):
+        from tools.environment import provision_environment
+
+        settings = {"name_scheme": "given_family", "attendee_names_asked": True}
+        requests = []
+
+        def request(method, endpoint, payload=None):
+            requests.append((method, endpoint, payload))
+            if method == "PATCH":
+                settings.update(payload)
+            return settings.copy()
+
+        monkeypatch.setattr(provision_environment, "pretix_req", request)
+        provision_environment.reconcile_pretix_event_settings(
+            "template",
+            {"name_scheme": "full", "attendee_names_asked": True},
+            ("name_scheme",),
+        )
+
+        assert requests == [
+            ("PATCH", "events/template/settings", {"name_scheme": "full"}),
+            ("GET", "events/template/settings", None),
+        ]
+
+    def test_template_name_scheme_redundant_patch_uses_readback(self, monkeypatch):
+        from tools.common.ansible_events_lib import ApiError
+        from tools.environment import provision_environment
+
+        requests = []
+        settings = {"name_scheme": "full", "attendee_names_asked": True}
+
+        def request(method, endpoint, payload=None):
+            requests.append((method, endpoint, payload))
+            if method == "PATCH":
+                raise ApiError(
+                    "Pretix PATCH events/template/settings failed: 400 "
+                    '{"name_scheme":["\\"full\\" is not a valid choice."]}'
+                )
+            return settings.copy()
+
+        monkeypatch.setattr(provision_environment, "pretix_req", request)
+        provision_environment.reconcile_pretix_event_settings(
+            "template",
+            {"name_scheme": "full", "attendee_names_asked": True},
+            ("name_scheme",),
+        )
+
+        assert requests == [
+            ("PATCH", "events/template/settings", {"name_scheme": "full"}),
+            ("GET", "events/template/settings", None),
+        ]
+
+    def test_template_name_scheme_mismatch_after_rejection_fails(self, monkeypatch):
+        from tools.common.ansible_events_lib import ApiError
+        from tools.environment import provision_environment
+
+        settings = {"name_scheme": "given_family"}
+
+        def request(method, endpoint, payload=None):
+            if method == "PATCH":
+                raise ApiError(
+                    "Pretix PATCH events/template/settings failed: 400 "
+                    '{"name_scheme":["\\"full\\" is not a valid choice."]}'
+                )
+            return settings.copy()
+
+        monkeypatch.setattr(provision_environment, "pretix_req", request)
+        with pytest.raises(ApiError, match="current value still differs"):
+            provision_environment.reconcile_pretix_event_settings(
+                "template",
+                {"name_scheme": "full"},
+                ("name_scheme",),
+            )
+
     def test_template_creation_uses_only_public_event_api_fields(self, monkeypatch):
         from tools.environment import provision_environment
 

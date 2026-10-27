@@ -313,17 +313,66 @@ def log_resource_status(
     logger.info("%s: %s | %s", resource, state, details)
 
 
-def reconcile_pretix_event_settings(event_slug: str, desired: Mapping[str, Any]) -> None:
-    """Patch only event settings that differ, then verify Pretix accepted them."""
+def is_pretix_choice_error(error: ApiError, field: str) -> bool:
+    """Return whether Pretix rejected a setting because its choice list is empty."""
+    message = str(error)
+    return "failed: 400 " in message and f'"{field}"' in message and "not a valid choice" in message
+
+
+def reconcile_pretix_event_settings(
+    event_slug: str,
+    desired: Mapping[str, Any],
+    preflight_fields: tuple[str, ...] = (),
+) -> None:
+    """Patch selected fields before reading settings, then reconcile and verify the rest.
+
+    Pretix builds the ``name_scheme`` API choices from a generator. On supported
+    Pretix versions, reading event settings can consume that generator in the API
+    worker, causing a later PATCH on that worker to reject even valid choices.
+    Applying ``name_scheme`` first avoids triggering that request sequence. If a
+    previous run already applied it, the API may reject the redundant PATCH; in
+    that case, a read-back confirms whether the desired value is already stored.
+    """
     endpoint = f"events/{event_slug}/settings"
-    before = pretix_req("GET", endpoint)
+    preflight_status: dict[str, str] = {}
+    before: dict[str, Any] | None = None
+    for field in preflight_fields:
+        if field not in desired:
+            raise ApiError(f"Pretix preflight setting {field!r} is missing from desired settings")
+        try:
+            pretix_req("PATCH", endpoint, {field: desired[field]})
+        except ApiError as exc:
+            if not is_pretix_choice_error(exc, field):
+                raise
+            before = pretix_req("GET", endpoint)
+            if field not in before or not same_configuration_value(field, before[field], desired[field]):
+                raise ApiError(
+                    f"Pretix rejected event setting {field!r} and its current value still differs; "
+                    "retry after restarting the Pretix API worker"
+                ) from exc
+            preflight_status[field] = "Already configured"
+        else:
+            preflight_status[field] = "Applied before settings read"
+
+    if before is None:
+        before = pretix_req("GET", endpoint)
+    for field in preflight_fields:
+        if field not in before or not same_configuration_value(field, before[field], desired[field]):
+            raise ApiError(f"Pretix event {event_slug!r} did not reconcile setting {field!r}")
     changes = {
         field: value
         for field, value in desired.items()
+        if field not in preflight_fields
         if field not in before or not same_configuration_value(field, before[field], value)
     }
     if not changes:
-        log_resource_status(f"Template {event_slug} settings", desired, before)
+        log_resource_status(
+            f"Template {event_slug} settings",
+            {field: value for field, value in desired.items() if field not in preflight_fields},
+            before,
+        )
+        for field, status in preflight_status.items():
+            logger.info("Pretix event %s setting: %s", field.replace("_", " "), status)
         return
 
     after = pretix_req("PATCH", endpoint, changes)
@@ -334,7 +383,13 @@ def reconcile_pretix_event_settings(event_slug: str, desired: Mapping[str, Any])
     for field, value in desired.items():
         if field not in after or not same_configuration_value(field, after[field], value):
             raise ApiError(f"Pretix event {event_slug!r} did not reconcile setting {field!r}")
-    log_resource_status(f"Template {event_slug} settings", desired, before)
+    log_resource_status(
+        f"Template {event_slug} settings",
+        {field: value for field, value in desired.items() if field not in preflight_fields},
+        before,
+    )
+    for field, status in preflight_status.items():
+        logger.info("Pretix event %s setting: %s", field.replace("_", " "), status)
 
 
 def reconcile_pretix_mapping(
@@ -572,6 +627,7 @@ def reconcile_pretix_template(events: list[dict[str, Any]]) -> None:
             "payment_term_last": None,
             "meta_noindex": True,
         },
+        ("name_scheme",),
     )
     reconcile_template_ticket()
 
