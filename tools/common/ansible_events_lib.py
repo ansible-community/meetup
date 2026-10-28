@@ -75,6 +75,8 @@ TEMPLATE_SLUG = "ansible-meetup-template-v6"
 DEFAULT_ITEM_NAME = "RSVP"
 DEFAULT_ITEM_PRICE = "0.00"
 DEFAULT_QUOTA_NAME = "Capacity"
+PASSBOOK_BACKFIELD_PROPERTY = "pretix_passbook_backfield"
+PASSBOOK_BACKFIELD_DEFAULT = ""
 ORGANISER_PERMISSIONS: list[str] = [
     "event.orders:read",
     "event.orders:checkin",
@@ -459,13 +461,19 @@ def pretix_list_all(endpoint: str) -> list[dict[str, Any]]:
 
 
 def check_event_exists(slug: str) -> bool:
-    """Return True/False for a confirmed event/404; raise ApiError otherwise."""
+    """Check for a slug in the events visible to the configured API token.
+
+    Pretix returns 403 for a detail lookup when an event is missing as well as
+    when the token cannot view it. The organizer event list is the safe
+    read-only inventory for this check; it only establishes visibility to this
+    token, not global non-existence.
+    """
     try:
-        resp = PRETIX_CLIENT.request("GET", f"events/{slug}/")
-    except requests.RequestException as exc:
-        raise ApiError(f"Pretix check_event_exists {slug} connection error: {exc}") from exc
-    if resp.status_code == 404:
-        return False
-    if resp.status_code == 200:
-        return True
-    raise ApiError(f"Pretix check_event_exists {slug} failed: {resp.status_code} {resp.text[:200]}")
+        events = pretix_list_all("events")
+    except ApiError as exc:
+        raise ApiError(
+            f"Cannot check Pretix event {slug!r}: GET events/ failed, so its existence "
+            f"cannot be established for this API token. Confirm the token can list "
+            f"organizer events and check its team permissions. Details: {exc}"
+        ) from exc
+    return any(event.get("slug") == slug for event in events)
