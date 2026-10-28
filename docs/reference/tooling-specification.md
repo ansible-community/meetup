@@ -189,16 +189,15 @@ Pass `--pretix`, `--forum`, or both to select the reconciliation phases. At leas
 
 **Phase 2: Pretix Teams and Metadata**
 
-2. Reconcile regional teams:
+2. Reconcile regional teams with Pretix `require_2fa=false`:
    - Fetch all teams using `pretix_list_all("teams")` (paginated).
    - For each city, create a missing team or reconcile its `all_events`, `all_event_permissions`, `limit_event_permissions`, and `limit_events`. The desired event list is rebuilt from all Pretix events whose slug exactly matches `{city-slug}-{three-letter-month}-{four-digit-year}`; stale and cross-city assignments are removed.
-3. Reconcile the Pretix staff team `Ansible Meetup Staff` with access to all events and all event permissions in the meetup organizer. The provisioner never changes its membership; Pretix admins add and remove staff members. No Forum group grants staff-team membership.
+3. Reconcile the Pretix staff team `Ansible Meetup Staff` with access to all events and all event permissions in the meetup organizer, also with `require_2fa=false`. The provisioner never changes its membership; Pretix admins add and remove staff members. No Forum group grants staff-team membership.
 4. Ensure `forum_topic_url` meta property exists:
    - `GET /api/v1/organizers/ansible-meetups/event_meta_properties/`
    - If no property named `forum_topic_url` in results:
      - `POST /api/v1/organizers/ansible-meetups/event_meta_properties/`
      - Payload: `{"name": "forum_topic_url", "default": "https://forum.ansible.com/c/events/8", "choices": []}`
-
 **Phase 3: Pretix Template**
 
 5. Create or reconcile template event:
@@ -208,6 +207,7 @@ Pass `--pretix`, `--forum`, or both to select the reconciliation phases. At leas
      - Payload sets the name, slug, `live=false`, `is_public=false`, `timezone="UTC"`, currency, and start date.
    - On every run, reconcile `live=false`, `is_public=false`, and `timezone="UTC"`.
    - Do not send or verify `is_template`: Pretix's public event API does not expose that field. The private event is used as the clone source by its stable slug through `clone_from`.
+   - Reconcile `pretix_passbook_backfield` through `events/{template}/item_meta_properties/`. This is separate from the organizer-level `forum_topic_url` event metadata property.
 
 6. Enforce template settings:
    - `PATCH /api/v1/organizers/ansible-meetups/events/ansible-meetup-template-v6/settings/`
@@ -230,6 +230,14 @@ Pass `--pretix`, `--forum`, or both to select the reconciliation phases. At leas
 **Phase 5: Discourse Subcategories and Access**
 
 13. For each city in the `CITIES` registry, reconcile its regional subcategory by parent and name. Set `everyone` to `create_post` (level 2: view and reply, but no new topics), and grant `full` (level 1) only to that city's organiser group. Do not grant category permissions to attendee groups; they are used for notifications. Set `moderating_group_ids` to that city's organiser group. Then remove registered organiser permissions and moderator assignments from every other category, considering only meetup-named groups. Set each organiser group's default notification level to Tracking for its own subcategory and apply that default to existing group members. Add missing city options to the Discourse user field.
+
+#### Read-only Setup Diagnostics (`tools.environment.check_setup`)
+
+Run `uv run python -m tools.environment.check_setup` to inspect local credentials, Pretix and Forum API access, managed resources, template configuration, and `gundalow`'s Forum identity/group membership. The command performs read requests only, reports `PASS`, `FAIL`, or `MANUAL` per check, and exits non-zero when any check fails.
+
+The Pretix `GET teams` endpoint is permission-gated by `organizer.teams:write`, so a successful request verifies that permission for the configured API token. Required write permissions that cannot be established without mutation are listed by name as `MANUAL`: `organizer.settings.general:write`, `organizer.events:create`, `event.settings.general:write`, and `event.items:write`. Forum write access is also `MANUAL`; the checker never probes write endpoints.
+
+Pretix teams do not require Pretix-managed 2FA. Privileged SSO logins require Forum 2FA through the signed DiscourseConnect assertion, independently of Pretix team settings.
 
 ### 4.2 Event Creation (`tools.events.create_event`)
 
@@ -369,7 +377,9 @@ Trailing slash rules:
 | `PATCH` | *(empty — targets organizer)* | Update organizer settings |
 | `GET` | `event_meta_properties` | List meta properties |
 | `POST` | `event_meta_properties` | Create `forum_topic_url` property |
-| `GET` | `events/{slug}` | Check event existence / fetch event |
+| `GET` | `events/{slug}/item_meta_properties` | List event item metadata properties |
+| `POST` | `events/{slug}/item_meta_properties` | Create template wallet-pass back-field property |
+| `GET` | `events` | Check existence among events visible to the configured API token |
 | `POST` | `events` | Create event (or clone from template) |
 | `PATCH` | `events/{slug}` | Update event (publish, set name) |
 | `PATCH` | `events/{slug}/settings` | Update template checkout settings |

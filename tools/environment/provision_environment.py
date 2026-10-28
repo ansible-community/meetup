@@ -28,6 +28,8 @@ from tools.common.ansible_events_lib import (
     ORGANIZERS_GROUP_RE,
     ORGANISERS_GROUP_PREFIX,
     ORGANISER_PERMISSIONS,
+    PASSBOOK_BACKFIELD_DEFAULT,
+    PASSBOOK_BACKFIELD_PROPERTY,
     STAFF_TEAM_NAME,
     GROUP_VISIBILITY_OWNERS_ONLY,
     GROUP_VISIBILITY_STAFF_ONLY,
@@ -256,7 +258,7 @@ FIELD_LABELS: dict[str, str] = {
     "all_organizer_permissions": "all organizer permissions",
     "limit_organizer_permissions": "organizer permissions",
     "limit_events": "event scope",
-    "require_2fa": "2FA required",
+    "require_2fa": "Pretix 2FA required",
     "is_public": "public listing",
 }
 UNORDERED_FIELDS: set[str] = {
@@ -281,6 +283,8 @@ def same_configuration_value(field: str, current: Any, desired: Any) -> bool:
     """
     if field == "choices" and current in (None, []) and desired in (None, []):
         # Pretix represents an unrestricted metadata property as either null or [].
+        return True
+    if field == "allowed_values" and current in (None, []) and desired in (None, []):
         return True
     if field in UNORDERED_FIELDS and isinstance(current, list) and isinstance(desired, list):
         return set(current) == set(desired)
@@ -436,7 +440,7 @@ def reconcile_pretix_teams() -> list[dict[str, Any]]:
             STAFF_TEAM_NAME,
             {
                 "name": STAFF_TEAM_NAME,
-                "require_2fa": True,
+                "require_2fa": False,
                 "all_events": True,
                 "limit_events": [],
                 "all_event_permissions": True,
@@ -466,7 +470,7 @@ def reconcile_pretix_teams() -> list[dict[str, Any]]:
                 city.team_name,
                 {
                     "name": city.team_name,
-                    "require_2fa": True,
+                    "require_2fa": False,
                     "all_events": False,
                     "all_event_permissions": False,
                     "limit_event_permissions": ORGANISER_PERMISSIONS,
@@ -583,6 +587,37 @@ def reconcile_template_ticket() -> None:
         log_resource_status(DEFAULT_QUOTA_NAME, quota_desired, None)
 
 
+def reconcile_template_item_meta_property() -> None:
+    """Ensure the template defines the wallet-pass item field inherited by clones."""
+    endpoint = f"events/{TEMPLATE_SLUG}/item_meta_properties"
+    properties = pretix_list_all(endpoint)
+    matches = [prop for prop in properties if prop.get("name") == PASSBOOK_BACKFIELD_PROPERTY]
+    if len(matches) > 1:
+        raise ApiError(f"Pretix template has multiple item metadata properties named {PASSBOOK_BACKFIELD_PROPERTY!r}")
+
+    desired = {
+        "name": PASSBOOK_BACKFIELD_PROPERTY,
+        "default": PASSBOOK_BACKFIELD_DEFAULT,
+        "required": False,
+        "allowed_values": None,
+    }
+    if not matches:
+        created = pretix_req("POST", endpoint, desired)
+        if any(
+            field not in created or not same_configuration_value(field, created[field], value)
+            for field, value in desired.items()
+        ):
+            raise ApiError(f"Pretix template item metadata property {PASSBOOK_BACKFIELD_PROPERTY!r} did not reconcile")
+        log_resource_status(PASSBOOK_BACKFIELD_PROPERTY, desired, None)
+        return
+
+    prop = matches[0]
+    property_id = prop.get("id")
+    if not isinstance(property_id, int):
+        raise ApiError(f"Pretix template item metadata property {PASSBOOK_BACKFIELD_PROPERTY!r} has an invalid ID")
+    reconcile_pretix_mapping(f"{endpoint}/{property_id}", PASSBOOK_BACKFIELD_PROPERTY, desired, prop)
+
+
 def reconcile_pretix_template(events: list[dict[str, Any]]) -> None:
     """Create or reconcile the private clone source and its settings/ticket configuration."""
     matches = [event for event in events if event.get("slug") == TEMPLATE_SLUG]
@@ -629,6 +664,7 @@ def reconcile_pretix_template(events: list[dict[str, Any]]) -> None:
         },
         ("name_scheme",),
     )
+    reconcile_template_item_meta_property()
     reconcile_template_ticket()
 
 

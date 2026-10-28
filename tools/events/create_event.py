@@ -180,11 +180,20 @@ def main() -> None:
         venue_display = "*To be announced*"
 
     if check_event_exists(target_slug):
-        logger.error("Pretix event %r already exists. Aborting to prevent duplicates.", target_slug)
+        logger.error(
+            "Pretix event %r is already visible in the API token's event inventory. "
+            "Aborting to prevent duplicates.",
+            target_slug,
+        )
         raise SystemExit(1)
 
     if not check_event_exists(TEMPLATE_SLUG):
-        logger.error("Pretix template %r does not exist. Provision the environment first.", TEMPLATE_SLUG)
+        logger.error(
+            "Pretix template %r is not visible in the API token's event inventory. "
+            "It may be missing, or this token may not have permission to view it. "
+            "Check the template slug and the token team's event-read permissions.",
+            TEMPLATE_SLUG,
+        )
         raise SystemExit(1)
     team_name = f"{ORGANISER_TEAM_PREFIX} - {city_title}"
     if not any(team.get("name") == team_name for team in pretix_list_all("teams")):
@@ -339,8 +348,15 @@ Questions? Talk proposals? Need a ride? Reply below — this topic is your space
                 "meta_data": {"forum_topic_url": forum_url},
             },
         )
-    except ApiError:
+    except ApiError as exc:
         discourse_req("DELETE", f"posts/{post_id}.json")
+        if "Pretix POST events failed: 403" in str(exc):
+            raise ApiError(
+                f"Pretix denied event creation for {target_slug!r} (POST events/ returned 403). "
+                "The read-only event inventory check passed, so this is a create-permission "
+                "failure. Grant organizer.events:create to the API token's team. "
+                f"The draft Forum post was removed. Pretix response: {exc}"
+            ) from exc
         raise
 
     if not pretix_event or not isinstance(pretix_event, dict):

@@ -712,7 +712,7 @@ class TestProvisioningPermissions:
             ]
         )
 
-    def test_pretix_teams_require_two_factor_authentication(self, monkeypatch):
+    def test_pretix_teams_do_not_require_pretix_two_factor_authentication(self, monkeypatch):
         from tools.environment import provision_environment
 
         requests = []
@@ -745,7 +745,7 @@ class TestProvisioningPermissions:
 
         team_creations = [payload for method, endpoint, payload in requests if method == "POST" and endpoint == "teams"]
         assert len(team_creations) == len(provision_environment.CITIES) + 1
-        assert all(team["require_2fa"] is True for team in team_creations)
+        assert all(team["require_2fa"] is False for team in team_creations)
 
     def test_template_ticket_reconciles_item_and_quota_drift(self, monkeypatch):
         from tools.environment import provision_environment
