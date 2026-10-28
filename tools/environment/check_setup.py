@@ -760,9 +760,7 @@ class SetupChecker:
         self, name: str, target: str, expected: Mapping[str, Any], actual: Mapping[str, Any], next_step: str
     ) -> None:
         differences = [
-            key
-            for key, value in expected.items()
-            if key not in actual or not self._same(actual[key], value, field=key)
+            key for key, value in expected.items() if key not in actual or not self._same(actual[key], value, field=key)
         ]
         if differences:
             self.add("FAIL", name, target, "Values differ or are missing for: " + ", ".join(differences), next_step)

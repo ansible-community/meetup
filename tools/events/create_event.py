@@ -184,8 +184,7 @@ def main() -> None:
 
     if check_event_exists(target_slug):
         logger.error(
-            "Pretix event %r is already visible in the API token's event inventory. "
-            "Aborting to prevent duplicates.",
+            "Pretix event %r is already visible in the API token's event inventory. Aborting to prevent duplicates.",
             target_slug,
         )
         raise SystemExit(1)
