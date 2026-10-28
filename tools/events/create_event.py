@@ -36,13 +36,13 @@ from tools.common.ansible_events_lib import (
 )
 
 
-def print_social_media_copy(*, city: str, dt: datetime, forum_url: str) -> None:
+def print_social_media_copy(*, city: str, dt: datetime, event_url: str) -> None:
     """Print ready-to-share event copy for supported social platforms.
 
     Args:
         city: Canonical city display name.
         dt: Event-local start date and time.
-        forum_url: Canonical Discourse event topic URL.
+        event_url: Forum topic URL when Forum posting is enabled, otherwise the Pretix event URL.
     """
     print("\n" + "=" * 80)
     print("SOCIAL MEDIA COPY (ready to paste)")
@@ -50,17 +50,17 @@ def print_social_media_copy(*, city: str, dt: datetime, forum_url: str) -> None:
 
     print("📱 X / TWITTER:")
     print("-" * 40)
-    twitter_text = f"Join us at {EVENT_NAME_PREFIX} {city} on {dt.strftime('%B %d')}! Connect with automation enthusiasts, share knowledge, and level up your Ansible skills. #Ansible #Meetup #OpenSource\n\n{forum_url}"
+    twitter_text = f"Join us at {EVENT_NAME_PREFIX} {city} on {dt.strftime('%B %d')}! Connect with automation enthusiasts, share knowledge, and level up your Ansible skills. #Ansible #Meetup #OpenSource\n\n{event_url}"
     if len(twitter_text) > 280:
-        twitter_text = f"{EVENT_NAME_PREFIX} {city} - {dt.strftime('%B %d')}! Join us for automation talks, networking & community. #Ansible #Meetup #OpenSource\n\n{forum_url}"
+        twitter_text = f"{EVENT_NAME_PREFIX} {city} - {dt.strftime('%B %d')}! Join us for automation talks, networking & community. #Ansible #Meetup #OpenSource\n\n{event_url}"
     print(twitter_text)
     print(f"({len(twitter_text)} chars)\n")
 
     print("🦋 BLUESKY:")
     print("-" * 40)
-    bluesky_text = f"Calling all automation enthusiasts! Join us at {EVENT_NAME_PREFIX} {city} on {dt.strftime('%B %d, %Y')}. Learn, share, and connect with the community. #Ansible #DevOps #Automation\n\n{forum_url}"
+    bluesky_text = f"Calling all automation enthusiasts! Join us at {EVENT_NAME_PREFIX} {city} on {dt.strftime('%B %d, %Y')}. Learn, share, and connect with the community. #Ansible #DevOps #Automation\n\n{event_url}"
     if len(bluesky_text) > 300:
-        bluesky_text = f"{EVENT_NAME_PREFIX} {city} - {dt.strftime('%B %d')}! Automation talks, networking & community. #Ansible #DevOps #Automation\n\n{forum_url}"
+        bluesky_text = f"{EVENT_NAME_PREFIX} {city} - {dt.strftime('%B %d')}! Automation talks, networking & community. #Ansible #DevOps #Automation\n\n{event_url}"
     print(bluesky_text)
     print(f"({len(bluesky_text)} chars)\n")
 
@@ -73,7 +73,7 @@ Whether you're an Ansible expert or just getting started, join us for:
 🤝 Networking with local DevOps engineers
 💡 Q&A with experienced practitioners
 
-RSVP & details: {forum_url}
+RSVP & details: {event_url}
 
 #Ansible #Meetup #DevOps #Automation #OpenSource #InfrastructureAsCode"""
     print(mastodon_text)
@@ -93,7 +93,7 @@ This is a fantastic opportunity to:
 
 Whether you're already using Ansible in production or just exploring automation tools, you'll find valuable insights and connections at this event.
 
-RSVP and event details: {forum_url}
+RSVP and event details: {event_url}
 
 Tag someone who should join us! #Ansible #DevOps #Automation #InfrastructureAsCode #CommunityMeetup"""
     print(linkedin_text)
@@ -107,7 +107,7 @@ Hey r/ansible! We're organizing a local meetup for the Ansible community in {cit
 
 We'll have talks from community members sharing their real-world experiences, time for networking, and Q&A. Whether you're deep into Ansible automation or just getting started, it's a great chance to connect with others doing similar work.
 
-Event details and RSVP: {forum_url}
+Event details and RSVP: {event_url}
 
 Feel free to reach out if you have questions or want to propose a talk topic!"""
     print(reddit_text + "\n")
@@ -116,7 +116,7 @@ Feel free to reach out if you have questions or want to propose a talk topic!"""
     print("-" * 40)
     hn_text = f"Ansible Community Meetup – {city} ({dt.strftime('%B %Y')})"
     print(hn_text)
-    print(f"{forum_url}\n")
+    print(f"{event_url}\n")
 
     print("=" * 80)
     print("END OF SOCIAL MEDIA COPY")
@@ -124,12 +124,13 @@ Feel free to reach out if you have questions or want to propose a talk topic!"""
 
 
 def main() -> None:
-    """Validate event inputs and create the linked Forum and Pretix event."""
-    parser = argparse.ArgumentParser(description="Generate an Ansible Meetup with Discourse Calendar integration.")
+    """Validate event inputs and create a Pretix event, optionally with a Forum topic."""
+    parser = argparse.ArgumentParser(description="Create an Ansible Meetup Pretix event.")
     parser.add_argument("--city", required=True, help="Registered lowercase city slug, e.g. london")
     parser.add_argument("--date", required=True, help="Event local time (e.g., '2026-10-31T18:00:00')")
     parser.add_argument("--capacity", required=True, type=int, help="Venue capacity limit")
-    parser.add_argument("--organiser", required=True, help="Discourse username of the local organiser")
+    parser.add_argument("--organiser", help="Discourse username of the local organiser (required with --forum)")
+    parser.add_argument("--forum", action="store_true", help="Create and link a Forum topic for this event")
     parser.add_argument("--venue", default=None, help="Venue name (e.g., 'Metro Bank Offices')")
     parser.add_argument("--address", default=None, help="Venue address (e.g., '1 Southampton Row, London WC1B 5HA')")
     args = parser.parse_args()
@@ -146,24 +147,26 @@ def main() -> None:
         parser.error("--date must be local time without a timezone offset")
     if args.capacity <= 0:
         parser.error("--capacity must be a positive integer")
-    if not re.fullmatch(r"[a-zA-Z0-9_.-]+", args.organiser):
+    if args.forum and not args.organiser:
+        parser.error("--organiser is required when --forum is used")
+    if args.organiser and not re.fullmatch(r"[a-zA-Z0-9_.-]+", args.organiser):
         parser.error("--organiser must be a valid Discourse username")
 
-    pre_flight_checks()
+    pre_flight_checks(require_discourse=args.forum)
 
     event_timezone = city_info.timezone
     city_title = city_info.city
     city_slug = city_info.slug
-    expected_group = f"{ORGANISERS_GROUP_PREFIX}-{city_slug}"
+    if args.forum:
+        expected_group = f"{ORGANISERS_GROUP_PREFIX}-{city_slug}"
+        logger.info("Validating organiser @%s...", args.organiser)
+        if not discourse_user_exists(args.organiser):
+            logger.error("Discourse user %r does not exist.", args.organiser)
+            raise SystemExit(1)
 
-    logger.info("Validating organiser @%s...", args.organiser)
-    if not discourse_user_exists(args.organiser):
-        logger.error("Discourse user %r does not exist.", args.organiser)
-        raise SystemExit(1)
-
-    if not discourse_user_in_group(args.organiser, expected_group):
-        logger.error("User %r is not in group %r. Add them to the group first.", args.organiser, expected_group)
-        raise SystemExit(1)
+        if not discourse_user_in_group(args.organiser, expected_group):
+            logger.error("User %r is not in group %r. Add them to the group first.", args.organiser, expected_group)
+            raise SystemExit(1)
 
     end_dt = dt + timedelta(hours=3)
 
@@ -199,9 +202,8 @@ def main() -> None:
     if not any(team.get("name") == team_name for team in pretix_list_all("teams")):
         logger.error("Pretix team %r does not exist. Provision the environment first.", team_name)
         raise SystemExit(1)
-    city_category_id = discourse_city_category_id(city_title)
-
-    logger.info("Drafting initial forum post on behalf of @%s...", args.organiser)
+    city_category_id = discourse_city_category_id(city_title) if args.forum else None
+    organiser_display = f"@{args.organiser}" if args.organiser else "Ansible Community"
 
     initial_markdown = f"""[event start="{start_str}" end="{end_str}" timezone="{event_timezone}" minimal="true" name="{event_name}" url="https://link-pending.local"]
 [/event]
@@ -220,13 +222,13 @@ Join us for an evening of automation, collaboration, and community! Whether you'
 | **Time** | {dt.strftime("%H:%M")} - {end_dt.strftime("%H:%M")} ({event_timezone}) |
 | **Venue** | {venue_display} |
 | **Cost** | Free |
-| **Organiser** | @{args.organiser} |
+| **Organiser** | {organiser_display} |
 
 ### Agenda
 
 | Time | Topic | Speaker |
 |------|-------|---------|
-| {dt.strftime("%H:%M")} | Welcome & introductions | @{args.organiser} |
+| {dt.strftime("%H:%M")} | Welcome & introductions | {organiser_display} |
 | *TBD* | *Open for proposals* | *Your name here!* |
 | *TBD* | *Open for proposals* | *Your name here!* |
 | {end_dt.strftime("%H:%M")} | Wrap-up & networking | |
@@ -235,7 +237,7 @@ Join us for an evening of automation, collaboration, and community! Whether you'
 
 *Organisers: update this section as speakers are confirmed.*
 
-**@{args.organiser}** — *Meetup organiser. [Edit to add a short bio.]*
+**{organiser_display}** — *Meetup organiser. [Edit to add a short bio.]*
 
 <!-- Copy this block for each confirmed speaker:
 **@username** — *Brief bio: role, company, what they're passionate about in automation.*
@@ -276,7 +278,7 @@ Questions? Talk proposals? Need a ride? Reply below — this topic is your space
 
 [Browse all Ansible Community Meetups]({EVENTS_FORUM_URL}) | [Code of Conduct]({CODE_OF_CONDUCT_URL})
 
-*Organised by @{args.organiser} on behalf of the Ansible Community.*
+*Organised by {organiser_display} on behalf of the Ansible Community.*
 """
 
     import json as json_mod
@@ -313,92 +315,97 @@ Questions? Talk proposals? Need a ride? Reply below — this topic is your space
 
     initial_markdown += f'\n<script type="application/ld+json">\n{json_mod.dumps(jsonld, indent=2)}\n</script>\n'
 
-    topic_resp = discourse_req(
-        "POST",
-        "posts.json",
-        {
-            "title": f"{EVENT_NAME_PREFIX}: {city_title} - {dt.strftime('%B %Y')}",
-            "raw": initial_markdown,
-            "category": city_category_id,
-        },
-        run_as=args.organiser,
-    )
+    post_id = None
+    forum_url = None
+    if args.forum:
+        logger.info("Drafting initial forum post on behalf of %s...", organiser_display)
+        topic_resp = discourse_req(
+            "POST",
+            "posts.json",
+            {
+                "title": f"{EVENT_NAME_PREFIX}: {city_title} - {dt.strftime('%B %Y')}",
+                "raw": initial_markdown,
+                "category": city_category_id,
+            },
+            run_as=args.organiser,
+        )
 
-    if not topic_resp or not isinstance(topic_resp, dict):
-        logger.error("Failed to create Discourse topic. Aborting Pretix creation.")
-        raise SystemExit(1)
+        if not topic_resp or not isinstance(topic_resp, dict):
+            logger.error("Failed to create Discourse topic. Aborting Pretix creation.")
+            raise SystemExit(1)
 
-    post_id = topic_resp["id"]
-    forum_url = f"{DISCOURSE_URL}/t/{topic_resp['topic_slug']}/{topic_resp['topic_id']}"
-    logger.info("Forum post created: %s", forum_url)
+        post_id = topic_resp["id"]
+        forum_url = f"{DISCOURSE_URL}/t/{topic_resp['topic_slug']}/{topic_resp['topic_id']}"
+        logger.info("Forum post created: %s", forum_url)
 
     logger.info("Cloning Pretix event from %r...", TEMPLATE_SLUG)
 
+    event_payload = {
+        "name": {"en": event_name},
+        "slug": target_slug,
+        "date_from": args.date,
+        "date_to": end_dt.strftime("%Y-%m-%dT%H:%M:%S"),
+        "timezone": event_timezone,
+        "clone_from": TEMPLATE_SLUG,
+        "meta_data": {"forum_topic_url": forum_url} if forum_url is not None else {},
+    }
+
     try:
-        pretix_event = pretix_req(
-            "POST",
-            "events",
-            {
-                "name": {"en": event_name},
-                "slug": target_slug,
-                "date_from": args.date,
-                "date_to": end_dt.strftime("%Y-%m-%dT%H:%M:%S"),
-                "timezone": event_timezone,
-                "clone_from": TEMPLATE_SLUG,
-                "meta_data": {"forum_topic_url": forum_url},
-            },
-        )
+        pretix_event = pretix_req("POST", "events", event_payload)
     except ApiError as exc:
-        discourse_req("DELETE", f"posts/{post_id}.json")
+        if post_id is not None:
+            discourse_req("DELETE", f"posts/{post_id}.json")
         if "Pretix POST events failed: 403" in str(exc):
+            cleanup_note = "The draft Forum post was removed. " if post_id is not None else ""
             raise ApiError(
                 f"Pretix denied event creation for {target_slug!r} (POST events/ returned 403). "
                 "The read-only event inventory check passed, so this is a create-permission "
-                "failure. Grant organizer.events:create to the API token's team. "
-                f"The draft Forum post was removed. Pretix response: {exc}"
+                f"failure. Grant organizer.events:create to the API token's team. {cleanup_note}"
+                f"Pretix response: {exc}"
             ) from exc
         raise
 
     if not pretix_event or not isinstance(pretix_event, dict):
         logger.error("Failed to create Pretix event.")
-        # Compensate for the first mutation so a failed event creation does
-        # not leave a public topic with a permanently broken RSVP link.
-        discourse_req("DELETE", f"posts/{post_id}.json")
+        # Remove the Forum topic if one was created before a failed event creation.
+        if post_id is not None:
+            discourse_req("DELETE", f"posts/{post_id}.json")
         raise SystemExit(1)
 
     final_slug = pretix_event.get("slug")
     pretix_public_url = f"{PRETIX_URL}/{ORGANIZER_SLUG}/{final_slug}/"
     logger.info("Pretix event created: %s", pretix_public_url)
 
-    logger.info("Updating Discourse post with forum and RSVP links...")
+    if args.forum:
+        logger.info("Updating Discourse post with forum and RSVP links...")
 
-    jsonld["url"] = forum_url
-    offers["url"] = pretix_public_url
-    updated_jsonld = f'<script type="application/ld+json">\n{json_mod.dumps(jsonld, indent=2)}\n</script>'
+        jsonld["url"] = forum_url
+        offers["url"] = pretix_public_url
+        updated_jsonld = f'<script type="application/ld+json">\n{json_mod.dumps(jsonld, indent=2)}\n</script>'
 
-    final_markdown = (
-        initial_markdown.replace(
-            'url="https://link-pending.local"',
-            f'url="{forum_url}"',
+        final_markdown = (
+            initial_markdown.replace(
+                'url="https://link-pending.local"',
+                f'url="{forum_url}"',
+            )
+            .replace(
+                "*[RSVP link pending...]*",
+                f"**[Click here to RSVP via Pretix]({pretix_public_url})**",
+            )
+            .replace(
+                "RSVP: [link]",
+                f"RSVP: {forum_url}",
+            )
         )
-        .replace(
-            "*[RSVP link pending...]*",
-            f"**[Click here to RSVP via Pretix]({pretix_public_url})**",
-        )
-        .replace(
-            "RSVP: [link]",
-            f"RSVP: {forum_url}",
-        )
-    )
 
-    final_markdown = re.sub(
-        r'<script type="application/ld\+json">.*?</script>',
-        updated_jsonld,
-        final_markdown,
-        flags=re.DOTALL,
-    )
+        final_markdown = re.sub(
+            r'<script type="application/ld\+json">.*?</script>',
+            updated_jsonld,
+            final_markdown,
+            flags=re.DOTALL,
+        )
 
-    discourse_req("PUT", f"posts/{post_id}.json", {"post": {"raw": final_markdown}}, run_as=args.organiser)
+        discourse_req("PUT", f"posts/{post_id}.json", {"post": {"raw": final_markdown}}, run_as=args.organiser)
 
     logger.info("Adjusting venue capacity to %d...", args.capacity)
     quotas = pretix_req("GET", f"events/{final_slug}/quotas")
@@ -438,17 +445,18 @@ Questions? Talk proposals? Need a ride? Reply below — this topic is your space
             },
         )
 
-    logger.info("Setting wallet pass back field to forum URL...")
-    items_for_pass = pretix_req("GET", f"events/{final_slug}/items")
-    if items_for_pass and isinstance(items_for_pass, dict):
-        for item in items_for_pass.get("results", []):
-            pretix_req(
-                "PATCH",
-                f"events/{final_slug}/items/{item['id']}",
-                {
-                    "meta_data": {"pretix_passbook_backfield": f"Event details and discussion: {forum_url}"},
-                },
-            )
+    if forum_url is not None:
+        logger.info("Setting wallet pass back field to forum URL...")
+        items_for_pass = pretix_req("GET", f"events/{final_slug}/items")
+        if items_for_pass and isinstance(items_for_pass, dict):
+            for item in items_for_pass.get("results", []):
+                pretix_req(
+                    "PATCH",
+                    f"events/{final_slug}/items/{item['id']}",
+                    {
+                        "meta_data": {"pretix_passbook_backfield": f"Event details and discussion: {forum_url}"},
+                    },
+                )
 
     logger.info("Publishing Pretix event...")
     pretix_req("PATCH", f"events/{final_slug}", {"live": True})
@@ -478,7 +486,7 @@ Questions? Talk proposals? Need a ride? Reply below — this topic is your space
             break
 
     logger.info("--- EVENT SUCCESSFULLY PROVISIONED ---")
-    print_social_media_copy(city=city_title, dt=dt, forum_url=forum_url)
+    print_social_media_copy(city=city_title, dt=dt, event_url=forum_url or pretix_public_url)
 
 
 if __name__ == "__main__":

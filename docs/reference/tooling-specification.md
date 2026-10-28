@@ -108,7 +108,7 @@ A frozen, slotted dataclass representing a meetup city.
 
 ### 3.2 API Results and Errors
 
-`pretix_req` and `discourse_req` return `dict[str, Any]` for JSON responses and `{}` for successful empty responses. Network errors, non-success status codes, invalid JSON, and non-object JSON raise `ApiError`; they are never represented as `None` or `False`. The CLI boundary catches `ApiError`, reports a concise failure, and exits non-zero. `check_event_exists` returns a boolean only for confirmed HTTP `200` or `404` responses.
+`pretix_req` and `discourse_req` return `dict[str, Any]` for JSON responses and `{}` for successful empty responses. Network errors, non-success status codes, invalid JSON, and non-object JSON raise `ApiError`; they are never represented as `None` or `False`. The CLI boundary catches `ApiError`, reports a concise failure, and exits non-zero. `check_event_exists` checks the paginated organizer event inventory visible to the configured API token; it does not use detail lookups, which can return 403 for either missing or inaccessible events.
 
 ### 3.3 Master Template
 
@@ -241,13 +241,15 @@ Pretix teams do not require Pretix-managed 2FA. Privileged SSO logins require Fo
 
 ### 4.2 Event Creation (`tools.events.create_event`)
 
-**Purpose:** Provision a complete meetup: Discourse topic + Pretix event + social media copy. City input must be a registered lowercase ASCII slug.
+**Purpose:** Provision a Pretix event and social media copy. Forum topic creation and cross-linking are opt-in with `--forum`. City input must be a registered lowercase ASCII slug.
 
-Run it from the repository root. The command below is an example; choose a registered city, local date/time, capacity, and Forum username for the event:
+Run it from the repository root. The default command creates a Pretix event without a Forum post:
 
 ```console
-uv run python -m tools.events.create_event --city london --date 2026-10-31T18:00:00 --capacity 100 --organiser FORUM_USERNAME
+uv run python -m tools.events.create_event --city london --date 2026-10-31T18:00:00 --capacity 100
 ```
+
+Add `--forum --organiser FORUM_USERNAME` to create a Forum topic and link it to Pretix.
 
 **CLI Arguments:**
 
@@ -256,7 +258,8 @@ uv run python -m tools.events.create_event --city london --date 2026-10-31T18:00
 | `--city` | Yes | string | `^[a-z]+$`; must resolve in `CITIES` | `london` |
 | `--date` | Yes | string | Event local time, ISO-8601 parsed by `datetime.fromisoformat` | `2026-10-31T18:00:00` |
 | `--capacity` | Yes | int | `argparse type=int` enforcement | `100` |
-| `--organiser` | Yes | string | Discourse username; must be a member of the registered city's organiser group | `gundalow` |
+| `--organiser` | With `--forum` | string | Discourse username; must be a member of the registered city's organiser group | `gundalow` |
+| `--forum` | No | flag | Create and link a Forum topic; without it, no Forum API requests or posts are made | `--forum` |
 
 **Derived Values:**
 
@@ -272,33 +275,33 @@ uv run python -m tools.events.create_event --city london --date 2026-10-31T18:00
 **Phase 0: Validation and Pre-flight**
 
 - Reject city names outside `^[a-z]+$` and names absent from `CITIES` before API calls.
-- Parse local date and validate positive capacity and organiser username before API calls. Verify organiser, exact organiser-group membership, template, Pretix team, and API availability before mutations.
-- `check_event_exists` returns `True`/`False` only for confirmed `200`/`404`; other statuses and network failures raise `ApiError`.
+- Parse local date and validate positive capacity before API calls. With `--forum`, also require and validate the organiser username, exact organiser-group membership, and Forum API availability.
+- `check_event_exists` checks the paginated event inventory visible to the configured API token.
 - Require HTTPS for `PRETIX_URL` except localhost and loopback development endpoints.
 
 - Check if `target_slug` already exists in Pretix via `check_event_exists(target_slug)`.
 - If it exists, **abort** (exit 1) with a clear error. API failures are not interpreted as absence.
 
-**Phase 1: Create Discourse Topic**
+**Optional Phase 1: Create Discourse Topic (`--forum`)**
 
 - `POST /posts.json`
 - Headers: `Api-Username: {organiser}` (impersonation)
 - Resolve the exact city subcategory under parent category `8` by name. Abort if missing or ambiguous.
 - Payload: `{"title": "Ansible Meetup: {City} - {Month Year}", "raw": {initial_markdown}, "category": {city_category_id}}`
-- **MUST abort** (exit 1) if this fails. No Pretix event should be created without a forum topic.
+- **MUST abort** (exit 1) if this fails. When `--forum` is selected, no Pretix event is created without its Forum topic.
 - Extract `post_id`, `topic_slug`, and `topic_id` from response.
 - Construct `forum_url = f"{DISCOURSE_URL}/t/{topic_slug}/{topic_id}"`
 
 **Phase 2: Create Pretix Event**
 
 - `POST /api/v1/organizers/ansible-meetups/events/`
-- Payload: `{"name": {"en": event_name}, "slug": target_slug, "date_from": date, "date_to": end_date, "timezone": event_timezone, "clone_from": "ansible-meetup-template-v6", "meta_data": {"forum_topic_url": forum_url}}`
+- Payload includes the name, slug, dates, timezone, `clone_from`, and `meta_data`. With `--forum`, `meta_data` contains `forum_topic_url`; otherwise it is empty so no Forum backlink is inherited.
 - **MUST abort** (exit 1) if this fails.
 - If event creation fails after topic creation, attempt to delete the topic. If the result has no ID or cleanup fails, report that the operator must inspect and remove any orphan before retrying.
 - Extract `final_slug` from response (may differ from `target_slug` if Pretix appends a suffix).
 - Construct `pretix_public_url = f"{PRETIX_URL}/{ORGANIZER_SLUG}/{final_slug}/"`
 
-**Phase 3: Update Discourse Post**
+**Optional Phase 3: Update Discourse Post (`--forum`)**
 
 - Replace placeholder URL in event block: `url="https://link-pending.local"` → `url="{forum_url}"`
 - Replace RSVP placeholder: `*[RSVP link pending...]*` → `**[Click here to RSVP via Pretix]({pretix_public_url})**`
@@ -317,11 +320,15 @@ uv run python -m tools.events.create_event --city london --date 2026-10-31T18:00
   - If no items: create one (`POST .../items/` → `{"name": {"en": "RSVP"}, "default_price": "0.00", "active": true, "admission": true}`)
   - `POST .../quotas/` → `{"name": "Capacity", "size": capacity, "items": [item_id]}`
 
-**Phase 5: Publish**
+**Optional Phase 5: Set Wallet Pass Back Field (`--forum`)**
+
+- Update ticket item metadata with a link to the Forum topic. This is skipped when `--forum` is absent.
+
+**Phase 6: Publish**
 
 - `PATCH /api/v1/organizers/ansible-meetups/events/{slug}/` → `{"live": true}`
 
-**Phase 6: Assign Team**
+**Phase 7: Assign Team**
 
 - Fetch all teams using `pretix_list_all("teams")` (paginated).
 - Find team named `Ansible Meetup Organisers - {City}`.
@@ -329,7 +336,7 @@ uv run python -m tools.events.create_event --city london --date 2026-10-31T18:00
 - Event creation adds its new slug to the matching team's list; the provisioner later recomputes that list from event slugs.
 - `PATCH /api/v1/organizers/ansible-meetups/teams/{id}/` → `{"limit_events": [...], "all_event_permissions": false, "limit_event_permissions": ["event.orders:read", "event.orders:checkin"]}`
 
-**Phase 7: Social Media Copy**
+**Phase 8: Social Media Copy**
 
 - Print to stdout (not file, not API).
 - See Section 8 for full specification.
@@ -385,6 +392,7 @@ Trailing slash rules:
 | `PATCH` | `events/{slug}/settings` | Update template checkout settings |
 | `GET` | `events/{slug}/items` | List ticket items |
 | `POST` | `events/{slug}/items` | Create ticket item |
+| `PATCH` | `events/{slug}/items/{id}` | Set Forum link in wallet pass metadata (only with `--forum`) |
 | `GET` | `events/{slug}/quotas` | List quotas |
 | `POST` | `events/{slug}/quotas` | Create quota |
 | `PATCH` | `events/{slug}/quotas/{id}` | Update quota size |
@@ -421,8 +429,8 @@ Same typed contract as Pretix. Duplicate creation errors are not swallowed; prov
 | `POST` | `categories.json` | Create regional subcategory |
 | `GET` | `u/gundalow/invited/pending.json` | List pending invites for reconciliation |
 | `POST` | `invites.json` | Create city attendee invite link |
-| `POST` | `posts.json` | Create forum topic |
-| `PUT` | `posts/{id}.json` | Update post content |
+| `POST` | `posts.json` | Create forum topic (only with `--forum`) |
+| `PUT` | `posts/{id}.json` | Update post content (only with `--forum`) |
 
 **SSO Toolkit Additional Endpoints (urllib):**
 
@@ -442,7 +450,8 @@ Same typed contract as Pretix. Duplicate creation errors are not swallowed; prov
 | `--city` | `^[a-z]+$`, registered in `CITIES` | Reject before API calls or mutations |
 | `--date` | Valid ISO-8601 | `datetime.fromisoformat()` — raises `ValueError` |
 | `--capacity` | Integer | `argparse type=int` — rejects non-integers |
-| `--organiser` | Discourse username | Membership-checked, then used as the Discourse `Api-Username` |
+| `--organiser` | Optional Discourse username | Required with `--forum`; membership-checked, then used as the Discourse `Api-Username` |
+| `--forum` | Boolean flag | When present, create the Forum topic and backlinks; absent by default |
 
 ### SSO Security
 
@@ -466,7 +475,7 @@ The separate `meetup-pretix-discourse-auth` plugin owns SSO signature, nonce, ra
 
 ### Known Accepted Risks
 
-1. **`run_as` scope:** `create_event.py --organiser` impersonates the selected Discourse user when posting. Membership is validated first; API key scope remains important.
+1. **`run_as` scope:** `create_event.py --forum --organiser` impersonates the selected Discourse user when posting. Membership is validated first; API key scope remains important.
 
 ---
 
@@ -483,7 +492,7 @@ The forum post created by `create_event.py` has two distinct zones separated by 
 
 - `minimal="true"`: Shows compact event widget without Interested/Attending buttons.
 - No `status="public"`: Prevents RSVP buttons (RSVP is handled by Pretix).
-- `url` is initially a placeholder; replaced with the forum topic URL in Phase 3.
+- When `--forum` is enabled, `url` is initially a placeholder and is replaced with the Forum topic URL in Phase 3.
 
 **Zone 2: Forum Event Content**
 
@@ -519,9 +528,9 @@ Have questions? Want to propose a talk? ...
 | Placeholder | Replacement |
 |---|---|
 | `url="https://link-pending.local"` | `url="{forum_url}"` |
-| RSVP and share placeholders | Link to the Pretix event and forum topic, respectively |
+| RSVP and share placeholders | With `--forum`, link to the Pretix event and Forum topic; otherwise use the Pretix event URL |
 
-The forum post remains the event content source. Pretix stores `forum_topic_url` as a backlink and does not receive a copy of the forum content.
+When `--forum` is enabled, the Forum post is the event content source. Pretix stores `forum_topic_url` as a backlink and does not receive a copy of the Forum content. Without the flag, no Forum post or backlink is created.
 
 ---
 
@@ -531,14 +540,14 @@ Generated after successful event provisioning. Printed to stdout for manual copy
 
 | Platform | Char Limit | Hashtags | Link Target | Fallback |
 |---|---|---|---|---|
-| **X / Twitter** | 280 | `#Ansible #Meetup #OpenSource` | Forum URL | Shorter text if over limit |
-| **Bluesky** | 300 | `#Ansible #DevOps #Automation` | Forum URL | Shorter text if over limit |
-| **Mastodon** | 500 | `#Ansible #Meetup #DevOps #Automation #OpenSource #InfrastructureAsCode` | Forum URL | None (always fits) |
-| **LinkedIn** | None | `#Ansible #DevOps #Automation #InfrastructureAsCode #CommunityMeetup` | Forum URL | None |
-| **Reddit** | None | None (markdown) | Forum URL | None |
-| **Hacker News** | None | None | Forum URL | Title only, link on separate line |
+| **X / Twitter** | 280 | `#Ansible #Meetup #OpenSource` | Forum URL with `--forum`, otherwise Pretix URL | Shorter text if over limit |
+| **Bluesky** | 300 | `#Ansible #DevOps #Automation` | Forum URL with `--forum`, otherwise Pretix URL | Shorter text if over limit |
+| **Mastodon** | 500 | `#Ansible #Meetup #DevOps #Automation #OpenSource #InfrastructureAsCode` | Forum URL with `--forum`, otherwise Pretix URL | None (always fits) |
+| **LinkedIn** | None | `#Ansible #DevOps #Automation #InfrastructureAsCode #CommunityMeetup` | Forum URL with `--forum`, otherwise Pretix URL | None |
+| **Reddit** | None | None (markdown) | Forum URL with `--forum`, otherwise Pretix URL | None |
+| **Hacker News** | None | None | Forum URL with `--forum`, otherwise Pretix URL | Title only, link on separate line |
 
-All platforms link to the **forum URL**, not the Pretix URL. The forum is the community hub.
+All platforms link to the Forum URL when a topic is created; otherwise they link directly to the Pretix event.
 
 X and Bluesky include a fallback mechanism: if the primary text exceeds the character limit, a shorter version is used. Character count is printed after each payload.
 
@@ -635,9 +644,9 @@ Pretix requests and non-429 Forum/Meetup failures are not retried. Forum API req
 
 ### Recovery after Partial Failure
 
-`create_event.py` validates configuration and remote prerequisites before mutation. If Pretix event creation fails after the Discourse topic was created, it attempts to delete that topic. If cleanup fails, an operator must remove the orphan before retrying. Later API failures can still leave a partially configured event and must be resolved before announcing it.
+`create_event.py` validates configuration and remote prerequisites before mutation. When `--forum` is enabled and Pretix event creation fails after the Discourse topic was created, it attempts to delete that topic. If cleanup fails, an operator must remove the orphan before retrying. Later API failures can still leave a partially configured event and must be resolved before announcing it.
 
-The script aborts on API errors. Review the event and forum topic before announcing it; later mutations can leave partially configured resources that require operator repair.
+The script aborts on API errors. Review the event and, when `--forum` was used, the Forum topic before announcing it; later mutations can leave partially configured resources that require operator repair.
 
 ### Partial Pagination
 
@@ -669,7 +678,7 @@ All events use `"currency": "USD"` (inherited from the template). No per-city cu
 
 ### Q1: Partial Failure Compensation
 
-The script attempts compensating cleanup if Pretix event creation fails. If the cleanup API call also fails, delete the topic manually before retrying. Unknown Pretix event state is fatal and never treated as absence.
+With `--forum`, the script attempts compensating cleanup if Pretix event creation fails. If the cleanup API call also fails, delete the topic manually before retrying. Unknown Pretix event state is fatal and never treated as absence.
 
 ### Q2: Scale & Pagination
 
@@ -698,4 +707,4 @@ What are the Pretix instance's API rate limits? `provision_environment.py` makes
 
 ## Canonical documentation
 
-This specification is maintained in the Ansible Meetup documentation repository. The Forum event topic is the canonical event information page. It links to Pretix for RSVP, and Pretix stores a backlink to the Forum topic; event details do not synchronize between the systems.
+This specification is maintained in the Ansible Meetup documentation repository. When requested with `--forum`, the Forum event topic is the canonical event information page. It links to Pretix for RSVP, and Pretix stores a backlink to the Forum topic; event details do not synchronize between the systems.
