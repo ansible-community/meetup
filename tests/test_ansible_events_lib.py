@@ -391,14 +391,22 @@ class TestPretixApiContract:
         with pytest.raises(ansible_events_lib.ApiError, match="found 2"):
             ansible_events_lib.discourse_city_category_id("London")
 
-    def test_check_event_exists_distinguishes_confirmed_404_from_api_failure(self, monkeypatch):
+    def test_check_event_exists_uses_visible_event_inventory(self, monkeypatch):
         from tools.common import ansible_events_lib
 
-        response = Mock(status_code=404, text="Not found")
-        monkeypatch.setattr(ansible_events_lib.requests.Session, "request", Mock(return_value=response))
-        assert ansible_events_lib.check_event_exists("london-oct-2026") is False
-        response.status_code = 503
-        with pytest.raises(ansible_events_lib.ApiError):
+        monkeypatch.setattr(
+            ansible_events_lib,
+            "pretix_list_all",
+            lambda endpoint: [{"slug": "london-oct-2026"}] if endpoint == "events" else [],
+        )
+        assert ansible_events_lib.check_event_exists("london-oct-2026") is True
+        assert ansible_events_lib.check_event_exists("barcelona-oct-2026") is False
+
+        def unavailable(_endpoint):
+            raise ansible_events_lib.ApiError("Pretix events list returned 503")
+
+        monkeypatch.setattr(ansible_events_lib, "pretix_list_all", unavailable)
+        with pytest.raises(ansible_events_lib.ApiError, match="existence cannot be established"):
             ansible_events_lib.check_event_exists("london-oct-2026")
 
     def test_pretix_request_rejects_non_object_json(self, monkeypatch):
@@ -680,6 +688,7 @@ class TestProvisioningPermissions:
         monkeypatch.setattr(provision_environment, "pretix_req", request)
         monkeypatch.setattr(provision_environment, "reconcile_pretix_event_settings", lambda *_: None)
         monkeypatch.setattr(provision_environment, "reconcile_template_ticket", lambda: None)
+        monkeypatch.setattr(provision_environment, "reconcile_template_item_meta_property", lambda: None)
 
         provision_environment.reconcile_pretix_template([])
 
@@ -700,6 +709,7 @@ class TestProvisioningPermissions:
         monkeypatch.setattr(provision_environment, "pretix_req", unexpected_request)
         monkeypatch.setattr(provision_environment, "reconcile_pretix_event_settings", lambda *_: None)
         monkeypatch.setattr(provision_environment, "reconcile_template_ticket", lambda: None)
+        monkeypatch.setattr(provision_environment, "reconcile_template_item_meta_property", lambda: None)
 
         provision_environment.reconcile_pretix_template(
             [
