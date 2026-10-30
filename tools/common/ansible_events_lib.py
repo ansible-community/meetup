@@ -211,6 +211,13 @@ class CityInfo:
 CITIES: tuple[CityInfo, ...] = (
     CityInfo(region="Europe", country="UK", slug="london", city="London", timezone="Europe/London"),
     CityInfo(region="Europe", country="Spain", slug="barcelona", city="Barcelona", timezone="Europe/Madrid"),
+    CityInfo(
+        region="Americas",
+        country="Argentina",
+        slug="buenosaires",
+        city="Buenos Aires",
+        timezone="America/Argentina/Buenos_Aires",
+    ),
 )
 
 if len({city.slug for city in CITIES}) != len(CITIES):
