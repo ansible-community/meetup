@@ -5,6 +5,7 @@ from __future__ import annotations
 import datetime as dt
 import html
 import os
+import tempfile
 from dataclasses import dataclass
 from pathlib import Path
 from collections.abc import Iterable
@@ -15,6 +16,7 @@ from tools.common.ansible_events_lib import ApiError, discourse_req
 
 GROUP_MEMBERS_PAGE_SIZE = 200
 REPORT_OUTPUT_DIRECTORY = Path("tools/output")
+MEETUP_GROUP_SNAPSHOT_PATH = REPORT_OUTPUT_DIRECTORY / "meetup-groups.json"
 
 ReportCell = str | list[str]
 ReportRow = dict[str, ReportCell]
@@ -159,7 +161,7 @@ def _render_section(section: ReportSection) -> str:
 
 def render_html_report(title: str, sections: list[ReportSection], *, generated_at: dt.datetime) -> str:
     """Render report sections with a linked table of contents and sorted cell lists."""
-    generated_display = generated_at.astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+    generated_display = generated_at.astimezone(dt.UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
     toc = "\n".join(
         f'<li><a href="#{html.escape(section.anchor, quote=True)}">{html.escape(section.title)}</a></li>'
         for section in sections
@@ -191,20 +193,36 @@ def render_html_report(title: str, sections: list[ReportSection], *, generated_a
 </head>
 <body>
   <h1 id="report-title">{html.escape(title)}{_render_anchor_link("report-title", "Link to report heading")}</h1>
-  <p>Generated {html.escape(generated_display)}</p>
   <nav id="table-of-contents" aria-label="Table of contents">
     <h2 id="contents-heading">Contents{_render_anchor_link("contents-heading", "Link to contents heading")}</h2>
     <ul>{toc}</ul>
   </nav>
   {rendered_sections}
+  <footer><p>Generated {html.escape(generated_display)}</p></footer>
 </body>
 </html>
 """
 
 
-def write_private_html(content: str, output_path: Path) -> None:
-    """Write a private HTML report, refusing to overwrite an existing file."""
+def write_private_text(content: str, output_path: Path, *, overwrite: bool = False) -> None:
+    """Write a private text file, optionally replacing it atomically."""
     output_path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if overwrite:
+        descriptor, temporary_name = tempfile.mkstemp(prefix=f".{output_path.name}.", dir=output_path.parent)
+        temporary_path = Path(temporary_name)
+        try:
+            os.fchmod(descriptor, 0o600)
+            with os.fdopen(descriptor, "w", encoding="utf-8", newline="") as output_file:
+                descriptor = -1
+                output_file.write(content)
+            os.replace(temporary_path, output_path)
+        except Exception:
+            if descriptor >= 0:
+                os.close(descriptor)
+            temporary_path.unlink(missing_ok=True)
+            raise
+        return
+
     descriptor = os.open(output_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
     try:
         os.fchmod(descriptor, 0o600)
@@ -216,3 +234,8 @@ def write_private_html(content: str, output_path: Path) -> None:
             os.close(descriptor)
         output_path.unlink(missing_ok=True)
         raise
+
+
+def write_private_html(content: str, output_path: Path, *, overwrite: bool = False) -> None:
+    """Write a private HTML report, optionally replacing it atomically."""
+    write_private_text(content, output_path, overwrite=overwrite)

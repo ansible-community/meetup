@@ -14,6 +14,7 @@ from tools.common.ansible_events_lib import (
     MIGRATED_GROUP_NAME,
 )
 from tools.common import reporting
+from tools.meetup_pro import meetup_list_groups
 from tools.reports import audit_attendees, audit_organisers, generate_all
 
 
@@ -105,6 +106,81 @@ def test_user_badge_awards_returns_ids_and_rejects_invalid_values(monkeypatch: p
         reporting.user_badge_awards("alice")
 
 
+def test_fetch_all_groups_paginates_and_preserves_member_counts() -> None:
+    class MeetupClient:
+        def __init__(self) -> None:
+            self.responses = iter(
+                [
+                    {
+                        "data": {
+                            "proNetwork": {
+                                "groupsSearch": {
+                                    "edges": [
+                                        {
+                                            "node": {
+                                                "id": "1",
+                                                "name": "Ansible London",
+                                                "memberships": {"totalCount": 25},
+                                            }
+                                        }
+                                    ],
+                                    "pageInfo": {"hasNextPage": True, "endCursor": "next"},
+                                }
+                            }
+                        }
+                    },
+                    {
+                        "data": {
+                            "proNetwork": {
+                                "groupsSearch": {
+                                    "edges": [
+                                        {
+                                            "node": {
+                                                "id": "2",
+                                                "name": "Ansible Buenos Aires",
+                                                "memberships": {"totalCount": 12},
+                                            }
+                                        }
+                                    ],
+                                    "pageInfo": {"hasNextPage": False},
+                                }
+                            }
+                        }
+                    },
+                ]
+            )
+            self.variables: list[dict[str, object]] = []
+
+        def graphql(self, _query: str, variables: dict[str, object]) -> dict[str, object]:
+            self.variables.append(variables)
+            return next(self.responses)
+
+    client = MeetupClient()
+
+    groups = meetup_list_groups.fetch_all_groups(client)
+
+    assert [group["members"] for group in groups] == [25, 12]
+    assert [variables["cursor"] for variables in client.variables] == [None, "next"]
+
+
+def test_fetch_all_groups_rejects_missing_member_count() -> None:
+    class MeetupClient:
+        def graphql(self, _query: str, _variables: dict[str, object]) -> dict[str, object]:
+            return {
+                "data": {
+                    "proNetwork": {
+                        "groupsSearch": {
+                            "edges": [{"node": {"name": "Ansible London", "memberships": None}}],
+                            "pageInfo": {"hasNextPage": False},
+                        }
+                    }
+                }
+            }
+
+    with pytest.raises(RuntimeError, match="invalid member count"):
+        meetup_list_groups.fetch_all_groups(MeetupClient())
+
+
 def test_write_private_html_creates_restricted_file_and_refuses_overwrite(tmp_path: Path) -> None:
     destination = tmp_path / "report.html"
     reporting.write_private_html("<html>audit</html>", destination)
@@ -113,6 +189,10 @@ def test_write_private_html_creates_restricted_file_and_refuses_overwrite(tmp_pa
     assert destination.read_text(encoding="utf-8") == "<html>audit</html>"
     with pytest.raises(FileExistsError):
         reporting.write_private_html("<html>replacement</html>", destination)
+
+    reporting.write_private_html("<html>replacement</html>", destination, overwrite=True)
+    assert stat.S_IMODE(destination.stat().st_mode) == 0o600
+    assert destination.read_text(encoding="utf-8") == "<html>replacement</html>"
 
 
 def test_html_report_has_toc_anchors_and_sorted_bullet_cells() -> None:
@@ -133,6 +213,8 @@ def test_html_report_has_toc_anchors_and_sorted_bullet_cells() -> None:
     assert '<h1 id="report-title">Audit &amp; report' in document
     assert '<h2 id="contents-heading">Contents' in document
     assert "Back to table of contents" not in document
+    assert document.index("<footer>") > document.index("<table>")
+    assert "Generated 2026-10-26 00:00:00 UTC" in document
     assert "<li>Alpha</li><li>zeta</li>" in document
     assert "<li>London</li><li>Paris</li>" in document
     assert "&lt;alice&gt;" in document
@@ -155,25 +237,63 @@ def test_attendee_group_names_accepts_only_lowercase_alpha_city_slugs() -> None:
     ]
 
 
-def test_invite_link_usernames_paginates_and_ignores_non_link_invites(monkeypatch: pytest.MonkeyPatch) -> None:
-    responses = iter(
-        [
-            {"invites": [{"invite_source": "link", "user": {"username": "alice"}}, {"invite_source": "email"}]},
-            {"invites": [{"invite_source": "link", "user": {"username": "bob"}}]},
-            {"invites": []},
-        ]
+def test_invite_link_redemptions_reports_status_and_deduplicates_users(monkeypatch: pytest.MonkeyPatch) -> None:
+    now = dt.datetime(2026, 10, 30, tzinfo=dt.UTC)
+    metadata = {
+        "london-key": {
+            "description": "Join Ansible London",
+            "groups": {"meetup-attendee-london", MIGRATED_GROUP_NAME},
+            "list_status": "pending",
+            "created_at": now - dt.timedelta(days=1),
+            "expires_at": now + dt.timedelta(days=2),
+            "max_redemptions_allowed": 5000,
+            "redemption_count": 1,
+            "expired": False,
+            "grants_admin": False,
+            "grants_moderator": False,
+        },
+        "expired-key": {
+            "description": "Join Ansible Buenos Aires",
+            "groups": {"meetup-attendee-buenosaires", MIGRATED_GROUP_NAME},
+            "list_status": "expired",
+            "created_at": now - dt.timedelta(days=3),
+            "expires_at": now - dt.timedelta(days=1),
+            "max_redemptions_allowed": 5000,
+            "redemption_count": 2,
+            "expired": True,
+            "grants_admin": False,
+            "grants_moderator": False,
+        },
+    }
+    result = {
+        "success": True,
+        "errors": [],
+        "columns": ["invitee", "inviter", "invite_key"],
+        "rows": [
+            ["Alice", "gundalow", "london-key"],
+            ["alice", "gundalow", "london-key"],
+            ["Bob", "gundalow", "expired-key"],
+        ],
+        "result_count": 3,
+    }
+    monkeypatch.setattr(audit_attendees, "discourse_req", lambda *_args, **_kwargs: result)
+    monkeypatch.setattr(audit_attendees, "invite_metadata_by_key", lambda: metadata)
+
+    users_by_group, rows = audit_attendees.invite_link_redemptions(
+        [MIGRATED_GROUP_NAME, "meetup-attendee-london", "meetup-attendee-buenosaires"], now=now
     )
-    requests: list[tuple[str, str | None, dict[str, object]]] = []
 
-    def get_json(endpoint: str, *, run_as: str | None = None, **params: object) -> dict[str, object]:
-        requests.append((endpoint, run_as, params))
-        return next(responses)
-
-    monkeypatch.setattr(audit_attendees, "get_json", get_json)
-
-    assert audit_attendees.invite_link_usernames() == {"alice", "bob"}
-    assert [request[2]["offset"] for request in requests] == [0, 2, 3]
-    assert all(request[1] == "gundalow" for request in requests)
+    rows_by_invite = {row["Invite"]: row for row in rows}
+    london = rows_by_invite["Join Ansible London"]
+    buenos_aires = rows_by_invite["Join Ansible Buenos Aires"]
+    assert users_by_group["meetup-attendee-london"] == {"alice"}
+    assert users_by_group["meetup-attendee-buenosaires"] == {"bob"}
+    assert london["Link status (API)"] == "✓ Active (API)"
+    assert london["Group / role check"] == "✓ Correct"
+    assert london["Redemptions / limit"] == "1 / 5000"
+    assert london["Remaining uses"] == "4999"
+    assert london["Unique redemptions"] == "1"
+    assert buenos_aires["Link status (API)"] == "✗ Expired"
 
 
 def test_attendee_report_counts_cumulative_account_age_and_invite_percentage(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -369,7 +489,11 @@ def test_generate_all_collects_before_writing_and_uses_shared_timestamp(
     monkeypatch.setattr(
         generate_all, "group_members_by_name", lambda group_names: {name: {"alice"} for name in group_names}
     )
-    monkeypatch.setattr(generate_all, "invite_link_usernames", lambda: {"alice"})
+    monkeypatch.setattr(
+        generate_all,
+        "invite_link_redemptions",
+        lambda group_names, **_kwargs: ({name: {"alice"} for name in group_names}, []),
+    )
     monkeypatch.setattr(
         generate_all,
         "build_badges_report",
@@ -402,7 +526,7 @@ def test_generate_all_collects_before_writing_and_uses_shared_timestamp(
 
     monkeypatch.setattr(generate_all, "build_attendee_report", build_attendee)
 
-    def write(content: str, path: Path) -> None:
+    def write(content: str, path: Path, **_kwargs: object) -> None:
         written.append((content, path))
 
     monkeypatch.setattr(generate_all, "write_private_html", write)
@@ -410,9 +534,11 @@ def test_generate_all_collects_before_writing_and_uses_shared_timestamp(
     output = generate_all.generate_all_reports(destination)
 
     assert output == destination
-    assert len(written) == 1
+    assert len(written) == 2
     content, path = written[0]
     assert path == destination
+    assert written[1][0] == content
+    assert written[1][1] == generate_all.LATEST_REPORT_PATH
     assert 'href="#organiser-accounts"' in content
     assert 'href="#migrated-attendees"' in content
     assert 'href="#attendee-groups"' in content
@@ -447,9 +573,13 @@ def test_generate_all_api_failure_does_not_write_partial_reports(
     monkeypatch.setattr(
         generate_all, "group_members_by_name", lambda group_names: {name: {"alice"} for name in group_names}
     )
-    monkeypatch.setattr(generate_all, "invite_link_usernames", lambda: {"alice"})
+    monkeypatch.setattr(
+        generate_all,
+        "invite_link_redemptions",
+        lambda group_names, **_kwargs: ({name: {"alice"} for name in group_names}, []),
+    )
     monkeypatch.setattr(generate_all, "build_attendee_report", fail_attendee_report)
-    monkeypatch.setattr(generate_all, "write_private_html", lambda _content, path: writes.append(path))
+    monkeypatch.setattr(generate_all, "write_private_html", lambda _content, path, **_kwargs: writes.append(path))
 
     with pytest.raises(ApiError, match="simulated attendee API failure"):
         generate_all.generate_all_reports(tmp_path / "community.html")

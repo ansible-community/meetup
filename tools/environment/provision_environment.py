@@ -26,6 +26,7 @@ from tools.common.ansible_events_lib import (
     DISCOURSE_PARENT_CATEGORY_ID,
     EVENTS_FORUM_URL,
     MIGRATED_GROUP_NAME,
+    MEETUP_INVITE_DESCRIPTION_PREFIX,
     ORGANIZERS_GROUP_RE,
     ORGANISERS_GROUP_PREFIX,
     ORGANISER_PERMISSIONS,
@@ -173,7 +174,7 @@ def reconcile_attendee_invites() -> None:
     invite_targets = pending_invites_by_description(response)
 
     for city in CITIES:
-        description = f"Join Ansible {city.city}"
+        description = f"{MEETUP_INVITE_DESCRIPTION_PREFIX}{city.city}"
         target_groups = (city.attendee_group, MIGRATED_GROUP_NAME)
         if any(
             invite_description == description and set(target_groups).issubset(group_names)

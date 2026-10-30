@@ -9,11 +9,13 @@ import json
 from pathlib import Path
 from typing import Any
 
-from tools.common.ansible_events_lib import MIGRATED_GROUP_NAME, logger, pre_flight_checks
+from tools.common.ansible_events_lib import ATTENDEE_GROUP_PREFIX, MIGRATED_GROUP_NAME, logger, pre_flight_checks
 from tools.common.reporting import (
     ReportSection,
+    ReportRow,
     group_members_by_name,
     list_discourse_groups,
+    MEETUP_GROUP_SNAPSHOT_PATH,
     render_html_report,
     report_output_path,
     write_private_html,
@@ -29,7 +31,7 @@ from tools.reports.audit_attendees import (
 from tools.reports.audit_organisers import FIELDNAMES as ORGANISER_FIELDNAMES
 from tools.reports.audit_organisers import build_report as build_organiser_report
 
-MEETUP_GROUP_SNAPSHOT_PATH = Path("tools/output/meetup-groups.json")
+LATEST_REPORT_PATH = Path("tools/output/community-audit.html")
 MEETUP_GROUP_FIELDNAMES = [
     "Meetup Pro group",
     "City",
@@ -39,10 +41,21 @@ MEETUP_GROUP_FIELDNAMES = [
     "Forum group members",
     "Current members who redeemed city link",
 ]
+INVITE_FIELDNAMES = [
+    "Invite",
+    "Created (UTC)",
+    "Expires (UTC)",
+    "Groups",
+    "Link status (API)",
+    "Group / role check",
+    "Redemptions / limit",
+    "Remaining uses",
+    "Unique redemptions",
+]
 
 
 def read_meetup_group_snapshot(path: Path = MEETUP_GROUP_SNAPSHOT_PATH) -> dict[str, Any]:
-    """Read the private Meetup Pro group-count snapshot used by this report."""
+    """Read the tracked Meetup Pro group-count snapshot used by this report."""
     if not path.exists():
         raise FileNotFoundError(
             f"Meetup Pro group snapshot not found at {path}; "
@@ -66,10 +79,11 @@ def meetup_group_rows(
     attendee_groups: list[str],
     members_by_group: dict[str, set[str]],
     invite_users_by_group: dict[str, set[str]],
-) -> list[dict[str, str]]:
+) -> list[ReportRow]:
     """Join raw Meetup Pro group counts to matching Forum attendee groups."""
-    forum_groups_by_slug = {name.removeprefix("meetup-attendee-"): name for name in attendee_groups}
-    rows: list[dict[str, str]] = []
+    attendee_prefix = f"{ATTENDEE_GROUP_PREFIX}-"
+    forum_groups_by_slug = {name.removeprefix(attendee_prefix): name for name in attendee_groups}
+    rows: list[ReportRow] = []
     for source_group in snapshot["groups"]:
         if not isinstance(source_group, dict):
             raise ValueError("Meetup Pro group snapshot contains an invalid group")
@@ -103,14 +117,18 @@ def meetup_group_rows(
                 "Current members who redeemed city link": str(invite_members),
             }
         )
-    return sorted(rows, key=lambda row: (row["City"].casefold(), row["Meetup Pro group"].casefold()))
+    return sorted(
+        rows,
+        key=lambda row: (str(row["City"]).casefold(), str(row["Meetup Pro group"]).casefold()),
+    )
 
 
 def generate_all_reports(output_path: Path | None = None) -> Path:
     """Build each report separately and write both sections to one private HTML file."""
     generated_at = dt.datetime.now().astimezone()
     destination = output_path or report_output_path("community-audit", now=generated_at)
-    if destination.exists():
+    is_latest_report = destination.resolve() == LATEST_REPORT_PATH.resolve()
+    if destination.exists() and not is_latest_report:
         raise FileExistsError(f"Refusing to overwrite existing report: {destination}")
 
     meetup_snapshot = read_meetup_group_snapshot()
@@ -119,7 +137,7 @@ def generate_all_reports(output_path: Path | None = None) -> Path:
     attendee_group_list = attendee_group_names(groups)
     badge_group_names = list(dict.fromkeys([MIGRATED_GROUP_NAME, *attendee_group_list]))
     members_by_group = group_members_by_name(badge_group_names)
-    invite_users_by_group, invite_rows = invite_link_redemptions(badge_group_names)
+    invite_users_by_group, invite_rows = invite_link_redemptions(badge_group_names, now=generated_at)
     migrated_rows = build_attendee_report(
         [MIGRATED_GROUP_NAME], invite_users_by_group, now=generated_at, members_by_group=members_by_group
     )
@@ -140,7 +158,7 @@ def generate_all_reports(output_path: Path | None = None) -> Path:
         ReportSection(
             "Invite-link redemptions",
             "invite-link-redemptions",
-            ["Invite", "Groups", "Unique redemptions"],
+            INVITE_FIELDNAMES,
             invite_rows,
         ),
         ReportSection("Migrated attendees", "migrated-attendees", ATTENDEE_FIELDNAMES, migrated_rows),
@@ -148,22 +166,25 @@ def generate_all_reports(output_path: Path | None = None) -> Path:
         ReportSection("Attendee badges", "attendee-badges", BADGE_FIELDNAMES, badge_rows),
     ]
     content = render_html_report("Community Meetup audit", sections, generated_at=generated_at)
-    write_private_html(content, destination)
+    write_private_html(content, destination, overwrite=is_latest_report)
     logger.info("Wrote community audit report to %s", destination.resolve())
+    if not is_latest_report:
+        write_private_html(content, LATEST_REPORT_PATH, overwrite=True)
+    logger.info("Updated latest community audit report at %s", LATEST_REPORT_PATH.resolve())
     return destination
 
 
 def main() -> None:
     """Generate and save the combined community audit report."""
-    pre_flight_checks(require_discourse=True, require_pretix=False)
     parser = argparse.ArgumentParser(description="Generate the combined HTML Meetup audit report")
     parser.add_argument(
         "--output",
         type=Path,
         default=None,
-        help="HTML output path (default: timestamped tools/output file)",
+        help="HTML output path (default: timestamped tools/output file; also updates community-audit.html)",
     )
     args = parser.parse_args()
+    pre_flight_checks(require_discourse=True, require_pretix=False)
     generate_all_reports(args.output)
 
 

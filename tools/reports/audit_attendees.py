@@ -11,7 +11,10 @@ from tools.common.ansible_events_lib import (
     ATTENDEE_GROUP_PREFIX,
     BADGE_MEETUP_ATTENDEE,
     BADGE_MEETUP_MIGRATED,
+    CITIES,
     INVITE_API_USERNAME,
+    MIGRATED_GROUP_NAME,
+    MEETUP_INVITE_DESCRIPTION_PREFIX,
     ApiError,
     discourse_req,
     logger,
@@ -58,27 +61,6 @@ def attendee_group_names(groups: list[dict[str, Any]]) -> list[str]:
     return sorted(names)
 
 
-def invite_link_usernames() -> set[str]:
-    """List users who redeemed Forum invite links created by the Meetup account."""
-    usernames: set[str] = set()
-    offset = 0
-    while True:
-        endpoint = f"u/{INVITE_API_USERNAME}/invited/redeemed.json"
-        data = get_json(endpoint, run_as=INVITE_API_USERNAME, offset=offset)
-        invites = response_records(data, "invites", endpoint)
-        for invite in invites:
-            if invite.get("invite_source") != "link":
-                continue
-            user = invite.get("user")
-            username = user.get("username") if isinstance(user, dict) else None
-            if not isinstance(username, str) or not username:
-                raise ApiError("Discourse redeemed invite response contains a link invite without a username")
-            usernames.add(username)
-        if not invites:
-            return usernames
-        offset += len(invites)
-
-
 def _invite_key(invite: dict[str, Any]) -> str | None:
     """Get an invite key from an invite record, without exposing it in output."""
     key = invite.get("invite_key")
@@ -93,7 +75,7 @@ def _invite_key(invite: dict[str, Any]) -> str | None:
 
 
 def invite_metadata_by_key() -> dict[str, dict[str, Any]]:
-    """Look up gundalow's active and expired invite links by key."""
+    """Look up gundalow's pending and expired invite links by key."""
     metadata_by_key: dict[str, dict[str, Any]] = {}
     for status in ("pending", "expired"):
         offset = 0
@@ -119,9 +101,19 @@ def invite_metadata_by_key() -> dict[str, dict[str, Any]]:
                         raise ApiError("Discourse invite response contains an invalid group")
                     group_names.add(name)
                 description = invite.get("description")
+                if key in metadata_by_key:
+                    raise ApiError("Discourse returned a duplicate invite key")
                 metadata_by_key[key] = {
                     "description": description if isinstance(description, str) else "Unnamed invite",
                     "groups": group_names,
+                    "list_status": status,
+                    "created_at": parse_created_at(invite.get("created_at")),
+                    "expires_at": parse_created_at(invite.get("expires_at")),
+                    "max_redemptions_allowed": invite.get("max_redemptions_allowed"),
+                    "redemption_count": invite.get("redemption_count"),
+                    "expired": invite.get("expired"),
+                    "grants_admin": invite.get("grants_admin"),
+                    "grants_moderator": invite.get("grants_moderator"),
                 }
             if not invites:
                 break
@@ -131,8 +123,11 @@ def invite_metadata_by_key() -> dict[str, dict[str, Any]]:
 
 def invite_link_redemptions(
     group_names: list[str],
+    *,
+    now: dt.datetime | None = None,
 ) -> tuple[dict[str, set[str]], list[ReportRow]]:
-    """Attribute query 34 redemptions to gundalow invite descriptions and groups."""
+    """Attribute redemptions and validate gundalow's attendee invite links."""
+    report_time = (now or dt.datetime.now(dt.UTC)).astimezone(dt.UTC)
     endpoint = f"admin/plugins/explorer/queries/{INVITE_REDEMPTIONS_QUERY_ID}/run.json"
     result = discourse_req(
         "POST",
@@ -188,28 +183,86 @@ def invite_link_redemptions(
     if unmatched_invites:
         logger.warning("%d redeemed invite record(s) had no active or expired invite metadata", unmatched_invites)
 
-    users_by_description: dict[tuple[str, tuple[str, ...]], set[str]] = {}
-    for metadata in link_metadata.values():
-        invite_groups = tuple(sorted(wanted_groups.intersection(metadata["groups"]), key=str.casefold))
-        if invite_groups:
-            users_by_description.setdefault((metadata["description"], invite_groups), set())
-    for invite_key, invite_users in users_by_invite.items():
-        metadata = link_metadata[invite_key]
-        invite_groups = tuple(sorted(wanted_groups.intersection(metadata["groups"]), key=str.casefold))
-        if not invite_groups:
+    invite_rows: list[ReportRow] = []
+    city_by_slug = {city.slug: city for city in CITIES}
+    for invite_key, metadata in link_metadata.items():
+        all_invite_groups = sorted(metadata["groups"], key=str.casefold)
+        if not wanted_groups.intersection(all_invite_groups):
             continue
-        identity = (metadata["description"], invite_groups)
-        users_by_description.setdefault(identity, set()).update(invite_users)
-    invite_rows = [
-        {
-            "Invite": description,
-            "Groups": list(invite_groups),
-            "Unique redemptions": str(len(invite_users)),
-        }
-        for (description, invite_groups), invite_users in sorted(
-            users_by_description.items(), key=lambda item: item[0][0].casefold()
+
+        max_uses = metadata["max_redemptions_allowed"]
+        used = metadata["redemption_count"]
+        usage_valid = (
+            isinstance(max_uses, int)
+            and not isinstance(max_uses, bool)
+            and max_uses > 0
+            and isinstance(used, int)
+            and not isinstance(used, bool)
+            and 0 <= used <= max_uses
         )
-    ]
+        remaining = max_uses - used if usage_valid else None
+        expires_at = metadata["expires_at"]
+        if (
+            metadata["list_status"] == "expired"
+            or metadata["expired"] is True
+            or (expires_at is not None and expires_at <= report_time)
+        ):
+            link_status = "✗ Expired"
+        elif not usage_valid:
+            link_status = "✗ Usage limit unavailable"
+        elif remaining == 0:
+            link_status = "✗ No uses remaining"
+        elif metadata["list_status"] == "pending" and expires_at is not None:
+            link_status = "✓ Active (API)"
+        else:
+            link_status = "✗ Expiry unavailable"
+
+        # Migration links should add exactly the city's attendee group and the
+        # migration tracking group, with no staff role grants.
+        attendee_groups = [name for name in all_invite_groups if name.startswith(f"{ATTENDEE_GROUP_PREFIX}-")]
+        expected_description = None
+        if len(attendee_groups) == 1:
+            city_slug = attendee_groups[0].removeprefix(f"{ATTENDEE_GROUP_PREFIX}-")
+            city = city_by_slug.get(city_slug)
+            if city is not None:
+                expected_description = f"{MEETUP_INVITE_DESCRIPTION_PREFIX}{city.city}"
+        configuration_valid = (
+            len(attendee_groups) == 1
+            and set(all_invite_groups) == {attendee_groups[0], MIGRATED_GROUP_NAME}
+            and metadata["description"] == expected_description
+            and metadata["grants_admin"] is False
+            and metadata["grants_moderator"] is False
+        )
+        invite_rows.append(
+            {
+                "Invite": metadata["description"],
+                "Created (UTC)": metadata["created_at"].strftime("%Y-%m-%d %H:%M:%S")
+                if metadata["created_at"] is not None
+                else "Unknown",
+                "Expires (UTC)": expires_at.strftime("%Y-%m-%d %H:%M:%S") if expires_at is not None else "Unknown",
+                "Groups": all_invite_groups,
+                "Link status (API)": link_status,
+                "Group / role check": "✓ Correct" if configuration_valid else "✗ Check configuration",
+                "Redemptions / limit": f"{used} / {max_uses}" if usage_valid else "Unknown",
+                "Remaining uses": str(remaining) if remaining is not None else "Unknown",
+                "Unique redemptions": str(len(users_by_invite.get(invite_key, set()))),
+            }
+        )
+    invite_rows.sort(key=lambda row: (str(row["Invite"]).casefold(), str(row["Created (UTC)"])))
+    if unmatched_invites:
+        invite_rows.append(
+            {
+                "Invite": "Unmatched redemption rows (link may be exhausted or unavailable)",
+                "Created (UTC)": "—",
+                "Expires (UTC)": "Unknown",
+                "Groups": ["Unknown"],
+                "Link status (API)": "? Not validated",
+                "Group / role check": "? Not validated",
+                "Redemptions / limit": "Unknown",
+                "Remaining uses": "Unknown",
+                "Unique redemptions": str(unmatched_invites),
+            }
+        )
     return users_by_group, invite_rows
 
 
