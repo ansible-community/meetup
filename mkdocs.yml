@@ -51,6 +51,7 @@ nav:
       - Adding a city: community-team/adding-a-city.md
       - Creating an event: community-team/creating-an-event.md
       - Managing organisers: community-team/managing-organisers.md
+      - Community reports: community-team/reports.md
       - Troubleshooting: community-team/troubleshooting.md
   - Strategy: ansible_meetup_strategy.md
   - Reference and contributing:

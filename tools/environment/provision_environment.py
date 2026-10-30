@@ -26,6 +26,7 @@ from tools.common.ansible_events_lib import (
     DISCOURSE_PARENT_CATEGORY_ID,
     EVENTS_FORUM_URL,
     MIGRATED_GROUP_NAME,
+    MEETUP_INVITE_DESCRIPTION_PREFIX,
     ORGANIZERS_GROUP_RE,
     ORGANISERS_GROUP_PREFIX,
     ORGANISER_PERMISSIONS,
@@ -34,6 +35,7 @@ from tools.common.ansible_events_lib import (
     STAFF_TEAM_NAME,
     GROUP_VISIBILITY_OWNERS_ONLY,
     GROUP_VISIBILITY_STAFF_ONLY,
+    INVITE_API_USERNAME,
     PRIVACY_POLICY_URL,
     TEMPLATE_SLUG,
     USER_CITY_FIELD_ID,
@@ -48,7 +50,6 @@ from tools.common.ansible_events_lib import (
 
 CATEGORY_PERMISSION_FULL = 1
 CATEGORY_PERMISSION_CREATE_POST = 2
-INVITE_API_USERNAME = "gundalow"
 INVITE_PENDING_ENDPOINT = f"u/{INVITE_API_USERNAME}/invited/pending.json"
 INVITE_MAX_REDEMPTIONS = 5_000
 INVITE_EXPIRES_AT = "2030-01-01"
@@ -173,7 +174,7 @@ def reconcile_attendee_invites() -> None:
     invite_targets = pending_invites_by_description(response)
 
     for city in CITIES:
-        description = f"Join Ansible {city.city}"
+        description = f"{MEETUP_INVITE_DESCRIPTION_PREFIX}{city.city}"
         target_groups = (city.attendee_group, MIGRATED_GROUP_NAME)
         if any(
             invite_description == description and set(target_groups).issubset(group_names)

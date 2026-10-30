@@ -20,3 +20,7 @@ tmp/
 htmlcov/
 
 tools/cfgmgmtcamp/cfgmgmtcamp.*.md
+
+# Locally generated reports
+/tools/output/*
+!/tools/output/.gitkeep
