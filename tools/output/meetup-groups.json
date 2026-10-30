@@ -1,0 +1,339 @@
+{
+  "generated_at": "2026-10-30T10:01:54.789650+00:00",
+  "network": "ansible",
+  "groups": [
+    {
+      "id": "18537570",
+      "name": "Ansible Atlanta",
+      "urlname": "Ansible-Atlanta",
+      "city": "Atlanta",
+      "country": "us",
+      "members": 767,
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "19314505",
+      "name": "Ansible Auckland",
+      "urlname": "Ansible-Auckland",
+      "city": "Auckland",
+      "country": "nz",
+      "members": 345,
+      "timezone": "Pacific/Auckland"
+    },
+    {
+      "id": "18576301",
+      "name": "Ansible Barcelona",
+      "urlname": "Ansible-Barcelona",
+      "city": "Barcelona",
+      "country": "es",
+      "members": 484,
+      "timezone": "Europe/Madrid"
+    },
+    {
+      "id": "16343252",
+      "name": "Ansible Benelux",
+      "urlname": "Ansible-Benelux",
+      "city": "Amsterdam",
+      "country": "nl",
+      "members": 814,
+      "timezone": "Europe/Amsterdam"
+    },
+    {
+      "id": "18274585",
+      "name": "Ansible Berlin",
+      "urlname": "Ansible-Berlin",
+      "city": "Berlin",
+      "country": "de",
+      "members": 444,
+      "timezone": "Europe/Berlin"
+    },
+    {
+      "id": "16467002",
+      "name": "Ansible Boston",
+      "urlname": "Ansible-Boston",
+      "city": "Boston",
+      "country": "us",
+      "members": 554,
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "18634389",
+      "name": "Ansible Brno",
+      "urlname": "Ansible-Brno",
+      "city": "Brno",
+      "country": "cz",
+      "members": 176,
+      "timezone": "Europe/Prague"
+    },
+    {
+      "id": "18491704",
+      "name": "Ansible Buenos Aires",
+      "urlname": "ansible-buenos-aires",
+      "city": "Buenos Aires",
+      "country": "ar",
+      "members": 533,
+      "timezone": "America/Argentina/Buenos_Aires"
+    },
+    {
+      "id": "18465343",
+      "name": "Ansible Colombia",
+      "urlname": "ansible-colombia",
+      "city": "Medellín",
+      "country": "co",
+      "members": 363,
+      "timezone": "America/Bogota"
+    },
+    {
+      "id": "18604299",
+      "name": "Ansible Copenhagen",
+      "urlname": "Ansible-Copenhagen",
+      "city": "Copenhagen",
+      "country": "dk",
+      "members": 197,
+      "timezone": "Europe/Copenhagen"
+    },
+    {
+      "id": "18068942",
+      "name": "Ansible Hamburg",
+      "urlname": "Ansible-Hamburg",
+      "city": "Hamburg",
+      "country": "de",
+      "members": 241,
+      "timezone": "Europe/Berlin"
+    },
+    {
+      "id": "17210512",
+      "name": "Ansible Helsinki",
+      "urlname": "Ansible-Helsinki",
+      "city": "Helsinki",
+      "country": "fi",
+      "members": 470,
+      "timezone": "Europe/Helsinki"
+    },
+    {
+      "id": "18584198",
+      "name": "Ansible India",
+      "urlname": "ansible-india",
+      "city": "Bangalore",
+      "country": "in",
+      "members": 5726,
+      "timezone": "Asia/Kolkata"
+    },
+    {
+      "id": "35317437",
+      "name": "Ansible Ireland",
+      "urlname": "ansible-ireland",
+      "city": "Dublin",
+      "country": "ie",
+      "members": 235,
+      "timezone": "Europe/Dublin"
+    },
+    {
+      "id": "15734842",
+      "name": "Ansible London",
+      "urlname": "Ansible-London",
+      "city": "London",
+      "country": "gb",
+      "members": 2385,
+      "timezone": "Europe/London"
+    },
+    {
+      "id": "17920402",
+      "name": "Ansible Madrid",
+      "urlname": "Ansible-Madrid",
+      "city": "Madrid",
+      "country": "es",
+      "members": 467,
+      "timezone": "Europe/Madrid"
+    },
+    {
+      "id": "25280172",
+      "name": "Ansible Manchester",
+      "urlname": "Ansible-Manchester",
+      "city": "Manchester",
+      "country": "gb",
+      "members": 84,
+      "timezone": "Europe/London"
+    },
+    {
+      "id": "16183822",
+      "name": "Ansible Minneapolis",
+      "urlname": "Ansible-Minneapolis",
+      "city": "Minneapolis",
+      "country": "us",
+      "members": 879,
+      "timezone": "America/Chicago"
+    },
+    {
+      "id": "18553108",
+      "name": "Ansible Montréal",
+      "urlname": "Ansible-Montreal",
+      "city": "Montréal",
+      "country": "ca",
+      "members": 726,
+      "timezone": "America/Toronto"
+    },
+    {
+      "id": "18672197",
+      "name": "Ansible México",
+      "urlname": "ansible-mexico-city",
+      "city": "México City",
+      "country": "mx",
+      "members": 170,
+      "timezone": "America/Mexico_City"
+    },
+    {
+      "id": "18672296",
+      "name": "Ansible München",
+      "urlname": "ansible-munchen",
+      "city": "München",
+      "country": "de",
+      "members": 763,
+      "timezone": "Europe/Berlin"
+    },
+    {
+      "id": "19230646",
+      "name": "Ansible New Zealand",
+      "urlname": "Ansible-New-Zealand",
+      "city": "Wellington",
+      "country": "nz",
+      "members": 700,
+      "timezone": "Pacific/Auckland"
+    },
+    {
+      "id": "18550448",
+      "name": "Ansible NOVA",
+      "urlname": "Ansible-NOVA",
+      "city": "Mc Lean",
+      "country": "us",
+      "members": 946,
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "18236216",
+      "name": "Ansible Omaha",
+      "urlname": "Ansible-Omaha",
+      "city": "Omaha",
+      "country": "us",
+      "members": 74,
+      "timezone": "America/Chicago"
+    },
+    {
+      "id": "13064402",
+      "name": "Ansible Paris",
+      "urlname": "Ansible-Paris",
+      "city": "Paris",
+      "country": "fr",
+      "members": 1890,
+      "timezone": "Europe/Paris"
+    },
+    {
+      "id": "18236248",
+      "name": "Ansible RDU",
+      "urlname": "ansible-durham",
+      "city": "Durham",
+      "country": "us",
+      "members": 622,
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "19852510",
+      "name": "Ansible Roma",
+      "urlname": "Ansible-Roma",
+      "city": "Roma",
+      "country": "it",
+      "members": 82,
+      "timezone": "Europe/Rome"
+    },
+    {
+      "id": "16465302",
+      "name": "Ansible San Francisco",
+      "urlname": "ansiblesf",
+      "city": "San Francisco",
+      "country": "us",
+      "members": 542,
+      "timezone": "America/Los_Angeles"
+    },
+    {
+      "id": "18584203",
+      "name": "Ansible Singapore",
+      "urlname": "Ansible-Singapore",
+      "city": "Singapore",
+      "country": "sg",
+      "members": 1480,
+      "timezone": "Asia/Singapore"
+    },
+    {
+      "id": "18509939",
+      "name": "Ansible St. Louis",
+      "urlname": "Ansible-St-Louis",
+      "city": "Saint Louis",
+      "country": "us",
+      "members": 505,
+      "timezone": "America/Chicago"
+    },
+    {
+      "id": "18370418",
+      "name": "Ansible Stockholm",
+      "urlname": "Ansible-Stockholm",
+      "city": "Stockholm",
+      "country": "se",
+      "members": 334,
+      "timezone": "Europe/Stockholm"
+    },
+    {
+      "id": "18800852",
+      "name": "Ansible Stuttgart",
+      "urlname": "Ansible-Stuttgart",
+      "city": "Stuttgart",
+      "country": "de",
+      "members": 116,
+      "timezone": "Europe/Berlin"
+    },
+    {
+      "id": "17513332",
+      "name": "Ansible Sydney",
+      "urlname": "ansible-sydney",
+      "city": "Sydney",
+      "country": "au",
+      "members": 619,
+      "timezone": "Australia/Sydney"
+    },
+    {
+      "id": "18584167",
+      "name": "Ansible São Paulo",
+      "urlname": "ansible-sao-paulo",
+      "city": "São Paulo",
+      "country": "br",
+      "members": 1122,
+      "timezone": "America/Sao_Paulo"
+    },
+    {
+      "id": "18476239",
+      "name": "Ansible Toronto",
+      "urlname": "Ansible-Toronto",
+      "city": "Toronto",
+      "country": "ca",
+      "members": 643,
+      "timezone": "America/Toronto"
+    },
+    {
+      "id": "38094347",
+      "name": "Ansible Virtual Meetups",
+      "urlname": "ansible-virtual-meetups",
+      "city": "Raleigh",
+      "country": "us",
+      "members": 181,
+      "timezone": "America/New_York"
+    },
+    {
+      "id": "18530854",
+      "name": "Colorado Automates",
+      "urlname": "colorado-automates",
+      "city": "Denver",
+      "country": "us",
+      "members": 300,
+      "timezone": "America/Denver"
+    }
+  ]
+}

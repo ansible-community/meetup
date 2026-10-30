@@ -4,7 +4,17 @@ The combined HTML report provides a point-in-time audit of organiser security an
 
 ## Generate all reports
 
-Generate both report sections in one HTML file:
+Refresh the Meetup Pro group-count snapshot first, then generate the combined report. The Meetup exporter requires the Meetup Pro credentials listed in the [group export guide](../legacy/meetup_pro/exporting-groups.md).
+
+```console
+uv run python -m tools.meetup_pro.meetup_list_groups
+```
+
+The exporter writes `tools/output/meetup-groups.json`. The combined report reads that snapshot and includes its collection timestamp and raw Meetup Pro group member counts.
+
+The report also uses Data Explorer query **34** to attribute invite redemptions by `invite_key`. The query must return columns named `invitee`, `inviter`, and `invite_key`; the report looks up `gundalow`'s pending and expired invite records at runtime to map keys to their descriptions and groups. The configured Forum API key must be allowed to run the query. The report shows an invite-level table of unique redeemers, descriptions, and target groups without exposing invite keys. Unused matching links appear with zero redemptions.
+
+Generate the report in one HTML file:
 
 ```console
 uv run python -m tools.reports.generate_all
@@ -24,6 +34,8 @@ The organiser report includes every member of a `meetup-organisers-{city}` group
 
 ## Attendee groups
 
-The attendee report includes a `meetup-migrated-attendees` summary table followed by one row for each `meetup-attendee-{city}` group. Both tables show member count; cumulative account creation counts for rolling UTC windows of 1, 2, 3, 4, 5, and 10 days; and the count and percentage of members recorded as having redeemed a Forum invite link created by `gundalow`. These Forum invite links are the indicator used to track people joining from Meetup Pro. Empty groups show `N/A` for the percentage. Missing account creation timestamps are excluded from the age counts and reported as a warning.
+The attendee report includes a `meetup-migrated-attendees` summary table followed by one row for each `meetup-attendee-{city}` group. Both tables show member count; cumulative account creation counts for rolling UTC windows of 1, 2, 3, 4, 5, and 10 days; and the count and percentage of members who redeemed a `gundalow` invite whose configured groups include that row's group. Invite-key metadata is read at report time and invite keys are not written into the report. Empty groups show `N/A` for the percentage. Missing account creation timestamps are excluded from the age counts and reported as a warning.
+
+The Meetup Pro source-groups table compares raw source member counts with the matching Forum attendee group and city-link redemptions where a city group exists. Meetup Pro groups can overlap in their membership, so do not sum their counts as unique people. Invite links reused across campaigns provide cumulative redemptions; capture a fresh source snapshot for each reporting point and use separate links if you need campaign-level attribution.
 
 The attendee badges table follows the attendee group table. It counts Meetup attendee and migrated badge awards for the migrated group and each attendee city group.

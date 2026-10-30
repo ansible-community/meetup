@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
-"""List all groups in the Ansible Meetup Pro Network. Outputs CSV to stdout."""
+"""Export group membership counts from the Ansible Meetup Pro Network."""
 
 from __future__ import annotations
 
 import argparse
 import csv
+import datetime as dt
+import json
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +21,8 @@ from tools.meetup_pro.meetup_pro_lib import (
 )
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+DEFAULT_JSON_OUTPUT = Path("tools/output/meetup-groups.json")
 
 
 def fetch_all_groups(client: MeetupGraphQLClient) -> list[dict[str, Any]]:
@@ -64,10 +69,10 @@ def fetch_all_groups(client: MeetupGraphQLClient) -> list[dict[str, Any]]:
                     "id": node.get("id", ""),
                     "name": node.get("name", ""),
                     "urlname": node.get("urlname", ""),
-                    "city": node.get("city", ""),
-                    "country": node.get("country", ""),
-                    "members": node.get("memberships", {}).get("totalCount", 0),
-                    "timezone": node.get("timezone", ""),
+                    "city": node.get("city") or "",
+                    "country": node.get("country") or "",
+                    "members": (node.get("memberships") or {}).get("totalCount") or 0,
+                    "timezone": node.get("timezone") or "",
                 }
             )
 
@@ -86,9 +91,12 @@ def fetch_all_groups(client: MeetupGraphQLClient) -> list[dict[str, Any]]:
 
 
 def main() -> None:
-    """Fetch Meetup Pro groups and write them as a private CSV file."""
+    """Fetch Meetup Pro groups and write private CSV and JSON snapshots."""
     parser = argparse.ArgumentParser(description="Export groups in the Ansible Meetup Pro network")
     parser.add_argument("--output", type=Path, default=Path("tmp/meetup-groups.csv"), help="CSV output path")
+    parser.add_argument(
+        "--json-output", type=Path, default=DEFAULT_JSON_OUTPUT, help="JSON snapshot path used by community reports"
+    )
     args = parser.parse_args()
 
     pre_flight_checks()
@@ -110,6 +118,25 @@ def main() -> None:
         for group in sorted(groups, key=lambda g: g["name"]):
             writer.writerow(group)
     logger.info("Wrote groups CSV to %s", args.output)
+
+    args.json_output.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    snapshot = {
+        "generated_at": dt.datetime.now(dt.UTC).isoformat(),
+        "network": PRO_NETWORK,
+        "groups": sorted(groups, key=lambda group: group["name"].casefold()),
+    }
+    descriptor = os.open(args.json_output, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    try:
+        os.fchmod(descriptor, 0o600)
+        with os.fdopen(descriptor, "w", encoding="utf-8") as output_file:
+            descriptor = -1
+            json.dump(snapshot, output_file, indent=2, ensure_ascii=False)
+            output_file.write("\n")
+    except Exception:
+        if descriptor >= 0:
+            os.close(descriptor)
+        raise
+    logger.info("Wrote Meetup Pro JSON snapshot to %s", args.json_output)
 
 
 if __name__ == "__main__":

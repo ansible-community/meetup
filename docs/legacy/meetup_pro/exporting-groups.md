@@ -19,6 +19,11 @@ From the repository root, run the current module command:
 uv run python -m tools.meetup_pro.meetup_list_groups
 ```
 
-The command writes `tmp/meetup-groups.csv` by default. Pass `--output PATH` to choose another destination. The file is created with owner-only permissions.
+The command writes two owner-only files:
+
+- `tmp/meetup-groups.csv`, for a spreadsheet-friendly export. Pass `--output PATH` to choose another CSV destination.
+- `tools/output/meetup-groups.json`, a static member-count snapshot read by the combined community report. Pass `--json-output PATH` to choose another JSON destination.
+
+Refresh the snapshot immediately before generating the community report so its Meetup Pro member counts have a clear collection time. The JSON contains group names and aggregate member counts, not member identities.
 
 Use the export only for the migration task, store it in the approved location, and limit access because it may contain personal information. For current community processes, start at [Ansible Meetups](../../index.md).
