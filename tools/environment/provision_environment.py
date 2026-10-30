@@ -711,19 +711,20 @@ def reconcile_discourse_group(
     if not isinstance(before, dict):
         raise ApiError(f"Could not read current settings for Discourse group {name!r}")
 
-    custom_attendee_description = (
+    custom_group_description = (
         not created
-        and name.startswith(f"{ATTENDEE_GROUP_PREFIX}-")
+        and (
+            name.startswith(f"{ATTENDEE_GROUP_PREFIX}-")
+            or name.startswith(f"{ORGANISERS_GROUP_PREFIX}-")
+        )
         and isinstance(before.get("bio_raw"), str)
         and bool(before["bio_raw"].strip())
     )
     reconciled_desired = {
         field: value
         for field, value in desired.items()
-        if not (custom_attendee_description and field == "bio_raw")
+        if not (custom_group_description and field == "bio_raw")
     }
-    if custom_attendee_description:
-        logger.info("custom description found")
 
     owners: list[Any] = []
     owners_changed = False
@@ -781,9 +782,12 @@ def reconcile_discourse_group(
         raise ApiError(f"Discourse organiser group {name!r} must have no group owners")
     log_resource_status(
         name,
-        {field: value for field, value in reconciled_desired.items() if field in GROUP_RECONCILE_FIELDS},
+        {field: value for field, value in desired.items() if field in GROUP_RECONCILE_FIELDS},
         None if created else before,
-        {"group owners": "Changed" if owners_changed else "OK"} if require_no_owners else None,
+        {
+            **({"description": "OK:MANUAL"} if custom_group_description else {}),
+            **({"group owners": "Changed" if owners_changed else "OK"} if require_no_owners else {}),
+        },
     )
 
 
