@@ -23,7 +23,6 @@ from tools.meetup_pro.meetup_pro_lib import (
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-DEFAULT_JSON_OUTPUT = MEETUP_GROUP_SNAPSHOT_PATH
 GROUP_FIELDNAMES = ["id", "name", "urlname", "city", "country", "members", "timezone"]
 
 
@@ -106,7 +105,10 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Export groups in the Ansible Meetup Pro network")
     parser.add_argument("--output", type=Path, default=Path("tmp/meetup-groups.csv"), help="CSV output path")
     parser.add_argument(
-        "--json-output", type=Path, default=DEFAULT_JSON_OUTPUT, help="JSON snapshot path used by community reports"
+        "--json-output",
+        type=Path,
+        default=MEETUP_GROUP_SNAPSHOT_PATH,
+        help="JSON snapshot path used by community reports",
     )
     args = parser.parse_args()
     if args.output.resolve() == args.json_output.resolve():

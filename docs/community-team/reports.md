@@ -10,7 +10,7 @@ The checked-in Meetup Pro group-count snapshot is the denominator for the compar
 uv run python -m tools.meetup_pro.meetup_list_groups
 ```
 
-The exporter writes `tools/output/meetup-groups.json`. The combined report reads that snapshot and includes its collection timestamp and raw Meetup Pro group member counts.
+The exporter writes `tools/data/meetup-groups.json`. The combined report reads that snapshot and includes its collection timestamp and raw Meetup Pro group member counts.
 
 The report also uses Data Explorer query **34** to attribute invite redemptions by `invite_key`. The query must return columns named `invitee`, `inviter`, and `invite_key`; the report looks up `gundalow`'s pending and expired link records at runtime. The configured Forum API key must be allowed to run the query and read those invite records. The invite table reports link state, expiry, redemptions, remaining uses, configured groups, role-grant flags, and unique redeemers. It does not expose invite keys. Unused matching links appear with zero redemptions. Rows without matching pending/expired metadata are called out; this can happen when a link is exhausted because Discourse omits exhausted links from those lists.
 

@@ -16,7 +16,7 @@ from tools.common.ansible_events_lib import ApiError, discourse_req
 
 GROUP_MEMBERS_PAGE_SIZE = 200
 REPORT_OUTPUT_DIRECTORY = Path("tools/output")
-MEETUP_GROUP_SNAPSHOT_PATH = REPORT_OUTPUT_DIRECTORY / "meetup-groups.json"
+MEETUP_GROUP_SNAPSHOT_PATH = Path("tools/data/meetup-groups.json")
 
 ReportCell = str | list[str]
 ReportRow = dict[str, ReportCell]
