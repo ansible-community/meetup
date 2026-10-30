@@ -128,10 +128,11 @@ def test_html_report_has_toc_anchors_and_sorted_bullet_cells() -> None:
 
     assert '<a href="#organisers">Organisers &amp; groups</a>' in document
     assert '<h2 id="organisers">Organisers &amp; groups<a class="heading-anchor"' in document
-    assert "📎</a></h2>" in document
+    assert '<svg aria-hidden="true" viewBox="0 0 24 24"' in document
+    assert document.count('class="heading-anchor"') == 3
     assert '<h1 id="report-title">Audit &amp; report' in document
     assert '<h2 id="contents-heading">Contents' in document
-    assert '<a href="#table-of-contents">Back to table of contents</a>' in document
+    assert "Back to table of contents" not in document
     assert "<li>Alpha</li><li>zeta</li>" in document
     assert "<li>London</li><li>Paris</li>" in document
     assert "&lt;alice&gt;" in document

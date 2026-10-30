@@ -128,7 +128,13 @@ def _render_anchor_link(anchor: str, label: str) -> str:
     escaped_label = html.escape(label, quote=True)
     return (
         f'<a class="heading-anchor" href="#{escaped_anchor}" '
-        f'aria-label="{escaped_label}" title="Link to this heading">📎</a>'
+        f'aria-label="{escaped_label}" title="{escaped_label}">'
+        '<svg aria-hidden="true" viewBox="0 0 24 24" width="20" height="20" '
+        'fill="none" stroke="currentColor" stroke-width="1.8" '
+        'stroke-linecap="round" stroke-linejoin="round">'
+        '<path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19'
+        'a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.82-2.83l8.49-8.48"/>'
+        "</svg></a>"
     )
 
 
@@ -147,7 +153,6 @@ def _render_section(section: ReportSection) -> str:
         f'<section aria-labelledby="{anchor}">'
         f'<h2 id="{anchor}">{title}{_render_anchor_link(section.anchor, f"Link to {section.title} heading")}</h2>'
         f"<table><thead><tr>{headers}</tr></thead><tbody>{rows}</tbody></table>"
-        '<p class="back-to-toc"><a href="#table-of-contents">Back to table of contents</a></p>'
         "</section>"
     )
 
@@ -176,22 +181,19 @@ def render_html_report(title: str, sections: list[ReportSection], *, generated_a
     tbody tr:nth-child(even) {{ background: #f8f8f8; }}
     td ul {{ margin: 0; padding-left: 1.25rem; }}
     h1, h2 {{ align-items: center; display: flex; gap: .5rem; }}
-    .heading-anchor {{ font-size: .8em; margin-left: auto; text-decoration: none; }}
-    .back-to-toc {{ font-size: .9rem; }}
+    .heading-anchor {{ align-items: center; border-radius: .2rem; color: #4b5563;
+                       display: inline-flex; flex: 0 0 auto; justify-content: center;
+                       margin-left: auto; min-height: 1.75rem; min-width: 1.75rem; }}
+    .heading-anchor:hover {{ background: #eef0f2; color: #111827; }}
+    .heading-anchor:focus-visible {{ outline: 2px solid #2563eb; outline-offset: 2px; }}
     @media print {{ body {{ max-width: none; }} a {{ color: inherit; }} }}
   </style>
 </head>
 <body>
-  <h1 id="report-title">{html.escape(title)}
-    <a class="heading-anchor" href="#report-title" aria-label="Link to report heading"
-       title="Link to this heading">📎</a>
-  </h1>
+  <h1 id="report-title">{html.escape(title)}{_render_anchor_link("report-title", "Link to report heading")}</h1>
   <p>Generated {html.escape(generated_display)}</p>
   <nav id="table-of-contents" aria-label="Table of contents">
-    <h2 id="contents-heading">Contents
-      <a class="heading-anchor" href="#contents-heading" aria-label="Link to contents heading"
-         title="Link to this heading">📎</a>
-    </h2>
+    <h2 id="contents-heading">Contents{_render_anchor_link("contents-heading", "Link to contents heading")}</h2>
     <ul>{toc}</ul>
   </nav>
   {rendered_sections}
