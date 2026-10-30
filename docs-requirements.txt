@@ -462,9 +462,9 @@ mkdocstrings==1.0.7 \
     # via
     #   mkdocs-ansible
     #   mkdocstrings-python
-mkdocstrings-python==2.0.9 \
-    --hash=sha256:ae945637dc0618c6beedbee169f10c0234b77f322c53db3fc9fb4c29b3013038 \
-    --hash=sha256:c0233eff3f84d78110df50541918e7ec2bcff8e1614faddea34290a90321a416
+mkdocstrings-python==2.0.10 \
+    --hash=sha256:4a3aaeebb25ba5ae57a8f9e75432fe4571984889602f2b2f7d672faa760e9062 \
+    --hash=sha256:5e34ae56b2f20a57807ee479d603ddc5ec7cc6d2252c4c177754627ef2d3b833
     # via mkdocs-ansible
 nodeenv==1.11.0 \
     --hash=sha256:3ce8fe5b71d16e8af7039ca65257354100bc772965d6bc549070649e53b1b146 \
