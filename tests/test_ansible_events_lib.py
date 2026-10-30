@@ -509,18 +509,21 @@ class TestProvisioningPermissions:
 
         assert requests == [
             ("GET", "u/gundalow/invited/pending.json", None, "gundalow"),
-            (
-                "POST",
-                "invites.json",
-                {
-                    "skip_email": True,
-                    "description": f"Join Ansible {barcelona.city}",
-                    "group_names": f"{barcelona.attendee_group},{provision_environment.MIGRATED_GROUP_NAME}",
-                    "max_redemptions_allowed": 5_000,
-                    "expires_at": "2030-01-01",
-                },
-                "gundalow",
-            ),
+            *[
+                (
+                    "POST",
+                    "invites.json",
+                    {
+                        "skip_email": True,
+                        "description": f"Join Ansible {city.city}",
+                        "group_names": f"{city.attendee_group},{provision_environment.MIGRATED_GROUP_NAME}",
+                        "max_redemptions_allowed": 5_000,
+                        "expires_at": "2030-01-01",
+                    },
+                    "gundalow",
+                )
+                for city in provision_environment.CITIES[1:]
+            ],
         ]
 
     def test_attendee_invites_fail_on_malformed_pending_response_before_creation(self, monkeypatch):
