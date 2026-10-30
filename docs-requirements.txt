@@ -456,9 +456,9 @@ mkdocs-minify-plugin==0.8.0 \
     --hash=sha256:5fba1a3f7bd9a2142c9954a6559a57e946587b21f133165ece30ea145c66aee6 \
     --hash=sha256:bc11b78b8120d79e817308e2b11539d790d21445eb63df831e393f76e52e753d
     # via mkdocs-ansible
-mkdocstrings==1.0.7 \
-    --hash=sha256:0951b147f352118a45a3db85f0f3b660833d34cb5120a2751315b8d08dafd159 \
-    --hash=sha256:9563828667eeb35256f87a6b61fe857676ac628ec1abbce9aea9839a502c9cb1
+mkdocstrings==1.0.8 \
+    --hash=sha256:4b03ed2b863009f1153f0d04aacb22a85b92afc28a0636d85717c92eecca638c \
+    --hash=sha256:b50fc326230906425c82ee9ec59b80e5db00892b2b593d4d0b841a0d4acf537b
     # via
     #   mkdocs-ansible
     #   mkdocstrings-python
