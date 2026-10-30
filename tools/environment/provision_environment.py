@@ -719,6 +719,7 @@ def reconcile_discourse_group(
         )
         and isinstance(before.get("bio_raw"), str)
         and bool(before["bio_raw"].strip())
+        and not same_configuration_value("bio_raw", before["bio_raw"], desired.get("bio_raw"))
     )
     reconciled_desired = {
         field: value
