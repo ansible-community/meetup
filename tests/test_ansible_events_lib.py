@@ -2,17 +2,23 @@ from __future__ import annotations
 
 import importlib
 from unittest.mock import Mock, patch
+from zoneinfo import ZoneInfo
 
 import pytest
 
-from tools.common.ansible_events_lib import (
+from tools.common.ansible_event_cities import (
     CITIES,
+    CityInfo,
+    MEETUP_PRO_CITIES,
+    PREVIOUS_CITIES,
+)
+from tools.common.ansible_events_lib import (
+    CITY_SLUG_RE,
     DISCOURSE_URL,
     EVENT_NAME_PREFIX,
     ORGANISER_TEAM_PREFIX,
     ORGANIZER_SLUG,
     PRETIX_URL,
-    CityInfo,
     get_city,
 )
 
@@ -92,9 +98,123 @@ class TestGetCity:
 
 
 class TestCitiesRegistry:
+    expected_countries = frozenset(
+        {
+            "Argentina",
+            "Australia",
+            "Brazil",
+            "Bulgaria",
+            "Canada",
+            "China",
+            "Colombia",
+            "Czech Republic",
+            "Denmark",
+            "Finland",
+            "France",
+            "Germany",
+            "Greece",
+            "Hong Kong",
+            "India",
+            "Indonesia",
+            "Ireland",
+            "Israel",
+            "Italy",
+            "Japan",
+            "Kenya",
+            "Latvia",
+            "Lebanon",
+            "Mexico",
+            "Netherlands",
+            "New Zealand",
+            "Peru",
+            "Poland",
+            "Portugal",
+            "Romania",
+            "Russia",
+            "Saudi Arabia",
+            "Singapore",
+            "South Africa",
+            "South Korea",
+            "Spain",
+            "Sweden",
+            "Switzerland",
+            "Taiwan",
+            "Thailand",
+            "UK",
+            "USA",
+            "Vietnam",
+        }
+    )
+
     def test_all_cities_are_cityinfo(self) -> None:
         for city in CITIES:
             assert isinstance(city, CityInfo)
+
+    @pytest.mark.parametrize("city", CITIES, ids=lambda city: city.slug)
+    def test_every_city_loads_with_valid_country_and_timezone(self, city: CityInfo) -> None:
+        assert get_city(city.slug) == city
+        assert CITY_SLUG_RE.fullmatch(city.slug)
+        assert city.region.strip()
+        assert city.city.strip()
+        assert city.country in self.expected_countries
+        assert ZoneInfo(city.timezone)
+
+    def test_registry_covers_expected_countries(self) -> None:
+        assert {city.country for city in CITIES} == self.expected_countries
+
+    @pytest.mark.parametrize(
+        ("slug", "city_name", "region", "country", "timezone"),
+        [
+            ("boise", "Boise", "NA", "USA", "America/Boise"),
+            ("brisbane", "Brisbane", "APAC", "Australia", "Australia/Brisbane"),
+            ("bucharest", "Bucharest", "EMEA", "Romania", "Europe/Bucharest"),
+            ("dhahran", "Dhahran", "APAC", "Saudi Arabia", "Asia/Riyadh"),
+            ("nova", "NOVA", "NA", "USA", "America/New_York"),
+            ("sfbay", "SF Bay", "NA", "USA", "America/Los_Angeles"),
+        ],
+    )
+    def test_corrected_locations_have_expected_country_and_timezone(
+        self, slug: str, city_name: str, region: str, country: str, timezone: str
+    ) -> None:
+        city = get_city(slug)
+        assert city is not None
+        assert city.city == city_name
+        assert city.region == region
+        assert city.country == country
+        assert city.timezone == timezone
+
+    def test_city_sections_are_sorted_by_region_country_and_city(self) -> None:
+        for cities in (MEETUP_PRO_CITIES, PREVIOUS_CITIES):
+            keys = [(city.region.casefold(), city.country.casefold(), city.city.casefold()) for city in cities]
+            assert keys == sorted(keys)
+
+    @pytest.mark.parametrize(
+        ("slug", "city"),
+        [
+            ("saopaulo", "São Paulo"),
+            ("montreal", "Montréal"),
+            ("medellin", "Medellín"),
+            ("munchen", "München"),
+            ("mexicocity", "Mexico City"),
+            ("bogota", "Bogotá"),
+            ("hanoi", "Hà Nội"),
+            ("brasilia", "Brasília"),
+            ("krakow", "Kraków"),
+            ("torun", "Toruń"),
+            ("zurich", "Zürich"),
+        ],
+    )
+    def test_accepted_unicode_city_spellings_are_preserved(self, slug: str, city: str) -> None:
+        result = get_city(slug)
+        assert result is not None
+        assert result.city == city
+
+    def test_unicode_display_name_is_used_for_api_labels_with_ascii_slug(self) -> None:
+        city = get_city("saopaulo")
+        assert city is not None
+        assert city.event_name == "Ansible Meetup São Paulo"
+        assert city.team_name == "Ansible Meetup Organisers - São Paulo"
+        assert city.organiser_group == "meetup-organisers-saopaulo"
 
     def test_no_duplicate_city_names(self) -> None:
         names = [c.city for c in CITIES]
@@ -479,8 +599,9 @@ class TestProvisioningPermissions:
     def test_attendee_invites_reuse_matches_and_create_only_missing_city(self, monkeypatch):
         from tools.environment import provision_environment
 
-        london = provision_environment.CITIES[0]
-        barcelona = provision_environment.CITIES[1]
+        london = next(city for city in provision_environment.CITIES if city.slug == "london")
+        barcelona = next(city for city in provision_environment.CITIES if city.slug == "barcelona")
+        monkeypatch.setattr(provision_environment, "CITIES", (london, barcelona))
         requests = []
 
         def request(method, endpoint, payload=None, *, run_as=None):
@@ -847,8 +968,9 @@ class TestProvisioningPermissions:
         plans = provision_environment.build_city_forum_plans()
 
         assert [plan.city for plan in plans] == list(provision_environment.CITIES)
-        assert plans[0].organiser_group_name == "meetup-organisers-london"
-        assert plans[0].attendee_group_name == "meetup-attendee-london"
+        london_plan = next(plan for plan in plans if plan.city.slug == "london")
+        assert london_plan.organiser_group_name == "meetup-organisers-london"
+        assert london_plan.attendee_group_name == "meetup-attendee-london"
 
     def test_group_reconciliation_updates_tracking_with_one_read(self, monkeypatch):
         from tools.environment import provision_environment
