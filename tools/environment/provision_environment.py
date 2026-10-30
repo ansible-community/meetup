@@ -15,6 +15,7 @@ from typing import Any
 from tools.common.ansible_events_lib import (
     ANSIBLE_PRIMARY_COLOR,
     ApiError,
+    ATTENDEE_GROUP_PREFIX,
     EVENT_SLUG_RE,
     CITIES,
     CityInfo,
@@ -710,6 +711,17 @@ def reconcile_discourse_group(
     if not isinstance(before, dict):
         raise ApiError(f"Could not read current settings for Discourse group {name!r}")
 
+    custom_group_description = (
+        not created
+        and (name.startswith(f"{ATTENDEE_GROUP_PREFIX}-") or name.startswith(f"{ORGANISERS_GROUP_PREFIX}-"))
+        and isinstance(before.get("bio_raw"), str)
+        and bool(before["bio_raw"].strip())
+        and not same_configuration_value("bio_raw", before["bio_raw"], desired.get("bio_raw"))
+    )
+    reconciled_desired = {
+        field: value for field, value in desired.items() if not (custom_group_description and field == "bio_raw")
+    }
+
     owners: list[Any] = []
     owners_changed = False
     if require_no_owners:
@@ -722,7 +734,7 @@ def reconcile_discourse_group(
 
     changes = {
         field: value
-        for field, value in desired.items()
+        for field, value in reconciled_desired.items()
         if field in GROUP_RECONCILE_FIELDS
         and (field not in before or not same_configuration_value(field, before[field], value))
     }
@@ -738,14 +750,14 @@ def reconcile_discourse_group(
         returned = update_response.get("group")
         if not isinstance(returned, dict) or any(
             field not in returned or not same_configuration_value(field, returned[field], value)
-            for field, value in desired.items()
+            for field, value in reconciled_desired.items()
             if field in GROUP_RECONCILE_FIELDS
         ):
             verified_response = discourse_req("GET", f"groups/by-id/{group_id}.json")
             returned = verified_response.get("group")
         if not isinstance(returned, dict) or any(
             field not in returned or not same_configuration_value(field, returned[field], value)
-            for field, value in desired.items()
+            for field, value in reconciled_desired.items()
             if field in GROUP_RECONCILE_FIELDS
         ):
             raise ApiError(f"Discourse group {name!r} did not reconcile to the requested settings")
@@ -757,7 +769,7 @@ def reconcile_discourse_group(
             owners = owners_value
     elif any(
         field not in before or not same_configuration_value(field, before[field], value)
-        for field, value in desired.items()
+        for field, value in reconciled_desired.items()
         if field in GROUP_RECONCILE_FIELDS
     ):
         raise ApiError(f"Discourse group {name!r} did not reconcile to the requested settings")
@@ -768,7 +780,10 @@ def reconcile_discourse_group(
         name,
         {field: value for field, value in desired.items() if field in GROUP_RECONCILE_FIELDS},
         None if created else before,
-        {"group owners": "Changed" if owners_changed else "OK"} if require_no_owners else None,
+        {
+            **({"description": "OK:MANUAL"} if custom_group_description else {}),
+            **({"group owners": "Changed" if owners_changed else "OK"} if require_no_owners else {}),
+        },
     )
 
 
