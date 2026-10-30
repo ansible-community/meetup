@@ -713,18 +713,13 @@ def reconcile_discourse_group(
 
     custom_group_description = (
         not created
-        and (
-            name.startswith(f"{ATTENDEE_GROUP_PREFIX}-")
-            or name.startswith(f"{ORGANISERS_GROUP_PREFIX}-")
-        )
+        and (name.startswith(f"{ATTENDEE_GROUP_PREFIX}-") or name.startswith(f"{ORGANISERS_GROUP_PREFIX}-"))
         and isinstance(before.get("bio_raw"), str)
         and bool(before["bio_raw"].strip())
         and not same_configuration_value("bio_raw", before["bio_raw"], desired.get("bio_raw"))
     )
     reconciled_desired = {
-        field: value
-        for field, value in desired.items()
-        if not (custom_group_description and field == "bio_raw")
+        field: value for field, value in desired.items() if not (custom_group_description and field == "bio_raw")
     }
 
     owners: list[Any] = []
