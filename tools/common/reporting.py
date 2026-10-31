@@ -180,25 +180,101 @@ def render_html_report(title: str, sections: list[ReportSection], *, generated_a
     table {{ border-collapse: collapse; margin: 1rem 0; width: 100%; }}
     th, td {{ border: 1px solid #bbb; padding: .5rem .65rem; text-align: left; vertical-align: top; }}
     th {{ background: #eee; }}
+    th button {{ background: none; border: 0; color: inherit; cursor: pointer; font: inherit;
+                 font-weight: 700; padding: 0; text-align: left; width: 100%; }}
+    th button::after {{ color: #6b7280; content: " ↕"; font-size: .85em; }}
+    th button:focus-visible, .table-filter input:focus-visible {{ outline: 2px solid #2563eb; outline-offset: 2px; }}
+    th[aria-sort="ascending"] button::after {{ color: inherit; content: " ▲"; }}
+    th[aria-sort="descending"] button::after {{ color: inherit; content: " ▼"; }}
+    .table-tools {{ align-items: center; display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1rem; }}
+    .table-filter {{ align-items: center; display: flex; gap: .4rem; }}
+    .table-filter input {{ font: inherit; max-width: 100%; padding: .3rem .45rem; }}
+    .table-count {{ color: #4b5563; font-size: .9rem; }}
+    tbody tr[hidden] {{ display: none; }}
     tbody tr:nth-child(even) {{ background: #f8f8f8; }}
     td ul {{ margin: 0; padding-left: 1.25rem; }}
     h1, h2 {{ align-items: center; display: flex; gap: .5rem; }}
     .heading-anchor {{ align-items: center; border-radius: .2rem; color: #4b5563;
                        display: inline-flex; flex: 0 0 auto; justify-content: center;
-                       margin-left: auto; min-height: 1.75rem; min-width: 1.75rem; }}
+                       margin-left: .15rem; min-height: 1.75rem; min-width: 1.75rem; }}
     .heading-anchor:hover {{ background: #eef0f2; color: #111827; }}
     .heading-anchor:focus-visible {{ outline: 2px solid #2563eb; outline-offset: 2px; }}
     @media print {{ body {{ max-width: none; }} a {{ color: inherit; }} }}
   </style>
 </head>
 <body>
-  <h1 id="report-title">{html.escape(title)}{_render_anchor_link("report-title", "Link to report heading")}</h1>
+  <h1 id="report-title">{html.escape(title)}</h1>
   <nav id="table-of-contents" aria-label="Table of contents">
-    <h2 id="contents-heading">Contents{_render_anchor_link("contents-heading", "Link to contents heading")}</h2>
+    <h2 id="contents-heading">Contents</h2>
     <ul>{toc}</ul>
   </nav>
   {rendered_sections}
   <footer><p>Generated {html.escape(generated_display)}</p></footer>
+  <script>
+    (() => {{
+      const collator = new Intl.Collator(undefined, {{ numeric: true, sensitivity: "base" }});
+
+      document.querySelectorAll("section table").forEach((table) => {{
+        const heading = table.closest("section")?.querySelector("h2")?.textContent.trim() || "report";
+        const body = table.tBodies[0];
+        const headers = Array.from(table.tHead?.rows[0]?.cells || []);
+        const rows = Array.from(body?.rows || []);
+        if (!body || headers.length === 0 || rows.length === 0 ||
+            (rows[0].cells.length === 1 && rows[0].cells[0].hasAttribute("colspan"))) {{
+          return;
+        }}
+
+        const tools = document.createElement("div");
+        tools.className = "table-tools";
+        const label = document.createElement("label");
+        label.className = "table-filter";
+        const input = document.createElement("input");
+        input.type = "search";
+        input.placeholder = "Filter rows";
+        input.setAttribute("aria-label", `Filter ${{heading}} table`);
+        label.append("Filter", input);
+        const count = document.createElement("span");
+        count.className = "table-count";
+        count.setAttribute("aria-live", "polite");
+        tools.append(label, count);
+        table.before(tools);
+
+        const updateFilter = () => {{
+          const query = input.value.trim().toLocaleLowerCase();
+          let visible = 0;
+          rows.forEach((row) => {{
+            const matches = row.textContent.toLocaleLowerCase().includes(query);
+            row.hidden = !matches;
+            visible += Number(matches);
+          }});
+          count.textContent = `${{visible}} of ${{rows.length}} rows`;
+        }};
+        input.addEventListener("input", updateFilter);
+        updateFilter();
+
+        headers.forEach((header, columnIndex) => {{
+          const button = document.createElement("button");
+          button.type = "button";
+          button.textContent = header.textContent.trim();
+          button.setAttribute("aria-label", `Sort by ${{button.textContent}}`);
+          header.textContent = "";
+          header.append(button);
+          header.setAttribute("aria-sort", "none");
+          button.addEventListener("click", () => {{
+            const ascending = header.getAttribute("aria-sort") !== "ascending";
+            headers.forEach((cell) => cell.setAttribute("aria-sort", "none"));
+            header.setAttribute("aria-sort", ascending ? "ascending" : "descending");
+            const direction = ascending ? 1 : -1;
+            rows.sort((left, right) => {{
+              const first = left.cells[columnIndex]?.textContent.trim() || "";
+              const second = right.cells[columnIndex]?.textContent.trim() || "";
+              return direction * collator.compare(first, second);
+            }}).forEach((row) => body.append(row));
+          }});
+        }});
+      }});
+    }})();
+  </script>
 </body>
 </html>
 """
