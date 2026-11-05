@@ -18,7 +18,7 @@ Use this procedure when installing or reconciling the shared Forum and Pretix se
    uv run python -m tools.environment.check_setup
    ```
 
-   The checker verifies `organizer.teams:write` through Pretix's permission-gated team-list endpoint. It lists other required Pretix write permissions by name as `MANUAL`, because verifying them would require a write request. Forum write access is also `MANUAL`. Plugin installation/configuration, Pretix bootstrap-user state, worker restart state, and live end-to-end behavior require operator verification. Discourse may omit a user's email from `GET admin/users/{id}.json`; an omitted email is reported as `MANUAL`, while an explicitly anonymized email remains a `FAIL`.
+   The checker verifies `organizer.teams:write` through Pretix's permission-gated team-list endpoint. It lists other required Pretix write permissions by name as `MANUAL`, because verifying them would require a write request. Forum write access is also `MANUAL`. Plugin installation/configuration, Pretix bootstrap-user state, worker restart state, and live end-to-end behavior require operator verification. It checks that `gundalow` has a usable primary Forum email, but never displays the address.
 4. Run the environment provisioner from the repository root:
 
    ```console

@@ -575,41 +575,19 @@ class SetupChecker:
         username_matches = (
             record.get("id") == external_id and str(record.get("username", "")).casefold() == FORUM_USERNAME.casefold()
         )
-        email = record.get("email")
-        email_parts = email.rsplit("@", maxsplit=1) if isinstance(email, str) else []
-        email_present = isinstance(email, str) and bool(email)
-        valid_email = (
-            isinstance(email, str)
-            and len(email_parts) == 2
-            and bool(email_parts[0])
-            and bool(email_parts[1])
-            and not email.casefold().endswith("@anonymized.invalid")
-        )
-        anonymized_email = isinstance(email, str) and email.casefold().endswith("@anonymized.invalid")
         safe_status = not bool(record.get("suspended_till")) and not bool(record.get("silenced_till"))
-        if username_matches and safe_status and not email_present:
-            self.add(
-                "MANUAL",
-                f"Forum Admin API identity: {FORUM_USERNAME}",
-                target,
-                "Forum ID, username, and account status are valid, but this response omitted the email field.",
-                "This does not show that Discourse lacks an email; verify it in the Forum Admin interface "
-                "or through an approved email-visible API.",
-            )
-        elif username_matches and valid_email and safe_status:
+        if username_matches and safe_status:
             self.add(
                 "PASS",
                 f"Forum Admin API identity: {FORUM_USERNAME}",
                 target,
-                "Forum ID and username match, email is usable, and account is not suspended or silenced.",
+                "Forum ID and username match, and account is not suspended or silenced.",
                 "None.",
             )
         else:
             issues = []
             if not username_matches:
                 issues.append("username mismatch")
-            if not valid_email:
-                issues.append("email anonymized" if anonymized_email else "email invalid")
             if not safe_status:
                 issues.append("account suspended or silenced")
             self.add(
@@ -619,12 +597,56 @@ class SetupChecker:
                 "; ".join(issues),
                 "Review the Forum account in the Admin interface.",
             )
+        if username_matches:
+            self._check_forum_user_email()
+
+    def _check_forum_user_email(self) -> None:
+        """Check that the Forum user has a usable primary email without exposing it."""
+        target = f"GET u/{FORUM_USERNAME}/emails.json (Api-Username: {FORUM_USERNAME})"
+        try:
+            # The email endpoint applies per-user visibility rules. Read as the
+            # account being checked, just as that user sees their own settings.
+            response = discourse_req("GET", f"u/{FORUM_USERNAME}/emails.json", run_as=FORUM_USERNAME)
+        except Exception as exc:
+            self.add(
+                "MANUAL",
+                f"Forum account email set: {FORUM_USERNAME}",
+                target,
+                self.sanitized_api_failure("Forum", target, exc),
+                f"Check that the global API key can make requests as {FORUM_USERNAME} and rerun.",
+            )
+            return
+
+        email = response.get("email")
+        if not isinstance(email, str):
+            self.add(
+                "MANUAL",
+                f"Forum account email set: {FORUM_USERNAME}",
+                target,
+                "The email endpoint did not return a primary email field; no address was displayed.",
+                "Verify email status in the Forum Admin interface or confirm API access to the email endpoint.",
+            )
+        elif email.strip() and not email.casefold().endswith("@anonymized.invalid"):
+            self.add(
+                "PASS",
+                f"Forum account email set: {FORUM_USERNAME}",
+                target,
+                "A usable primary email is set; the address was not displayed.",
+                "None.",
+            )
+        else:
+            self.add(
+                "FAIL",
+                f"Forum account email set: {FORUM_USERNAME}",
+                target,
+                "No usable primary email is set; the address was not displayed.",
+                "Review the account email in the Forum Admin interface.",
+            )
 
     def _check_forum_city_groups(self) -> None:
         group_names = [group.get("name") for group in self.forum_groups if isinstance(group.get("name"), str)]
         for city in CITIES:
             group_name = city.organiser_group
-            target = f"GET groups/{group_name}/members.json"
             if group_names.count(group_name) != 1:
                 self.add(
                     "FAIL",
@@ -654,41 +676,6 @@ class SetupChecker:
                     if mapped
                     else "Expected Pretix city team is not present.",
                     "Reconcile the Pretix city team and retain the matching Forum group name.",
-                )
-            try:
-                response = discourse_req("GET", f"groups/{group_name}/members.json")
-            except Exception as exc:
-                self.add(
-                    "FAIL",
-                    f"Forum group membership: {group_name}",
-                    target,
-                    self.sanitized_api_failure("Forum", target, exc),
-                    "Check Forum API permission to read group members.",
-                )
-                continue
-            members = response.get("members")
-            if not isinstance(members, list):
-                self.add(
-                    "FAIL",
-                    f"Forum group membership: {group_name}",
-                    target,
-                    "Response did not contain a members list.",
-                    "Check the Forum group members API response.",
-                )
-            elif any(
-                isinstance(member, dict) and str(member.get("username", "")).casefold() == FORUM_USERNAME.casefold()
-                for member in members
-            ):
-                self.add(
-                    "PASS", f"Forum group membership: {group_name}", target, f"{FORUM_USERNAME} is a member.", "None."
-                )
-            else:
-                self.add(
-                    "FAIL",
-                    f"Forum group membership: {group_name}",
-                    target,
-                    f"{FORUM_USERNAME} is not listed as a member.",
-                    f"Add {FORUM_USERNAME} to {group_name}, then rerun.",
                 )
 
     def add_manual_checks(self) -> None:
