@@ -233,9 +233,9 @@ Pass `--pretix`, `--forum`, or both to select the reconciliation phases. At leas
 
 #### Read-only Setup Diagnostics (`tools.environment.check_setup`)
 
-Run `uv run python -m tools.environment.check_setup` to inspect local credentials, Pretix and Forum API access, managed resources, template configuration, and `gundalow`'s Forum identity/group membership. The command performs read requests only, reports `PASS`, `FAIL`, or `MANUAL` per check, and exits non-zero when any check fails.
+Run `uv run python -m tools.environment.check_setup` to inspect local credentials, Pretix and Forum API access, managed resources, and template configuration. It checks `gundalow`'s Forum identity and whether a usable primary email is set, without displaying the email. It does not check organiser-group membership: Forum admins manage those memberships city by city, and event creation with `--forum` checks the named organiser against the selected city's group.
 
-The Pretix `GET teams` endpoint is permission-gated by `organizer.teams:write`, so a successful request verifies that permission for the configured API token. Required write permissions that cannot be established without mutation are listed by name as `MANUAL`: `organizer.settings.general:write`, `organizer.events:create`, `event.settings.general:write`, and `event.items:write`. Forum write access is also `MANUAL`; the checker never probes write endpoints.
+The Pretix `GET teams` endpoint is permission-gated by `organizer.teams:write`, so a successful request verifies that permission for the configured API token. The Admin API identity endpoint may omit email, so the checker reads `u/gundalow/emails.json` as `gundalow` and reports only whether a usable primary email is set. Pretix requires email in the signed DiscourseConnect identity payload at login. Required write permissions that cannot be established without mutation are listed by name as `MANUAL`: `organizer.settings.general:write`, `organizer.events:create`, `event.settings.general:write`, and `event.items:write`. Forum write access is also `MANUAL`; the checker never probes write endpoints.
 
 Pretix teams do not require Pretix-managed 2FA. Privileged SSO logins require Forum 2FA through the signed DiscourseConnect assertion, independently of Pretix team settings.
 
