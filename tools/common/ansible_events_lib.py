@@ -216,6 +216,7 @@ class CityInfo:
 
 CITIES: tuple[CityInfo, ...] = (
     CityInfo(region="Europe", country="UK", slug="london", city="London", timezone="Europe/London"),
+    CityInfo(region="Europe", country="UK", slug="manchester", city="Manchester", timezone="Europe/London"),
     CityInfo(region="Europe", country="Spain", slug="barcelona", city="Barcelona", timezone="Europe/Madrid"),
     CityInfo(
         region="Americas",
