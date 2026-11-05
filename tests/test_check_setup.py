@@ -203,15 +203,27 @@ def test_local_configuration_never_displays_secret_values(monkeypatch: pytest.Mo
     assert "forum-secret" not in checker.results[0].detail
 
 
-def test_print_results_fails_only_for_fail_status(capsys: pytest.CaptureFixture[str]) -> None:
+def test_print_results_uses_hierarchical_status_markers_and_fails_only_on_fail(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     manual = check_setup.CheckResult("MANUAL", "server check", "operator", "unavailable", "inspect")
+    city = check_setup.CheckResult(
+        "PASS",
+        f"Forum/Pretix mapping: {CITIES[0].city}",
+        f"{CITIES[0].organiser_group} → {CITIES[0].team_name}",
+        "mapping is correct",
+        "None.",
+    )
     failure = check_setup.CheckResult("FAIL", "resource", "GET settings", "missing", "reconcile")
 
-    assert check_setup.print_results([manual]) is False
+    assert check_setup.print_results([manual, city]) is False
     manual_output = capsys.readouterr().out
     assert "1 MANUAL" in manual_output
-    assert "🔴" not in manual_output
-    assert check_setup.print_results([manual, failure]) is True
+    assert "Global\n  ❓ MANUAL: server check" in manual_output
+    assert f"{CITIES[0].city}\n  ✅ PASS: Forum/Pretix mapping: {CITIES[0].city}" in manual_output
+    assert "    Target: operator" in manual_output
+    assert "❌ FAIL:" not in manual_output
+    assert check_setup.print_results([manual, city, failure]) is True
     failed_output = capsys.readouterr().out
-    assert "🔴 FAIL: resource" in failed_output
+    assert "  ❌ FAIL: resource" in failed_output
     assert "1 FAIL" in failed_output

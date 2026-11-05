@@ -775,16 +775,42 @@ class SetupChecker:
         return self.results
 
 
+def result_scope(result: CheckResult) -> str:
+    """Return the city section for a city-specific check, or Global."""
+    searchable = f"{result.name} {result.target}".casefold()
+    for city in CITIES:
+        if any(
+            identifier.casefold() in searchable
+            for identifier in (city.city, city.slug, city.organiser_group, city.team_name)
+        ):
+            return city.city
+    return "Global"
+
+
 def print_results(results: list[CheckResult]) -> bool:
-    """Print sanitized results and return whether any diagnostic failed."""
+    """Print sanitized, hierarchically grouped results and report whether any failed."""
+    grouped: dict[str, list[CheckResult]] = {"Global": []}
+    grouped.update({city.city: [] for city in CITIES})
     for result in results:
-        marker = "🔴 " if result.status == "FAIL" else ""
-        print(f"{marker}{result.status}: {result.name}")
-        print(f"  Target: {result.target}")
-        print(f"  Result: {result.detail}")
-        print(f"  Next: {result.next_step}")
+        grouped[result_scope(result)].append(result)
+
+    for scope in ("Global", *(city.city for city in CITIES)):
+        scoped_results = grouped[scope]
+        if not scoped_results:
+            continue
+        print(scope)
+        for result in scoped_results:
+            marker = {"PASS": "✅", "FAIL": "❌", "MANUAL": "❓"}.get(result.status, "❌")
+            print(f"  {marker} {result.status}: {result.name}")
+            print(f"    Target: {result.target}")
+            print(f"    Result: {result.detail}")
+            print(f"    Next: {result.next_step}")
     counts = {status: sum(result.status == status for result in results) for status in ("PASS", "FAIL", "MANUAL")}
-    print(f"Summary: {counts['PASS']} PASS, {counts['FAIL']} FAIL, {counts['MANUAL']} MANUAL")
+    print(
+        f"Summary: ✅ {counts['PASS']} PASS, "
+        f"{('❌ ' if counts['FAIL'] else '')}{counts['FAIL']} FAIL, "
+        f"❓ {counts['MANUAL']} MANUAL"
+    )
     return counts["FAIL"] > 0
 
 
