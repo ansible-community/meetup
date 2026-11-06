@@ -91,6 +91,8 @@ def test_rendered_page_uses_ansible_theme_and_map_controls() -> None:
     assert f"'circle-color': '{MAP_MARKER_COLOR}'" in page
     assert "new maplibregl.FullscreenControl()" in page
     assert "map.on('click', 'meetup-cluster-count', expandCluster)" in page
+    assert "async function expandCluster(event)" in page
+    assert "await map.getSource('meetup-locations').getClusterExpansionZoom(feature.properties.cluster_id)" in page
     assert OUTPUT.name == "map.html"
     assert 'placeholder="Search city, country, or region"' in page
     assert "location.region" in page and "location.timezone" in page

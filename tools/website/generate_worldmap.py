@@ -277,12 +277,11 @@ function selectLocation(slug, fromMap = false) {{
   if (mapReady && !fromMap) map.flyTo({{center: [location.lon, location.lat], zoom: 8}});
   requestAnimationFrame(() => document.getElementById(`location-${{slug}}`)?.scrollIntoView({{block: 'nearest', behavior: 'smooth'}}));
 }}
-function expandCluster(event) {{
+async function expandCluster(event) {{
   const feature = event.features?.[0];
   if (!feature) return;
-  map.getSource('meetup-locations').getClusterExpansionZoom(feature.properties.cluster_id, (error, zoom) => {{
-    if (!error) map.easeTo({{center: feature.geometry.coordinates, zoom}});
-  }});
+  const zoom = await map.getSource('meetup-locations').getClusterExpansionZoom(feature.properties.cluster_id);
+  map.easeTo({{center: feature.geometry.coordinates, zoom}});
 }}
 map.on('load', () => {{
   map.addSource('meetup-locations', {{
