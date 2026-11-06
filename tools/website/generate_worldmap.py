@@ -13,9 +13,9 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / "docs/meetup-worldmap.html"
+OUTPUT = ROOT / "docs/map.html"
 MAP_MARKER_COLOR = "#5bbdbf"
-LOGGER = logging.getLogger("meetup_worldmap")
+LOGGER = logging.getLogger(__name__)
 
 
 def normalise_region(region: str) -> str:
@@ -31,6 +31,8 @@ def normalise_region(region: str) -> str:
 
 def render_page(locations: list[dict[str, object]], generated_at: str) -> str:
     """Render a self-contained interactive meetup-location map and directory."""
+    from tools.common.ansible_events_lib import DISCOURSE_URL
+
     payload = json.dumps({"locations": locations, "generated_at": generated_at}, ensure_ascii=False)
     payload = payload.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     safe_json = payload
@@ -48,12 +50,11 @@ def render_page(locations: list[dict[str, object]], generated_at: str) -> str:
 <style>
 :root {{
   color-scheme: light dark;
-  --brand: #5bbdbf;
+  --brand: {MAP_MARKER_COLOR};
   --ink: #000000de;
   --muted: #52606d;
   --line: #d7dde2;
   --surface: #fff;
-  --soft: #f4f6f8;
   --link: #2980b9;
 }}
 * {{ box-sizing: border-box; }}
@@ -71,46 +72,86 @@ input {{ min-width: 230px; flex: 1; }}
 button, .subscribe {{ font: inherit; display: inline-block; padding: 7px 11px; border-radius: 4px; border: 1px solid var(--brand); background: color-mix(in srgb, var(--brand) 12%, var(--surface)); color: var(--ink); text-decoration: none; cursor: pointer; white-space: nowrap; }}
 button:hover, .subscribe:hover {{ background: color-mix(in srgb, var(--brand) 24%, var(--surface)); }}
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {{ outline: 3px solid var(--link); outline-offset: 2px; }}
-.map-wrap {{ position: relative; }}
-#map {{ height: min(65vh, 650px); min-height: 390px; border: 1px solid var(--line); border-radius: 4px; z-index: 0; }}
+.controls label {{ display: flex; align-items: center; gap: 8px; }}
+.discovery-grid {{ display: grid; grid-template-columns: minmax(340px, .85fr) minmax(0, 1.35fr); gap: 20px; align-items: start; }}
+.results-panel, .map-panel {{ min-width: 0; }}
+.results-panel h2 {{ margin-top: 0; }}
+#results {{ max-height: min(72vh, 780px); overflow: auto; border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; }}
+.region {{ border-bottom: 1px solid var(--line); padding: 8px 0; }}
+.region:last-child {{ border-bottom: 0; }}
+.region summary {{ font-weight: 700; cursor: pointer; font-size: 1.05rem; }}
+.country {{ margin: 12px 0 5px; font-size: .9rem; color: var(--muted); }}
+.location-list {{ display: grid; gap: 7px; }}
+.location {{ display: flex; align-items: center; gap: 10px; width: 100%; min-height: 62px; padding: 8px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }}
+.location.is-selected {{ border-color: var(--brand); box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 28%, transparent); }}
+.location-select {{ flex: 1; min-width: 0; padding: 3px; border: 0; background: transparent; text-align: left; white-space: normal; }}
+.location-select:hover {{ background: transparent; }}
+.location-select strong, .location-select span, .location-select small {{ display: block; }}
+.location-select strong {{ font-size: 1rem; }}
+.location-select span {{ color: var(--muted); }}
+.location-select small {{ color: var(--muted); font-family: "Red Hat Mono", monospace; font-size: .78rem; }}
+.subscribe {{ font-size: .8rem; padding: 6px 8px; }}
+#map {{ height: min(72vh, 780px); min-height: 430px; border: 1px solid var(--line); border-radius: 4px; z-index: 0; }}
+.map-panel h2 {{ margin-top: 0; }}
 .map-note {{ font-size: .85rem; margin: .45em 0; }}
 .marker-count {{ font-weight: 700; align-self: center; }}
-.region {{ border-top: 1px solid var(--line); padding: 10px 0; }}
-.region summary {{ font-weight: 700; cursor: pointer; font-size: 1.1rem; }}
-.country {{ margin: 14px 0 7px; font-size: .96rem; color: var(--muted); }}
-.location-list {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 10px; margin-top: 8px; }}
-.location {{ display: flex; align-items: center; justify-content: space-between; gap: 12px; width: min(100%, 430px); min-height: 64px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }}
-.location h3 {{ font-size: 1rem; line-height: 1.3; margin: 0; }}
-.subscribe {{ font-size: .86rem; padding: 6px 9px; }}
-.maplibregl-popup-content {{ color: var(--ink); font: inherit; }}
-.maplibregl-popup-content .subscribe {{ margin-top: 8px; }}
+.maplibregl-popup-content {{ color: var(--ink) !important; background: var(--surface) !important; font: inherit; }}
+.maplibregl-popup-content .subscribe {{ display: inline-block; margin-top: 8px; }}
+.maplibregl-popup-close-button {{ color: var(--ink); background: transparent; font-size: 1.25rem; }}
+.maplibregl-popup-close-button:hover {{ background: transparent; }}
+.maplibregl-popup-anchor-bottom .maplibregl-popup-tip {{ border-top-color: var(--surface); }}
+.maplibregl-popup-anchor-top .maplibregl-popup-tip {{ border-bottom-color: var(--surface); }}
+.maplibregl-popup-anchor-left .maplibregl-popup-tip {{ border-right-color: var(--surface); }}
+.maplibregl-popup-anchor-right .maplibregl-popup-tip {{ border-left-color: var(--surface); }}
 .maplibregl-ctrl-group {{ border-radius: 4px !important; }}
+.mobile-view-switch {{ display: none; }}
 @media (prefers-color-scheme: dark) {{
-  :root {{ --ink: #f1f3f4; --muted: #c4c9ce; --line: #4b5258; --surface: #202428; --soft: #2b3035; --link: #8ab4f8; }}
+  :root {{ --ink: #f1f3f4; --muted: #c4c9ce; --line: #4b5258; --surface: #202428; --link: #8ab4f8; }}
 }}
-@media (max-width: 600px) {{
-  #map {{ height: 55vh; min-height: 330px; }}
-  .location {{ align-items: flex-start; flex-direction: column; gap: 8px; }}
+@media (max-width: 760px) {{
+  .discovery-grid {{ display: block; }}
+  .mobile-view-switch {{ display: flex; gap: 8px; margin: 12px 0; }}
+  .mobile-view-switch button[aria-pressed="true"] {{ background: var(--brand); color: #102326; }}
+  body[data-mobile-view="map"] .results-panel {{ display: none; }}
+  body[data-mobile-view="list"] .map-panel {{ display: none; }}
+  #results {{ max-height: none; }}
+  #map {{ height: 62vh; min-height: 340px; }}
+}}
+@media (max-width: 480px) {{
+  .controls {{ display: grid; }}
+  .controls input {{ min-width: 0; }}
+  .location {{ align-items: flex-start; }}
+  .subscribe {{ white-space: normal; }}
 }}
 </style>
 </head>
 <body>
 <main>
-  <p class="brand-label">Ansible Community Meetups</p>
   <h1>Find your local Ansible meetup</h1>
-  <p class="intro">Explore meetup communities around the world. Search by city or browse locations by region, then select a map circle or city to find its community link.</p>
+  <p class="intro">Search by city, country, or region to find a nearby Ansible meetup. Choose a location to see it on the map.</p>
   <div class="controls">
-    <input id="search" type="search" placeholder="Search city or country" aria-label="Search locations">
-    <select id="region-filter" aria-label="Filter by region"><option value="">All regions</option></select>
+    <input id="search" type="search" placeholder="Search city, country, or region" aria-label="Search city, country, or region">
+    <label>Browse by region
+      <select id="region-filter" aria-label="Browse by region"><option value="">All regions</option></select>
+    </label>
     <span id="location-count" class="marker-count" aria-live="polite"></span>
   </div>
-  <div class="map-wrap">
-    <div id="map" role="application" aria-label="Interactive map of Ansible meetup locations"></div>
+  <div class="mobile-view-switch" role="group" aria-label="Choose list or map view">
+    <button type="button" data-view="list" aria-pressed="true">List</button>
+    <button type="button" data-view="map" aria-pressed="false">Map</button>
   </div>
-  <p class="map-note"><span id="map-status" aria-live="polite"></span> Map style <a href="https://openfreemap.org/">OpenFreeMap</a> © <a href="https://openmaptiles.org/">OpenMapTiles</a>; data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
-  <h2>Meetup locations by region</h2>
-  <div id="regions"></div>
-  <p class="subtle">Page data generated {html.escape(generated_at)}. Questions? Visit the <a href="https://forum.ansible.com/c/ansible-community/">Ansible Community Forum</a>.</p>
+  <div class="discovery-grid">
+    <section class="results-panel" aria-labelledby="results-heading">
+      <h2 id="results-heading">Meetup locations</h2>
+      <div id="results" aria-live="polite"></div>
+    </section>
+    <section class="map-panel" aria-labelledby="map-heading">
+      <h2 id="map-heading">Map</h2>
+      <div id="map" role="application" aria-label="Interactive map of Ansible meetup locations"></div>
+      <p class="map-note"><span id="map-status" aria-live="polite"></span> Map style <a href="https://openfreemap.org/">OpenFreeMap</a> © <a href="https://openmaptiles.org/">OpenMapTiles</a>; data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+    </section>
+  </div>
+  <p class="subtle">Page data generated {html.escape(generated_at)}. Questions? Visit the <a href="{DISCOURSE_URL}/c/ansible-community/">Ansible Community Forum</a>.</p>
 </main>
 <script id="meetup-data" type="application/json">{safe_json}</script>
 <script src="https://unpkg.com/maplibre-gl@^5/dist/maplibre-gl.js"></script>
@@ -121,6 +162,11 @@ const map = new maplibregl.Map({{container: 'map', style: 'https://tiles.openfre
 map.addControl(new maplibregl.NavigationControl(), 'top-right');
 map.addControl(new maplibregl.FullscreenControl(), 'top-right');
 const regionSelect = document.getElementById('region-filter');
+const searchInput = document.getElementById('search');
+const results = document.getElementById('results');
+let selectedSlug = null;
+let mapReady = false;
+document.body.dataset.mobileView = 'list';
 regions.forEach(region => {{
   const option = document.createElement('option');
   option.value = region;
@@ -130,36 +176,49 @@ regions.forEach(region => {{
 function esc(value) {{
   return String(value).replace(/[&<>"']/g, character => ({{'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}}[character]));
 }}
+function formatTimezone(timezone) {{
+  const now = new Date();
+  const name = new Intl.DateTimeFormat(undefined, {{timeZone: timezone, timeZoneName: 'longGeneric'}})
+    .formatToParts(now).find(part => part.type === 'timeZoneName')?.value;
+  const offset = new Intl.DateTimeFormat(undefined, {{timeZone: timezone, timeZoneName: 'shortOffset'}})
+    .formatToParts(now).find(part => part.type === 'timeZoneName')?.value.replace('GMT', 'UTC');
+  return offset ? `${{name}} · ${{offset}}` : (name || timezone);
+}}
 function featureCollection(rows) {{
   return {{
     type: 'FeatureCollection',
     features: rows.map(location => ({{
       type: 'Feature',
       geometry: {{type: 'Point', coordinates: [location.lon, location.lat]}},
-      properties: {{slug: location.slug, city: location.city, country: location.country}}
+      properties: {{slug: location.slug, city: location.city, country: location.country, selected: location.slug === selectedSlug}}
     }}))
   }};
 }}
 function renderLocations() {{
-  const query = document.getElementById('search').value.trim().toLowerCase();
+  const query = searchInput.value.trim().toLowerCase();
   const selectedRegion = regionSelect.value;
   const shown = locations.filter(location =>
     (!selectedRegion || location.region === selectedRegion) &&
-    (!query || `${{location.city}} ${{location.country}}`.toLowerCase().includes(query))
-  );
+    (!query || `${{location.city}} ${{location.country}} ${{location.region}} ${{location.timezone}}`.toLowerCase().includes(query))
+  ).sort((first, second) => first.city.localeCompare(second.city));
   document.getElementById('location-count').textContent = `${{shown.length}} of ${{locations.length}} locations`;
   const source = map.getSource('meetup-locations');
   if (source) source.setData(featureCollection(shown));
   document.getElementById('map-status').textContent = `${{shown.length}} locations shown. Click a circle to zoom in, or a pin for details.`;
 
-  const host = document.getElementById('regions');
-  host.replaceChildren();
+  results.replaceChildren();
+  if (!shown.length) {{
+    const empty = document.createElement('p');
+    empty.textContent = 'No meetup locations match that search.';
+    results.append(empty);
+    return;
+  }}
   regions.filter(region => !selectedRegion || region === selectedRegion).forEach(region => {{
     const regionRows = shown.filter(location => location.region === region);
     if (!regionRows.length) return;
     const details = document.createElement('details');
     details.className = 'region';
-    details.open = Boolean(query || selectedRegion);
+    details.open = true;
     const summary = document.createElement('summary');
     summary.textContent = `${{region}} · ${{regionRows.length}} locations`;
     details.append(summary);
@@ -176,14 +235,47 @@ function renderLocations() {{
       grid.className = 'location-list';
       countryRows.forEach(location => {{
         const card = document.createElement('article');
-        card.className = 'location';
-        card.innerHTML = `<h3>${{esc(location.city)}}</h3><a class="subscribe" href="https://forum.ansible.com/my/preferences/profile#user_event_cities">Get event notices</a>`;
+        card.className = `location${{location.slug === selectedSlug ? ' is-selected' : ''}}`;
+        card.id = `location-${{location.slug}}`;
+        const select = document.createElement('button');
+        select.type = 'button';
+        select.className = 'location-select';
+        select.setAttribute('aria-pressed', String(location.slug === selectedSlug));
+        const city = document.createElement('strong');
+        city.textContent = location.city;
+        const country = document.createElement('span');
+        country.textContent = location.country;
+        const timezone = document.createElement('small');
+        timezone.textContent = formatTimezone(location.timezone);
+        select.append(city, country, timezone);
+        select.addEventListener('click', () => selectLocation(location.slug));
+        const subscribe = document.createElement('a');
+        subscribe.className = 'subscribe';
+        subscribe.href = '{DISCOURSE_URL}/my/preferences/profile#user_event_cities';
+        subscribe.textContent = 'Get event notices';
+        card.append(select, subscribe);
         grid.append(card);
       }});
       details.append(grid);
     }});
-    host.append(details);
+    results.append(details);
   }});
+}}
+function setMobileView(view) {{
+  document.body.dataset.mobileView = view;
+  document.querySelectorAll('.mobile-view-switch button').forEach(button => {{
+    button.setAttribute('aria-pressed', String(button.dataset.view === view));
+  }});
+  if (view === 'map') requestAnimationFrame(() => map.resize());
+}}
+function selectLocation(slug, fromMap = false) {{
+  const location = locations.find(candidate => candidate.slug === slug);
+  if (!location) return;
+  selectedSlug = slug;
+  renderLocations();
+  if (window.matchMedia('(max-width: 760px)').matches) setMobileView(fromMap ? 'list' : 'map');
+  if (mapReady && !fromMap) map.flyTo({{center: [location.lon, location.lat], zoom: 8}});
+  requestAnimationFrame(() => document.getElementById(`location-${{slug}}`)?.scrollIntoView({{block: 'nearest', behavior: 'smooth'}}));
 }}
 function expandCluster(event) {{
   const feature = event.features?.[0];
@@ -207,17 +299,23 @@ map.on('load', () => {{
   }});
   map.addLayer({{
     id: 'meetup-points', type: 'circle', source: 'meetup-locations', filter: ['!', ['has', 'point_count']],
-    paint: {{'circle-color': '{MAP_MARKER_COLOR}', 'circle-radius': 7, 'circle-stroke-width': 2, 'circle-stroke-color': '#fff'}}
+    paint: {{'circle-color': '{MAP_MARKER_COLOR}', 'circle-radius': ['case', ['get', 'selected'], 11, 7], 'circle-stroke-width': ['case', ['get', 'selected'], 3, 2], 'circle-stroke-color': ['case', ['get', 'selected'], '#17202a', '#fff']}}
   }});
 
   const bounds = new maplibregl.LngLatBounds();
   locations.forEach(location => bounds.extend([location.lon, location.lat]));
   map.fitBounds(bounds, {{padding: 24, maxZoom: 1.6, duration: 0}});
+  mapReady = true;
+  if (selectedSlug) {{
+    const selected = locations.find(location => location.slug === selectedSlug);
+    if (selected) map.flyTo({{center: [selected.lon, selected.lat], zoom: 8}});
+  }}
   map.on('click', 'meetup-clusters', expandCluster);
   map.on('click', 'meetup-cluster-count', expandCluster);
   map.on('click', 'meetup-points', event => {{
     const location = event.features[0].properties;
-    const popup = `<strong>${{esc(location.city)}}</strong><br>${{esc(location.country)}}<br><a class="subscribe" href="https://forum.ansible.com/my/preferences/profile#user_event_cities">Get event notices</a>`;
+    selectLocation(location.slug, true);
+    const popup = `<strong>${{esc(location.city)}}</strong><br>${{esc(location.country)}}<br><a class="subscribe" href="{DISCOURSE_URL}/my/preferences/profile#user_event_cities">Get event notices</a>`;
     new maplibregl.Popup({{offset: 12}}).setLngLat(event.features[0].geometry.coordinates).setHTML(popup).addTo(map);
   }});
   ['meetup-clusters', 'meetup-cluster-count', 'meetup-points'].forEach(layer => {{
@@ -226,7 +324,8 @@ map.on('load', () => {{
   }});
   renderLocations();
 }});
-document.getElementById('search').addEventListener('input', renderLocations);
+document.querySelectorAll('.mobile-view-switch button').forEach(button => button.addEventListener('click', () => setMobileView(button.dataset.view)));
+searchInput.addEventListener('input', renderLocations);
 regionSelect.addEventListener('change', renderLocations);
 renderLocations();
 </script>
@@ -241,13 +340,14 @@ def main() -> None:
         "--output",
         type=Path,
         default=OUTPUT,
-        help="HTML output path (default: docs/meetup-worldmap.html)",
+        help="HTML output path (default: docs/map.html)",
     )
     parser.add_argument("-v", action="store_true", help="show timestamped progress logs")
     args = parser.parse_args()
     logging.basicConfig(
         level=logging.DEBUG if args.v else logging.INFO,
         format="%(asctime)s %(levelname)s %(message)s" if args.v else "%(levelname)s: %(message)s",
+        force=True,
     )
     sys.path.insert(0, str(ROOT))
     from tools.common.ansible_event_cities import CITIES
@@ -258,6 +358,7 @@ def main() -> None:
             "city": city.city,
             "country": city.country,
             "region": normalise_region(city.region),
+            "timezone": city.timezone,
             "lat": city.latitude,
             "lon": city.longitude,
         }

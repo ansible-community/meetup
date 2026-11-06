@@ -34,12 +34,11 @@ theme:
         name: Switch to light mode
 nav:
   - Start here: index.md
-  - Meetup map: meetup-map.md
+  - Meetup map: map.html
   - Attendees:
       - attendees/index.md
       - Find an event and RSVP: attendees/find-and-rsvp.md
       - Participate and follow up: attendees/participate-and-follow-up.md
-      - Meetup locations: community-team/meetup-worldmap.md
   - Organisers:
       - organisers/index.md
       - What it means to be an organiser: organisers/role.md
@@ -49,6 +48,7 @@ nav:
       - After the Meetup: organisers/after-the-meetup.md
   - Ansible Community Team:
       - community-team/index.md
+      - Generate the meetup map: community-team/meetup-worldmap.md
       - Provisioning: community-team/provisioning.md
       - Adding a city: community-team/adding-a-city.md
       - Creating an event: community-team/creating-an-event.md

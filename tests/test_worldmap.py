@@ -5,7 +5,7 @@ import re
 import pytest
 
 from tools.common.ansible_event_cities import CITIES, CityInfo
-from tools.website.generate_worldmap import MAP_MARKER_COLOR, normalise_region, render_page
+from tools.website.generate_worldmap import MAP_MARKER_COLOR, OUTPUT, normalise_region, render_page
 
 
 def test_registry_has_coordinates_for_every_location() -> None:
@@ -69,6 +69,7 @@ def test_rendered_page_uses_ansible_theme_and_map_controls() -> None:
                 "city": "<script>alert(1)</script>",
                 "country": "UK",
                 "region": "Europe",
+                "timezone": "Europe/London",
                 "lat": 51.5,
                 "lon": -0.1,
             }
@@ -79,6 +80,7 @@ def test_rendered_page_uses_ansible_theme_and_map_controls() -> None:
     assert match is not None
     data = json.loads(match.group(1))
     assert data["locations"][0]["city"] == "<script>alert(1)</script>"
+    assert data["locations"][0]["timezone"] == "Europe/London"
     assert r"\u003cscript\u003e" in match.group(1)
     assert "events" not in data
     assert "maplibre-gl@^5" in page
@@ -89,12 +91,21 @@ def test_rendered_page_uses_ansible_theme_and_map_controls() -> None:
     assert f"'circle-color': '{MAP_MARKER_COLOR}'" in page
     assert "new maplibregl.FullscreenControl()" in page
     assert "map.on('click', 'meetup-cluster-count', expandCluster)" in page
+    assert OUTPUT.name == "map.html"
+    assert 'placeholder="Search city, country, or region"' in page
+    assert "location.region" in page and "location.timezone" in page
+    assert "timezone.textContent = formatTimezone(location.timezone)" in page
+    assert "window.matchMedia('(max-width: 760px)').matches" in page
+    assert "map.flyTo({center: [location.lon, location.lat], zoom: 8}" in page
+    assert "document.body.dataset.mobileView = 'list'" in page
+    assert "scrollIntoView({block: 'nearest'" in page
+    assert ".maplibregl-popup-content { color: var(--ink) !important; background: var(--surface) !important;" in page
     assert "America/Argentina/Buenos_Aires" not in page
-    assert "${esc(location.region)}" not in page
+    assert '<br>${esc(location.country)}<br><a class="subscribe"' in page
     assert "Upcoming events" not in page
     assert "Location subscriptions are managed" not in page
-    assert "location.timezone" not in page
-    assert "width: min(100%, 430px)" in page
-    assert "border: 1px solid var(--line)" in page
+    assert 'id="meetup-data"' in page
+    assert "--surface: #202428" in page
+    assert "prefers-color-scheme: dark" in page
     assert "tile.openstreetmap.org" not in page
     assert "OpenMapTiles" in page and "OpenStreetMap contributors" in page
