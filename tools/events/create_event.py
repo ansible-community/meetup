@@ -137,7 +137,7 @@ def main() -> None:
 
     city_info = get_city(args.city)
     if not CITY_SLUG_RE.fullmatch(args.city) or city_info is None:
-        parser.error(f"Unknown or invalid city {args.city!r}; add lowercase city name to ansible_events_lib.py")
+        parser.error(f"Unknown or invalid city {args.city!r}; add the city to ansible_event_cities.py")
 
     try:
         dt = datetime.fromisoformat(args.date.rstrip("Z"))

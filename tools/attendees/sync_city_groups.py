@@ -25,12 +25,10 @@ from typing import Any
 
 import requests
 
+from tools.common.ansible_event_cities import ATTENDEE_GROUP_PREFIX, CITIES, CityInfo
 from tools.common.ansible_events_lib import (
-    ATTENDEE_GROUP_PREFIX,
-    CITIES,
     DISCOURSE_CLIENT,
     USER_CITY_FIELD_NAME,
-    CityInfo,
     logger,
     pre_flight_checks,
 )

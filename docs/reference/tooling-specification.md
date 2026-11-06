@@ -49,7 +49,7 @@ The Forum/Pretix tools use reusable Requests clients with shared base URLs, head
 
 ### Configuration: environment variables and constants
 
-The Forum/Pretix tools read these environment variables in `tools/common/ansible_events_lib.py`; the event, provisioning, and attendee scripts import that shared configuration:
+The Forum/Pretix tools read these environment variables in `tools/common/ansible_events_lib.py`; the city registry is maintained separately in `tools/common/ansible_event_cities.py` and imported by the event, provisioning, and attendee scripts:
 
 | Variable | Required | Default | Used for |
 |---|---|---|---|
@@ -96,15 +96,16 @@ A frozen, slotted dataclass representing a meetup city.
 
 **Current Registry (immutable tuple):**
 
-| Slug | Region | Country | City | Timezone |
-|---|---|---|---|---|
-| london | Europe | UK | London | Europe/London |
-| barcelona | Europe | Spain | Barcelona | Europe/Madrid |
+`CITIES` is assembled from the Meetup Pro city groups and historic locations in
+`tools/common/ansible_event_cities.py`. Country-level Meetup Pro groups are
+recorded separately and are not treated as event cities. The source file keeps
+each section sorted by region, country, and city.
 
 **Constraints:**
 - The registry is an immutable `tuple[CityInfo, ...]`. Slugs and display names must be unique.
 - Each slug must match `^[a-z]+$`; each timezone must resolve through Python's IANA `zoneinfo` database.
 - CityInfo instances are frozen — no attribute mutation after construction.
+- Keep accepted Unicode spelling in city display names; Pretix and Discourse receive those labels in JSON. Slugs stay lowercase ASCII for identifiers.
 
 ### 3.2 API Results and Errors
 
@@ -593,7 +594,7 @@ X and Bluesky include a fallback mechanism: if the primary text exceeds the char
   - `CityInfo.field_value`: standard, multi-word, case preservation.
   - `CityInfo` frozen: immutability enforcement.
   - `get_city`: exact match, case-insensitive, not-found, partial match rejection, empty string, leading/trailing spaces.
-  - `CITIES` registry: all CityInfo instances, no duplicates, valid timezones, tuple immutability.
+  - `CITIES` registry in `tools/common/ansible_event_cities.py`: every city resolves by slug; country names match the expected set; metadata and timezones validate; sections stay sorted; accepted Unicode spellings are preserved.
   - Pretix URL building: trailing slashes, query strings, double slashes, empty endpoint.
   - Discourse URL building: slash stripping, nested paths.
   - `pre_flight_checks`: both vars set, missing discourse key, `require_discourse=False`.
@@ -611,7 +612,7 @@ X and Bluesky include a fallback mechanism: if the primary text exceeds the char
 
 ### Continuous integration
 
-GitHub Actions uses `astral-sh/setup-uv@v5` to select Python 3.13, then runs `uv sync --locked --all-groups`. On pull requests and pushes to `main` or `master`, it runs `pytest`, Ruff lint and format checks on the Meetup tool modules and tests, Pyright on `tools/common/ansible_events_lib.py` and `tools/environment/provision_environment.py`, and `mkdocs build --strict`. CI does not build a Python wheel and does not include `tools/cfgmgmtcamp/` in its Python checks.
+GitHub Actions uses `astral-sh/setup-uv@v5` to select Python 3.13, then runs `uv sync --locked --all-groups`. On pull requests and pushes to `main` or `master`, it runs `pytest`, Ruff lint and format checks on the Meetup tool modules and tests, Pyright on `tools/common/ansible_event_cities.py`, `tools/common/ansible_events_lib.py`, and `tools/environment/provision_environment.py`, and `mkdocs build --strict`. CI does not build a Python wheel and does not include `tools/cfgmgmtcamp/` in its Python checks.
 
 ---
 
@@ -658,7 +659,7 @@ The `teams` list endpoint is paginated via `pretix_list_all`. Other list endpoin
 
 ### Hardcoded Cities Registry
 
-The `CITIES` tuple is defined in source code. Adding a new city requires a code change and deployment in this repo, followed by provisioning of its Forum group and Pretix team. The auth plugin resolves city teams dynamically and requires no city-specific code change or release. There is no database, config file, or API for dynamic city management.
+The `CITIES` tuple is defined in `tools/common/ansible_event_cities.py`. Adding a new city requires a code change and deployment in this repo, followed by provisioning of its Forum group and Pretix team. The auth plugin resolves city teams dynamically and requires no city-specific code change or release. There is no database, config file, or API for dynamic city management.
 
 ### Social Media Output
 

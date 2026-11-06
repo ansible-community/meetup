@@ -12,13 +12,12 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from tools.common.ansible_event_cities import CITIES, CityInfo
 from tools.common.ansible_events_lib import (
     ANSIBLE_PRIMARY_COLOR,
     ApiError,
     ATTENDEE_GROUP_PREFIX,
     EVENT_SLUG_RE,
-    CITIES,
-    CityInfo,
     CODE_OF_CONDUCT_URL,
     DEFAULT_ITEM_NAME,
     DEFAULT_ITEM_PRICE,
