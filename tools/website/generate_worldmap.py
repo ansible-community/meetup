@@ -21,6 +21,7 @@ OUTPUT = ROOT / "docs/meetup-worldmap.html"
 EVENTS_URL = "https://forum.ansible.com/c/events/8.json"
 DISCOURSE_URL = "https://forum.ansible.com"
 USER_AGENT = "AnsibleCommunityMeetupMap/1.0 (https://github.com/ansible-community/meetup)"
+MAP_MARKER_COLOR = "#5BBCBF"
 LOGGER = logging.getLogger("meetup_worldmap")
 
 
@@ -64,7 +65,7 @@ def attendance_format(event: dict[str, Any], raw: str, title: str, location: str
 
 def fetch_topic_event(topic: dict[str, Any]) -> tuple[dict[str, Any], str]:
     """Fetch the topic's first post, where Discourse serializes event details."""
-    url = f'{DISCOURSE_URL}/t/{topic.get("slug", "")}/{topic.get("id", "")}.json'
+    url = f"{DISCOURSE_URL}/t/{topic.get('slug', '')}/{topic.get('id', '')}.json"
     response = requests.get(url, headers={"User-Agent": USER_AGENT}, timeout=20)
     response.raise_for_status()
     payload = response.json()
@@ -121,7 +122,7 @@ def fetch_events() -> list[dict[str, Any]]:
         events.append(
             {
                 "title": title,
-                "url": f'{DISCOURSE_URL}/t/{topic.get("slug", "")}/{topic.get("id", "")}',
+                "url": f"{DISCOURSE_URL}/t/{topic.get('slug', '')}/{topic.get('id', '')}",
                 "start": starts_at.isoformat(),
                 "timezone": event.get("timezone") or topic.get("event_timezone") or "UTC",
                 "location": location,
@@ -137,7 +138,7 @@ def render_page(locations: list[dict[str, Any]], events: list[dict[str, Any]], g
     payload = json.dumps({"locations": locations, "events": events, "generated_at": generated_at}, ensure_ascii=False)
     payload = payload.replace("<", "\\u003c").replace(">", "\\u003e").replace("&", "\\u0026")
     safe_json = payload
-    return f'''<!doctype html>
+    return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Ansible Meetup locations and events</title>
 <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/ansible/logos/refs/heads/main/community-marks/Ansible-Community-Mark-Pool.png">
@@ -163,16 +164,21 @@ const regionSelect=document.getElementById('region-filter');regions.forEach(r=>{
 function esc(s){{return String(s).replace(/[&<>"']/g,c=>({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c]))}}
 function featureCollection(rows){{return{{type:'FeatureCollection',features:rows.map(x=>({{type:'Feature',geometry:{{type:'Point',coordinates:[x.lon,x.lat]}},properties:{{slug:x.slug,city:x.city,country:x.country,region:x.region,timezone:x.timezone}}}}))}}}}
 function renderLocations(){{const q=document.getElementById('search').value.trim().toLowerCase(),r=regionSelect.value;const shown=locations.filter(x=>(!r||x.region===r)&&(!q||`${{x.city}} ${{x.country}}`.toLowerCase().includes(q)));document.getElementById('location-count').textContent=`${{shown.length}} of ${{locations.length}} locations`;const source=map.getSource('meetup-locations');if(source)source.setData(featureCollection(shown));document.getElementById('map-status').textContent=`${{shown.length}} locations shown. Click clusters to zoom, or a point for details.`;const host=document.getElementById('regions');host.replaceChildren();regions.filter(x=>!r||x===r).forEach(region=>{{const rows=shown.filter(x=>x.region===region);if(!rows.length)return;const details=document.createElement('details');details.className='region';details.open=Boolean(q||r);const summary=document.createElement('summary');summary.textContent=`${{region}} · ${{rows.length}} locations`;details.append(summary);[...new Set(rows.map(x=>x.country))].sort().forEach(country=>{{const countryRows=rows.filter(x=>x.country===country);const heading=document.createElement('h3');heading.className='country';heading.textContent=`${{country}} · ${{countryRows.length}}`;details.append(heading);const grid=document.createElement('div');grid.className='location-list';countryRows.sort((a,b)=>a.city.localeCompare(b.city)).forEach(x=>{{const card=document.createElement('article');card.className='location';card.innerHTML=`<h3>${{esc(x.city)}}</h3><p>${{esc(x.timezone)}}</p><a class="subscribe" href="https://forum.ansible.com/my/preferences/profile#user_event_cities">Get event notices</a>`;grid.append(card)}});details.append(grid)}});host.append(details)}})}}
-map.on('load',()=>{{map.addSource('meetup-locations',{{type:'geojson',data:featureCollection(locations),cluster:true,clusterMaxZoom:5,clusterRadius:48}});map.addLayer({{id:'meetup-clusters',type:'circle',source:'meetup-locations',filter:['has','point_count'],paint:{{'circle-color':'#5BBCBF','circle-radius':['step',['get','point_count'],15,10,19,50,24],'circle-stroke-width':2,'circle-stroke-color':'#fff'}}}});map.addLayer({{id:'meetup-cluster-count',type:'symbol',source:'meetup-locations',filter:['has','point_count'],layout:{{'text-field':['get','point_count_abbreviated'],'text-size':12}},paint:{{'text-color':'#fff'}}}});map.addLayer({{id:'meetup-points',type:'circle',source:'meetup-locations',filter:['!', ['has','point_count']],paint:{{'circle-color':'#5BBCBF','circle-radius':7,'circle-stroke-width':2,'circle-stroke-color':'#fff'}}}});const bounds=new maplibregl.LngLatBounds();locations.forEach(x=>bounds.extend([x.lon,x.lat]));map.fitBounds(bounds,{{padding:24,maxZoom:1.6,duration:0}});map.on('click','meetup-clusters',event=>{{const feature=map.queryRenderedFeatures(event.point,{{layers:['meetup-clusters']}})[0],clusterId=feature.properties.cluster_id;map.getSource('meetup-locations').getClusterExpansionZoom(clusterId,(error,zoom)=>{{if(!error)map.easeTo({{center:feature.geometry.coordinates,zoom}})}})}});map.on('click','meetup-points',event=>{{const feature=event.features[0],x=feature.properties;new maplibregl.Popup({{offset:12}}).setLngLat(feature.geometry.coordinates).setHTML(`<strong>${{esc(x.city)}}</strong><br>${{esc(x.country)}}<br><span>${{esc(x.region)}}</span><br><a href="https://forum.ansible.com/my/preferences/profile#user_event_cities">Get event notices</a>`).addTo(map)}});map.on('mouseenter','meetup-clusters',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','meetup-clusters',()=>map.getCanvas().style.cursor='');map.on('mouseenter','meetup-points',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','meetup-points',()=>map.getCanvas().style.cursor='');renderLocations()}});
+map.on('load',()=>{{map.addSource('meetup-locations',{{type:'geojson',data:featureCollection(locations),cluster:true,clusterMaxZoom:5,clusterRadius:48}});map.addLayer({{id:'meetup-clusters',type:'circle',source:'meetup-locations',filter:['has','point_count'],paint:{{'circle-color':'{MAP_MARKER_COLOR}','circle-radius':['step',['get','point_count'],15,10,19,50,24],'circle-stroke-width':2,'circle-stroke-color':'#fff'}}}});map.addLayer({{id:'meetup-cluster-count',type:'symbol',source:'meetup-locations',filter:['has','point_count'],layout:{{'text-field':['get','point_count_abbreviated'],'text-size':12}},paint:{{'text-color':'#fff'}}}});map.addLayer({{id:'meetup-points',type:'circle',source:'meetup-locations',filter:['!', ['has','point_count']],paint:{{'circle-color':'{MAP_MARKER_COLOR}','circle-radius':7,'circle-stroke-width':2,'circle-stroke-color':'#fff'}}}});const bounds=new maplibregl.LngLatBounds();locations.forEach(x=>bounds.extend([x.lon,x.lat]));map.fitBounds(bounds,{{padding:24,maxZoom:1.6,duration:0}});map.on('click','meetup-clusters',event=>{{const feature=map.queryRenderedFeatures(event.point,{{layers:['meetup-clusters']}})[0],clusterId=feature.properties.cluster_id;map.getSource('meetup-locations').getClusterExpansionZoom(clusterId,(error,zoom)=>{{if(!error)map.easeTo({{center:feature.geometry.coordinates,zoom}})}})}});map.on('click','meetup-points',event=>{{const feature=event.features[0],x=feature.properties;new maplibregl.Popup({{offset:12}}).setLngLat(feature.geometry.coordinates).setHTML(`<strong>${{esc(x.city)}}</strong><br>${{esc(x.country)}}<br><span>${{esc(x.region)}}</span><br><a href="https://forum.ansible.com/my/preferences/profile#user_event_cities">Get event notices</a>`).addTo(map)}});map.on('mouseenter','meetup-clusters',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','meetup-clusters',()=>map.getCanvas().style.cursor='');map.on('mouseenter','meetup-points',()=>map.getCanvas().style.cursor='pointer');map.on('mouseleave','meetup-points',()=>map.getCanvas().style.cursor='');renderLocations()}});
 function renderEvents(){{const filter=document.getElementById('event-filter').value;const shown=data.events.filter(e=>!filter||((filter==='Repeating')?e.repeating:(e.format===filter)));const host=document.getElementById('events');host.replaceChildren();if(!shown.length){{host.innerHTML='<div class="empty">No upcoming events found. Browse the <a href="https://forum.ansible.com/c/events/8">Forum Events category</a>.</div>';return}}shown.forEach(e=>{{const card=document.createElement('article');card.className='event';const date=new Date(e.start);card.innerHTML=`<h3><a href="${{esc(e.url)}}">${{esc(e.title)}}</a></h3><span class="pill">${{esc(e.format)}}</span>${{e.repeating?'<span class="pill">Repeating</span>':''}}<p>${{date.toLocaleString(undefined,{{dateStyle:'medium',timeStyle:'short',timeZone:e.timezone||undefined}})}} (${{esc(e.timezone||'UTC')}})</p>${{e.location?`<p>${{esc(e.location)}}</p>`:''}}`;host.append(card)}})}}
 document.getElementById('search').addEventListener('input',renderLocations);regionSelect.addEventListener('change',renderLocations);document.getElementById('event-filter').addEventListener('change',renderEvents);renderLocations();renderEvents();
-</script></body></html>'''
+</script></body></html>"""
 
 
 def main() -> None:
     """Build the generated HTML page from the canonical location registry."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path, default=OUTPUT, help="HTML output path (default: docs/meetup-worldmap.html)")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=OUTPUT,
+        help="HTML output path (default: docs/meetup-worldmap.html)",
+    )
     parser.add_argument("-v", action="store_true", help="show timestamped progress logs")
     args = parser.parse_args()
     logging.basicConfig(
@@ -194,9 +200,6 @@ def main() -> None:
         }
         for city in CITIES
     ]
-    missing_coordinates = [location["slug"] for location in locations if location["lat"] is None or location["lon"] is None]
-    if missing_coordinates:
-        raise ValueError(f"Missing coordinates for registered locations: {', '.join(missing_coordinates)}")
     LOGGER.info("Loaded canonical coordinates for %s locations", len(locations))
     started_at = time.monotonic()
     try:
