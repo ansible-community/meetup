@@ -116,7 +116,17 @@ def test_explicit_attendance_mode_takes_precedence() -> None:
 def test_rendered_json_is_script_safe_and_map_uses_openfreemap() -> None:
     page = render_page(
         [{"slug": "london", "city": "London", "country": "UK", "region": "Europe", "lat": 51.5, "lon": -0.1}],
-        [{"title": "<script>alert(1)</script>", "url": "https://forum.ansible.com/t/example/1", "start": "2027-01-01T10:00:00+00:00", "timezone": "UTC", "location": "", "format": "Online", "repeating": False}],
+        [
+            {
+                "title": "<script>alert(1)</script>",
+                "url": "https://forum.ansible.com/t/example/1",
+                "start": "2027-01-01T10:00:00+00:00",
+                "timezone": "UTC",
+                "location": "",
+                "format": "Online",
+                "repeating": False,
+            }
+        ],
         "2026-11-06 10:00 UTC",
     )
     match = re.search(r'<script id="meetup-data" type="application/json">(.*?)</script>', page, re.S)

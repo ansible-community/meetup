@@ -34,7 +34,7 @@ theme:
         name: Switch to light mode
 nav:
   - Start here: index.md
-  - Meetup map: meetup-worldmap.md
+  - Meetup map: meetup-map.md
   - Attendees:
       - attendees/index.md
       - Find an event and RSVP: attendees/find-and-rsvp.md
