@@ -2,6 +2,14 @@
 
 Ansible Meetups are community events for learning, sharing practical experience, and meeting people interested in Ansible. The Ansible Community Forum is the home for event information and discussion. Pretix handles registration.
 
+## Find your local Ansible meetup
+
+Search meetup locations by city, country, or region, or browse the map.
+
+<a class="md-button md-button--primary" href="map.html">Open the map on its own page</a>
+
+<iframe src="map.html" title="Interactive map of Ansible meetup locations" style="width:100%;height:82vh;min-height:700px;border:1px solid #d7dde2;border-radius:8px" loading="lazy" allowfullscreen></iframe>
+
 Choose the guide for what you want to do:
 
 - **Attending?** [Find an event and RSVP](attendees/find-and-rsvp.md), then [join the discussion and follow up](attendees/participate-and-follow-up.md).

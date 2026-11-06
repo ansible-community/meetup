@@ -35,6 +35,7 @@ select = ["E", "F", "B", "S", "T20", "DTZ", "UP", "SIM", "G"]
 "tools/environment/check_setup.py" = ["T201"]
 "tools/meetup_pro/meetup_pro_lib.py" = ["S105"]
 "tools/meetup_pro/meetup_list_organisers.py" = ["E501"]
+"tools/website/generate_worldmap.py" = ["E501"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
