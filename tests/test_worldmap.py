@@ -2,13 +2,10 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import UTC, datetime, timedelta
-from unittest.mock import Mock
-
 import pytest
 
 from tools.common.ansible_event_cities import CITIES, CityInfo
-from tools.website.generate_worldmap import attendance_format, fetch_events, normalise_region, render_page
+from tools.website.generate_worldmap import MAP_MARKER_COLOR, normalise_region, render_page
 
 
 def test_registry_has_coordinates_for_every_location() -> None:
@@ -64,67 +61,16 @@ def test_normalise_region(source: str, expected: str) -> None:
     assert normalise_region(source) == expected
 
 
-def test_fetch_events_uses_feed_dates_and_post_event_details(monkeypatch: pytest.MonkeyPatch) -> None:
-    future_start = (datetime.now(UTC) + timedelta(days=3)).replace(microsecond=0)
-    past_start = (datetime.now(UTC) - timedelta(days=3)).replace(microsecond=0)
-    feed = {
-        "topic_list": {
-            "topics": [
-                {
-                    "id": 12,
-                    "slug": "london-meetup",
-                    "title": "London Community Meetup",
-                    "event_starts_at": future_start.isoformat(),
-                    "event_timezone": "Europe/London",
-                },
-                {"id": 11, "slug": "past", "title": "Past event", "event_starts_at": past_start.isoformat()},
-                {"id": 10, "slug": "no-date", "title": "No event date"},
-            ]
-        }
-    }
-    event = {"timezone": "Europe/London", "location": "London office", "recurrence": "FREQ=WEEKLY"}
-    raw = (
-        '<script type="application/ld+json">'
-        '{"eventAttendanceMode":"https://schema.org/OfflineEventAttendanceMode"}'
-        "</script>"
-    )
-    feed_response = Mock()
-    feed_response.json.return_value = feed
-    detail_response = Mock()
-    detail_response.json.return_value = {"post_stream": {"posts": [{"event": event, "raw": raw}]}}
-    request = Mock(side_effect=[feed_response, detail_response])
-    monkeypatch.setattr("tools.website.generate_worldmap.requests.get", request)
-
-    events = fetch_events()
-
-    assert len(events) == 1
-    assert events[0]["title"] == "London Community Meetup"
-    assert events[0]["start"] == future_start.isoformat()
-    assert events[0]["timezone"] == "Europe/London"
-    assert events[0]["format"] == "In person"
-    assert events[0]["repeating"] is True
-    assert request.call_count == 2
-
-
-def test_explicit_attendance_mode_takes_precedence() -> None:
-    online = {"eventAttendanceMode": "https://schema.org/OnlineEventAttendanceMode"}
-    offline = {"eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode"}
-    assert attendance_format(online, "", "In-person meetup", "London office") == "Online"
-    assert attendance_format(offline, "", "Online meetup", "London office") == "In person"
-
-
-def test_rendered_json_is_script_safe_and_map_uses_openfreemap() -> None:
+def test_rendered_page_uses_ansible_theme_and_map_controls() -> None:
     page = render_page(
-        [{"slug": "london", "city": "London", "country": "UK", "region": "Europe", "lat": 51.5, "lon": -0.1}],
         [
             {
-                "title": "<script>alert(1)</script>",
-                "url": "https://forum.ansible.com/t/example/1",
-                "start": "2027-01-01T10:00:00+00:00",
-                "timezone": "UTC",
-                "location": "",
-                "format": "Online",
-                "repeating": False,
+                "slug": "london",
+                "city": "<script>alert(1)</script>",
+                "country": "UK",
+                "region": "Europe",
+                "lat": 51.5,
+                "lon": -0.1,
             }
         ],
         "2026-11-06 10:00 UTC",
@@ -132,19 +78,23 @@ def test_rendered_json_is_script_safe_and_map_uses_openfreemap() -> None:
     match = re.search(r'<script id="meetup-data" type="application/json">(.*?)</script>', page, re.S)
     assert match is not None
     data = json.loads(match.group(1))
-    assert data["events"][0]["title"] == "<script>alert(1)</script>"
-    assert r"\u003cscript" in match.group(1)
+    assert data["locations"][0]["city"] == "<script>alert(1)</script>"
+    assert r"\u003cscript\u003e" in match.group(1)
+    assert "events" not in data
     assert "maplibre-gl@^5" in page
-    assert "tiles.openfreemap.org/styles/liberty" in page
-    assert 'rel="icon"' in page
-    assert "Ansible-Community-Mark-Pool.png" in page
-    assert "clusterRadius:48" in page
-    assert "circle-color':'#5BBCBF" in page
-    assert "Current meetup" not in page
-    assert "Previous location" not in page
-    assert "countryRows.sort((a,b)=>a.city.localeCompare(b.city))" in page
-    assert "details.open=Boolean(q||r)" in page
-    assert "countryRows.length" in page
-    assert "grid-template-columns:minmax(0,1fr) auto" in page
+    assert "assets/stylesheets/ansible.css" in page
+    assert "Red+Hat+Display" in page
+    assert "#5bbdbf" in page
+    assert MAP_MARKER_COLOR == "#5bbdbf"
+    assert f"'circle-color': '{MAP_MARKER_COLOR}'" in page
+    assert "new maplibregl.FullscreenControl()" in page
+    assert "map.on('click', 'meetup-cluster-count', expandCluster)" in page
+    assert "America/Argentina/Buenos_Aires" not in page
+    assert "${esc(location.region)}" not in page
+    assert "Upcoming events" not in page
+    assert "Location subscriptions are managed" not in page
+    assert "location.timezone" not in page
+    assert "width: min(100%, 430px)" in page
+    assert "border: 1px solid var(--line)" in page
     assert "tile.openstreetmap.org" not in page
     assert "OpenMapTiles" in page and "OpenStreetMap contributors" in page

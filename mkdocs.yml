@@ -39,7 +39,7 @@ nav:
       - attendees/index.md
       - Find an event and RSVP: attendees/find-and-rsvp.md
       - Participate and follow up: attendees/participate-and-follow-up.md
-      - Meetup locations and events: community-team/meetup-worldmap.md
+      - Meetup locations: community-team/meetup-worldmap.md
   - Organisers:
       - organisers/index.md
       - What it means to be an organiser: organisers/role.md
