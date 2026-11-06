@@ -20,7 +20,7 @@ Adding a city establishes the Forum space, organiser access, and Pretix team use
 For example, add a Meetup Pro city to `MEETUP_PRO_CITIES` as a `CityInfo` entry, keeping the section sorted by region, country, and city:
 
 ```python
-CityInfo("Asia Pacific", "Australia", "cairns", "Cairns", "Australia/Brisbane"),
+(CityInfo("Asia Pacific", "Australia", "cairns", "Cairns", "Australia/Brisbane"),)
 ```
 
 Keep credentials and attendee data out of source control and pull request discussions.

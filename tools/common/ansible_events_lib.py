@@ -167,7 +167,6 @@ DISCOURSE_CLIENT = ApiClient(
 )
 
 
-
 def get_city(name: str) -> CityInfo | None:
     """Look up a registered city slug. Returns None for malformed or unknown names."""
     if not CITY_SLUG_RE.fullmatch(name):
