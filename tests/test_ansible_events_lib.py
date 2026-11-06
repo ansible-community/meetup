@@ -38,20 +38,6 @@ class TestCityInfoSlug:
             CityInfo(region="Europe", country="UK", slug="new-york", city="New York", timezone="Europe/London")
 
 
-class TestCityInfoFieldValue:
-    def test_standard_format(self) -> None:
-        city = CityInfo(region="Europe", country="UK", slug="london", city="London", timezone="Europe/London")
-        assert city.field_value == "Europe:UK:London"
-
-    def test_multi_word_values(self) -> None:
-        city = CityInfo(region="Americas", country="US", slug="newyork", city="New York", timezone="America/New_York")
-        assert city.field_value == "Americas:US:New York"
-
-    def test_preserves_original_case(self) -> None:
-        city = CityInfo(region="EMEA", country="India", slug="pune", city="Pune", timezone="Asia/Kolkata")
-        assert city.field_value == "EMEA:India:Pune"
-
-
 class TestCityInfoFrozen:
     def test_cannot_modify_city(self) -> None:
         city = CityInfo(region="Europe", country="UK", slug="london", city="London", timezone="Europe/London")

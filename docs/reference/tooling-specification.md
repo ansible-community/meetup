@@ -57,7 +57,7 @@ The Forum/Pretix tools read these environment variables in `tools/common/ansible
 | `PRETIX_API_TOKEN` | Yes | None | Pretix API authentication. |
 | `DISCOURSE_API_KEY` | For Forum operations | None | Discourse API authentication. |
 
-`tools/attendees/sync_city_groups` requires only the Forum key; it does not call Pretix. `DISCOURSE_URL=https://forum.ansible.com`, `DISCOURSE_API_USER=system`, the API timeout, and the User-Agent are constants in the shared library, not environment variables.
+`DISCOURSE_URL=https://forum.ansible.com`, `DISCOURSE_API_USER=system`, the API timeout, and the User-Agent are constants in the shared library, not environment variables.
 
 The Meetup Pro export tools use a separate set of credentials, required only by `tools/meetup_pro/meetup_list_groups` and `tools/meetup_pro/meetup_list_organisers`:
 
@@ -89,12 +89,6 @@ A frozen, slotted dataclass representing a meetup city.
 | `timezone` | `str` | `"Europe/London"` | IANA timezone identifier |
 | `latitude` | `float \| None` | `51.507446` | Latitude in decimal degrees (WGS 84), from -90 to 90 |
 | `longitude` | `float \| None` | `-0.127765` | Longitude in decimal degrees (WGS 84), from -180 to 180 |
-
-**Properties:**
-
-| Property | Derivation | Example |
-|---|---|---|
-| `field_value` | `f"{region}:{country}:{city}"` | `"Europe:UK:London"` |
 
 **Current Registry (immutable tuple):**
 
@@ -234,7 +228,7 @@ Pass `--pretix`, `--forum`, or both to select the reconciliation phases. At leas
 
 **Phase 5: Discourse Subcategories and Access**
 
-13. For each city in the `CITIES` registry, reconcile its regional subcategory by parent and name. Set `everyone` to `create_post` (level 2: view and reply, but no new topics), and grant `full` (level 1) only to that city's organiser group. Do not grant category permissions to attendee groups; they are used for notifications. Set `moderating_group_ids` to that city's organiser group. Then remove registered organiser permissions and moderator assignments from every other category, considering only meetup-named groups. Set each organiser group's default notification level to Tracking for its own subcategory and apply that default to existing group members. Add missing city options to the Discourse user field.
+13. For each city in the `CITIES` registry, reconcile its regional subcategory by parent and name. Set `everyone` to `create_post` (level 2: view and reply, but no new topics), and grant `full` (level 1) only to that city's organiser group. Do not grant category permissions to attendee groups; they are used for notifications. Set `moderating_group_ids` to that city's organiser group. Then remove registered organiser permissions and moderator assignments from every other category, considering only meetup-named groups. Set each organiser group's default notification level to Tracking for its own subcategory and apply that default to existing group members.
 
 #### Read-only Setup Diagnostics (`tools.environment.check_setup`)
 
@@ -595,7 +589,6 @@ X and Bluesky include a fallback mechanism: if the primary text exceeds the char
 - **Organization:** Class-based (`Test<Feature>`), methods named `test_<verb>_<condition>`.
 - **Coverage areas:**
   - `CityInfo.slug`: accepts lowercase ASCII letters and rejects non-matching forms such as hyphenated slugs.
-  - `CityInfo.field_value`: standard, multi-word, case preservation.
   - `CityInfo` frozen: immutability enforcement.
   - `get_city`: exact lowercase match, rejects mixed-case and unregistered slugs, partial matches, empty strings, and surrounding spaces.
   - `CITIES` registry in `tools/common/ansible_event_cities.py`: every city resolves by slug; required field types and coordinates validate; country names match the expected set; sections stay sorted; accepted Unicode spellings are preserved; slugs are unique within each registry and combined `CITIES`.

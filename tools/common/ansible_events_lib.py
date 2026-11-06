@@ -88,10 +88,6 @@ ORGANISER_PERMISSIONS: list[str] = [
     "event.orders:checkin",
 ]
 
-# --- Discourse user field ---
-USER_CITY_FIELD_NAME = "user_event_cities"
-USER_CITY_FIELD_ID = 4
-
 # --- Security ---
 RTBF_EMAIL_SUFFIX = "@anonymized.invalid"
 

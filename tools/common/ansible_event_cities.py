@@ -55,11 +55,6 @@ class CityInfo:
             raise ValueError(f"Invalid IANA timezone: {self.timezone!r}") from exc
 
     @property
-    def field_value(self) -> str:
-        """Format as 'region:country:city' for Discourse user fields."""
-        return f"{self.region}:{self.country}:{self.city}"
-
-    @property
     def event_name(self) -> str:
         """Return the canonical event name for this city."""
         return f"{EVENT_NAME_PREFIX} {self.city}"
