@@ -30,11 +30,11 @@ The command writes a private timestamped HTML report under `tools/output/` and u
 uv run python -m tools.reports.generate_all --output tools/output/community-audit.html
 ```
 
-Generated reports under `tools/output/` are ignored by Git and created with owner-only permissions. The HTML page has a table of contents, paperclip anchor links beside headings, sorted bullet lists for group names and event locations, and a generation timestamp at the bottom.
+Generated reports under `tools/output/` are ignored by Git and created with owner-only permissions. The HTML page has a table of contents, paperclip anchor links beside headings, sorted bullet lists for group names, and a generation timestamp at the bottom.
 
 ## Organiser accounts
 
-The organiser report includes every member of a `meetup-organisers-{city}` group, their 2FA status, Meetup badge status, account creation date, last seen timestamp, event locations, and other non-system group memberships. The badge column shows speaker, organiser, and attendee badge status in that order using ticks and crosses. “Last seen” is the timestamp Discourse exposes and may differ from the precise time of the user's last login. Missing profile values are shown as `Unknown`. Follow up on rows marked `Not enabled` because organisers are required to use 2FA.
+The organiser report includes every member of a `meetup-organisers-{city}` group, their 2FA status, Meetup badge status, account creation date, last seen timestamp, and other non-system group memberships. The badge column shows speaker, organiser, and attendee badge status in that order using ticks and crosses. “Last seen” is the timestamp Discourse exposes and may differ from the precise time of the user's last login. Missing profile values are shown as `Unknown`. Follow up on rows marked `Not enabled` because organisers are required to use 2FA.
 
 ## Attendee groups
 

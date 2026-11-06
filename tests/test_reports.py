@@ -415,7 +415,7 @@ def test_other_group_memberships_excludes_system_and_organiser_groups(monkeypatc
     assert visited == ["community-team"]
 
 
-def test_organiser_profile_formats_disabled_unknown_2fa_and_city_field(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_organiser_profile_formats_disabled_unknown_2fa(monkeypatch: pytest.MonkeyPatch) -> None:
     responses = iter(
         [
             {
@@ -428,7 +428,7 @@ def test_organiser_profile_formats_disabled_unknown_2fa_and_city_field(monkeypat
                     "custom_fields": {},
                 }
             },
-            {"user": {"username": "alice", "custom_fields": {"user_field_4": ["London", "Paris"]}}},
+            {"user": {"username": "alice", "custom_fields": {"unrelated_field": "ignored"}}},
         ]
     )
     endpoints: list[str] = []
@@ -449,7 +449,6 @@ def test_organiser_profile_formats_disabled_unknown_2fa_and_city_field(monkeypat
         "Badges (speaker / organiser / attendee)": "✅❌✅",
         "Account created": "2024-01-01T00:00:00Z",
         "Last seen": "Unknown",
-        "Event locations": ["London", "Paris"],
     }
     assert endpoints == ["u/alice.json", "admin/users/123.json"]
 
@@ -480,7 +479,6 @@ def test_generate_all_collects_before_writing_and_uses_shared_timestamp(
                 "Badges (speaker / organiser / attendee)": "✅❌❌",
                 "Account created": "2024-01-01",
                 "Last seen": "2026-10-26",
-                "Event locations": ["London"],
                 "Other groups": ["CommunityTeam"],
             }
         ],

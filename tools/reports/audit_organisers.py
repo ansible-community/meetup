@@ -13,8 +13,6 @@ from tools.common.ansible_events_lib import (
     BADGE_MEETUP_SPEAKER,
     ApiError,
     ORGANIZERS_GROUP_RE,
-    USER_CITY_FIELD_ID,
-    USER_CITY_FIELD_NAME,
 )
 from tools.common.reporting import (
     ReportRow,
@@ -38,7 +36,6 @@ FIELDNAMES = [
     "Badges (speaker / organiser / attendee)",
     "Account created",
     "Last seen",
-    "Event locations",
     "Other groups",
 ]
 
@@ -80,46 +77,6 @@ def _as_text(value: Any) -> str:
     return "Unknown"
 
 
-def _as_list(value: Any) -> list[str]:
-    """Convert a custom field value into a sorted list for HTML bullets."""
-    if isinstance(value, str):
-        values = [value.strip()] if value.strip() else []
-    elif isinstance(value, list):
-        values = [str(item).strip() for item in value if str(item).strip()]
-    else:
-        values = []
-    return sorted(values, key=str.casefold)
-
-
-def _event_location_value(user: dict[str, Any], admin_user: dict[str, Any]) -> Any:
-    """Find the city custom field across Discourse's serialized field shapes."""
-    field_id = str(USER_CITY_FIELD_ID)
-    field_key = f"user_field_{field_id}"
-    candidates: list[Any] = []
-    for record in (admin_user, user):
-        custom_fields = record.get("custom_fields")
-        if isinstance(custom_fields, dict):
-            candidates.extend(
-                [
-                    custom_fields.get(USER_CITY_FIELD_NAME),
-                    custom_fields.get(field_key),
-                    custom_fields.get(field_id),
-                    custom_fields.get(USER_CITY_FIELD_ID),
-                ]
-            )
-        user_fields = record.get("user_fields")
-        if isinstance(user_fields, dict):
-            candidates.extend(
-                [user_fields.get(field_id), user_fields.get(field_key), user_fields.get(USER_CITY_FIELD_ID)]
-            )
-    for value in candidates:
-        if isinstance(value, str) and value.strip():
-            return value
-        if isinstance(value, list) and any(isinstance(item, str) and item.strip() for item in value):
-            return value
-    return None
-
-
 def user_profile(username: str) -> dict[str, Any]:
     """Fetch one profile and return the audit fields needed for its report row."""
     endpoint = f"u/{quote(username, safe='')}.json"
@@ -147,7 +104,6 @@ def user_profile(username: str) -> dict[str, Any]:
     else:
         two_factor = "Unknown"
 
-    event_locations = _event_location_value(user, admin_user)
     badge_ids = set(user_badge_awards(username))
     return {
         "2FA": two_factor,
@@ -157,7 +113,6 @@ def user_profile(username: str) -> dict[str, Any]:
         ),
         "Account created": _as_text(user.get("created_at")),
         "Last seen": _as_text(user.get("last_seen_at")),
-        "Event locations": _as_list(event_locations),
     }
 
 

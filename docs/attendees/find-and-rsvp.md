@@ -3,8 +3,7 @@
 ## Find events
 
 1. Browse the [Ansible Forum Events category](https://forum.ansible.com/c/events/8) for upcoming events.
-2. To get notices for events near you, open your [Forum profile preferences](https://forum.ansible.com/my/preferences/profile) and set your **Event locations**.
-3. You can also read the [Bullhorn weekly newsletter](https://forum.ansible.com/c/news/bullhorn/17) for community news and event announcements.
+2. You can also read the [Bullhorn weekly newsletter](https://forum.ansible.com/c/news/bullhorn/17) for community news and event announcements.
 
 ## Reserve a place
 
