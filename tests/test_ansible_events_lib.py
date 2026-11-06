@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import math
 from unittest.mock import Mock, patch
 from zoneinfo import ZoneInfo
 
@@ -149,6 +150,30 @@ class TestCitiesRegistry:
     def test_all_cities_are_cityinfo(self) -> None:
         for city in CITIES:
             assert isinstance(city, CityInfo)
+
+    def test_every_city_has_valid_required_fields_and_coordinates(self) -> None:
+        for city in CITIES:
+            assert isinstance(city.region, str) and city.region.strip()
+            assert isinstance(city.country, str) and city.country.strip()
+            assert isinstance(city.slug, str) and city.slug
+            assert isinstance(city.city, str) and city.city.strip()
+            assert isinstance(city.timezone, str) and city.timezone
+            assert isinstance(city.latitude, float), f"{city.slug}: latitude must be a float"
+            assert isinstance(city.longitude, float), f"{city.slug}: longitude must be a float"
+            assert math.isfinite(city.latitude) and -90 <= city.latitude <= 90, city.slug
+            assert math.isfinite(city.longitude) and -180 <= city.longitude <= 180, city.slug
+
+    @pytest.mark.parametrize(
+        ("label", "cities"),
+        [
+            ("MEETUP_PRO_CITIES", MEETUP_PRO_CITIES),
+            ("PREVIOUS_CITIES", PREVIOUS_CITIES),
+            ("CITIES", CITIES),
+        ],
+    )
+    def test_city_slugs_are_unique_in_each_registry(self, label: str, cities: tuple[CityInfo, ...]) -> None:
+        slugs = [city.slug for city in cities]
+        assert len(slugs) == len(set(slugs)), f"Duplicate city slug in {label}: {slugs}"
 
     @pytest.mark.parametrize("city", CITIES, ids=lambda city: city.slug)
     def test_every_city_loads_with_valid_country_and_timezone(self, city: CityInfo) -> None:

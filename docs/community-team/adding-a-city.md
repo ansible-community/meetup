@@ -5,22 +5,32 @@ Adding a city establishes the Forum space, organiser access, and Pretix team use
 ## Before changing the registry
 
 - Confirm the local organiser contact and city display name. The city slug must equal the normalized Pretix team display-name suffix: apply Unicode NFKD, discard every character except ASCII letters, then lowercase. For example, `New York` uses `newyork` and `São Paulo` uses `saopaulo`. Avoid display names that normalize to the same slug; ambiguous matches deny login.
-- Agree a stable city slug containing lowercase ASCII letters only (`^[a-z]+$`) and a time zone.
+- Agree a stable city slug containing lowercase ASCII letters only (`^[a-z]+$`), an IANA time zone, and a map point.
 - Confirm that organisers understand the [role](../organisers/role.md) and can enable two-factor authentication where required.
 - Review the Forum group and Pretix team naming contract in the [auth plugin specification](../reference/pretix-discourse-auth-specification.md).
 
 ## Procedure
 
-1. Add the city to `tools/common/ansible_event_cities.py` with its display name, matching normalized city slug, and time zone, following the [tooling specification](../reference/tooling-specification.md).
+1. Add the city to `tools/common/ansible_event_cities.py` in the appropriate registry section, following the [tooling specification](../reference/tooling-specification.md).
 2. Review the diff, run the repository checks, and merge and deploy through the normal pull request workflow.
 3. [Provision the environment](provisioning.md) and verify the city category, `meetup-organisers-{city}` Forum group, and `Ansible Meetup Organisers - {city display name}` Pretix team. The auth plugin requires a unique matching city team under its configured Pretix organizer.
 4. Add the agreed organisers using [Managing organiser access](managing-organisers.md).
 5. Confirm the Forum topic is visible and that an organiser can access the correct Pretix dashboard.
 
+Each `CityInfo` entry stores the region, country, slug, display name, IANA time zone, latitude, and longitude, in that order. Coordinates are decimal degrees (WGS 84): latitude ranges from -90 to 90, and longitude from -180 to 180. Both coordinate values are required for every record in `CITIES`; the registry validates that they are paired and in range, while tests running in CI also check that they are finite floats. The city registry rejects duplicate slugs and display names. Coordinates are recorded for map use; no geocoding is performed. For a regional meetup such as NOVA, use a representative point for the area.
+
 For example, add a Meetup Pro city to `MEETUP_PRO_CITIES` as a `CityInfo` entry, keeping the section sorted by region, country, and city:
 
 ```python
-(CityInfo("Asia Pacific", "Australia", "cairns", "Cairns", "Australia/Brisbane"),)
+CityInfo(
+    "Asia Pacific",
+    "Australia",
+    "cairns",
+    "Cairns",
+    "Australia/Brisbane",
+    latitude=-16.9203,
+    longitude=145.7710,
+),
 ```
 
 Keep credentials and attendee data out of source control and pull request discussions.

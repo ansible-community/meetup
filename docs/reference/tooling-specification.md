@@ -87,6 +87,8 @@ A frozen, slotted dataclass representing a meetup city.
 | `slug` | `str` | `"london"` | Explicit lowercase ASCII identifier matching `^[a-z]+$` |
 | `city` | `str` | `"London"` | Display name of the city |
 | `timezone` | `str` | `"Europe/London"` | IANA timezone identifier |
+| `latitude` | `float \| None` | `51.507446` | Latitude in decimal degrees (WGS 84), from -90 to 90 |
+| `longitude` | `float \| None` | `-0.127765` | Longitude in decimal degrees (WGS 84), from -180 to 180 |
 
 **Properties:**
 
@@ -102,7 +104,9 @@ recorded separately and are not treated as event cities. The source file keeps
 each section sorted by region, country, and city.
 
 **Constraints:**
-- The registry is an immutable `tuple[CityInfo, ...]`. Slugs and display names must be unique.
+- Each registry city must have both coordinates. `CityInfo` permits omitted coordinates for non-registry instances, but `CITIES` entries cannot omit them.
+- Coordinates are finite decimal-degree numbers: latitude is in `[-90, 90]` and longitude in `[-180, 180]`. Both must be present together.
+- The registry is an immutable `tuple[CityInfo, ...]`. City slugs and case-insensitive display names must be unique across `CITIES`; registry tests also check for duplicate slugs within `MEETUP_PRO_CITIES` and `PREVIOUS_CITIES` separately.
 - Each slug must match `^[a-z]+$`; each timezone must resolve through Python's IANA `zoneinfo` database.
 - CityInfo instances are frozen — no attribute mutation after construction.
 - Keep accepted Unicode spelling in city display names; Pretix and Discourse receive those labels in JSON. Slugs stay lowercase ASCII for identifiers.
@@ -589,12 +593,12 @@ X and Bluesky include a fallback mechanism: if the primary text exceeds the char
 
 - **Framework:** pytest with `testpaths = ["tests"]`.
 - **Organization:** Class-based (`Test<Feature>`), methods named `test_<verb>_<condition>`.
-- **Coverage areas (66 test methods):**
-  - `CityInfo.slug`: lowercase, spaces→hyphens, multiple spaces, empty, leading/trailing, tabs, unicode.
+- **Coverage areas:**
+  - `CityInfo.slug`: accepts lowercase ASCII letters and rejects non-matching forms such as hyphenated slugs.
   - `CityInfo.field_value`: standard, multi-word, case preservation.
   - `CityInfo` frozen: immutability enforcement.
-  - `get_city`: exact match, case-insensitive, not-found, partial match rejection, empty string, leading/trailing spaces.
-  - `CITIES` registry in `tools/common/ansible_event_cities.py`: every city resolves by slug; country names match the expected set; metadata and timezones validate; sections stay sorted; accepted Unicode spellings are preserved.
+  - `get_city`: exact lowercase match, rejects mixed-case and unregistered slugs, partial matches, empty strings, and surrounding spaces.
+  - `CITIES` registry in `tools/common/ansible_event_cities.py`: every city resolves by slug; required field types and coordinates validate; country names match the expected set; sections stay sorted; accepted Unicode spellings are preserved; slugs are unique within each registry and combined `CITIES`.
   - Pretix URL building: trailing slashes, query strings, double slashes, empty endpoint.
   - Discourse URL building: slash stripping, nested paths.
   - `pre_flight_checks`: both vars set, missing discourse key, `require_discourse=False`.
@@ -612,7 +616,7 @@ X and Bluesky include a fallback mechanism: if the primary text exceeds the char
 
 ### Continuous integration
 
-GitHub Actions uses `astral-sh/setup-uv@v5` to select Python 3.13, then runs `uv sync --locked --all-groups`. On pull requests and pushes to `main` or `master`, it runs `pytest`, Ruff lint and format checks on the Meetup tool modules and tests, Pyright on `tools/common/ansible_event_cities.py`, `tools/common/ansible_events_lib.py`, and `tools/environment/provision_environment.py`, and `mkdocs build --strict`. CI does not build a Python wheel and does not include `tools/cfgmgmtcamp/` in its Python checks.
+GitHub Actions uses `astral-sh/setup-uv` to select Python 3.13, then runs `uv sync --locked --all-groups`. On pull requests and pushes to `main` or `master`, it runs `pytest`, Ruff lint and format checks on `tools/` and `tests/`, Pyright on `tools/`, `mkdocs build --strict`, and zizmor workflow analysis. The city-registry tests run as part of `pytest` and check required field types, float coordinates with valid finite ranges, and unique city slugs within both source sections and combined `CITIES`. CI does not build a Python wheel.
 
 ---
 
