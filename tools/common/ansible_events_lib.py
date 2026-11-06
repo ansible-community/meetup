@@ -29,7 +29,7 @@ def run_cli(action: Callable[[], None]) -> None:
     try:
         action()
     except ApiError as exc:
-        logger.error("API request failed: %s", exc)
+        logger.error("❌ API request failed: %s", exc)
         raise SystemExit(1) from exc
 
 
@@ -167,6 +167,7 @@ DISCOURSE_CLIENT = ApiClient(
 )
 
 
+
 def get_city(name: str) -> CityInfo | None:
     """Look up a registered city slug. Returns None for malformed or unknown names."""
     if not CITY_SLUG_RE.fullmatch(name):
@@ -263,10 +264,10 @@ def pre_flight_checks(*, require_discourse: bool = True, require_pretix: bool = 
     if require_pretix:
         parsed = urlparse(PRETIX_URL)
         if parsed.scheme != "https" and parsed.hostname not in {"localhost", "127.0.0.1", "::1"}:
-            logger.error("PRETIX_URL must use HTTPS outside localhost/loopback")
+            logger.error("❌ PRETIX_URL must use HTTPS outside localhost/loopback")
             missing.append("secure PRETIX_URL")
     if missing:
-        logger.error("Missing required environment variables: %s", ", ".join(missing))
+        logger.error("❌ Missing required environment variables: %s", ", ".join(missing))
         sys.exit(1)
 
 

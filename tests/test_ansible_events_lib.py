@@ -426,7 +426,7 @@ class TestPretixApiContract:
         assert ansible_events_lib.DISCOURSE_CLIENT.session.headers["Api-Key"] == "test-api-key"
         assert request.call_args.kwargs["headers"]["Api-Username"] == "organiser"
 
-    def test_discourse_request_retries_rate_limit_using_wait_seconds(self, monkeypatch):
+    def test_discourse_request_retries_rate_limit_using_wait_seconds(self, monkeypatch, caplog):
         from tools.common import ansible_events_lib
 
         monkeypatch.setattr(ansible_events_lib, "DISCOURSE_API_KEY", "test-api-key")
@@ -443,6 +443,8 @@ class TestPretixApiContract:
 
         assert request.call_count == 2
         sleep.assert_called_once_with(31.0)
+        warning = next(record for record in caplog.records if record.levelname == "WARNING")
+        assert "Discourse rate limit for GET c/43/show.json" in warning.message
 
     def test_discourse_request_rate_limit_retries_are_bounded(self, monkeypatch):
         from tools.common import ansible_events_lib
@@ -846,7 +848,9 @@ class TestProvisioningPermissions:
             ]
         )
 
-    def test_pretix_teams_do_not_require_pretix_two_factor_authentication(self, monkeypatch):
+    def test_pretix_teams_do_not_require_pretix_two_factor_authentication(self, monkeypatch, caplog):
+        import logging
+
         from tools.environment import provision_environment
 
         requests = []
@@ -874,12 +878,17 @@ class TestProvisioningPermissions:
 
         monkeypatch.setattr(provision_environment, "pretix_list_all", list_all)
         monkeypatch.setattr(provision_environment, "pretix_req", request)
+        caplog.set_level(logging.INFO, logger=provision_environment.logger.name)
 
         provision_environment.reconcile_pretix_teams()
 
         team_creations = [payload for method, endpoint, payload in requests if method == "POST" and endpoint == "teams"]
         assert len(team_creations) == len(provision_environment.CITIES) + 1
         assert all(team["require_2fa"] is False for team in team_creations)
+        messages = [record.getMessage() for record in caplog.records]
+        for city in provision_environment.CITIES:
+            assert city.city in messages
+            assert f"  🟡 {city.team_name}: Created" in messages
 
     def test_template_ticket_reconciles_item_and_quota_drift(self, monkeypatch):
         from tools.environment import provision_environment
@@ -1025,13 +1034,17 @@ class TestProvisioningPermissions:
         from tools.environment import provision_environment
 
         caplog.set_level(logging.INFO, logger=provision_environment.logger.name)
+        provision_environment.set_log_scope("Test City")
         provision_environment.log_resource_status(
             "meetup-organisers-london",
             {"visibility_level": 1, "members_visibility_level": 2},
             {"visibility_level": 0, "members_visibility_level": 2},
         )
 
-        assert "meetup-organisers-london: Updated | visibility: Changed, member visibility: OK" in caplog.text
+        messages = [record.getMessage() for record in caplog.records]
+        assert "  🟡 meetup-organisers-london: Updated" in messages
+        assert "    🟡 visibility: Updated" in messages
+        assert "    ✅ member visibility: Already correct" in messages
 
     def test_resource_status_marks_created_fields_as_verified(self, caplog):
         import logging
@@ -1039,15 +1052,52 @@ class TestProvisioningPermissions:
         from tools.environment import provision_environment
 
         caplog.set_level(logging.INFO, logger=provision_environment.logger.name)
+        provision_environment.set_log_scope("Test City")
         provision_environment.log_resource_status(
             "meetup-attendee-london",
             {"visibility_level": 3, "members_visibility_level": 3},
             None,
         )
 
-        assert "meetup-attendee-london: Created | visibility: OK, member visibility: OK" in caplog.text
+        messages = [record.getMessage() for record in caplog.records]
+        assert "  🟡 meetup-attendee-london: Created" in messages
+        assert "    ✅ visibility: Already correct" in messages
+        assert "    ✅ member visibility: Already correct" in messages
 
-    def test_city_category_uses_reply_only_default_and_city_organiser_access(self, monkeypatch):
+    def test_resource_status_marks_manual_fields_for_follow_up(self, caplog):
+        import logging
+
+        from tools.environment import provision_environment
+
+        caplog.set_level(logging.INFO, logger=provision_environment.logger.name)
+        provision_environment.set_log_scope("Manual City")
+        provision_environment.log_resource_status(
+            "meetup-attendee-manual-city",
+            {"description": "desired"},
+            {"description": "custom"},
+            {"description": "OK:MANUAL"},
+        )
+
+        assert "    ❓ description: Manual follow-up" in [record.getMessage() for record in caplog.records]
+
+    def test_provisioning_api_failure_has_failure_marker(self, caplog):
+        import logging
+
+        from tools.common import ansible_events_lib
+
+        caplog.set_level(logging.ERROR, logger=ansible_events_lib.logger.name)
+
+        def fail():
+            raise ansible_events_lib.ApiError("test failure")
+
+        with pytest.raises(SystemExit):
+            ansible_events_lib.run_cli(fail)
+
+        assert "❌ API request failed: test failure" in caplog.text
+
+    def test_city_category_uses_reply_only_default_and_city_organiser_access(self, monkeypatch, caplog):
+        import logging
+
         from tools.environment import provision_environment
         from tools.common.ansible_events_lib import get_city
 
@@ -1083,6 +1133,7 @@ class TestProvisioningPermissions:
             raise AssertionError(f"Unexpected Discourse request: {method} {endpoint}")
 
         monkeypatch.setattr(provision_environment, "discourse_req", request)
+        caplog.set_level(logging.INFO, logger=provision_environment.logger.name)
         provision_environment.reconcile_city_category_access(
             [current.copy()],
             {51: plan},
@@ -1096,6 +1147,9 @@ class TestProvisioningPermissions:
         }
         assert update["moderating_group_ids"] == [9]
         assert sum(method == "GET" for method, _, _ in requests) == 2
+        messages = [record.getMessage() for record in caplog.records]
+        assert "London" in messages
+        assert "  🟡 Events > London: Updated" in messages
 
     def test_organizer_access_is_removed_everywhere_except_own_subcategory(self, monkeypatch):
         from tools.environment import provision_environment

@@ -81,7 +81,7 @@ def test_missing_or_duplicate_meta_property_fails(
     assert "found" in checker.results[0].detail
 
 
-def test_forum_user_identity_and_city_group_membership(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_forum_identity_city_mapping_and_email_check(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[tuple[str, str]] = []
 
     def request(method: str, endpoint: str, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
@@ -94,8 +94,8 @@ def test_forum_user_identity_and_city_group_membership(monkeypatch: pytest.Monke
             return {"user": {"id": 42, "username": "gundalow"}}
         if endpoint == "admin/users/42.json":
             return {"id": 42, "username": "gundalow", "email": "gundalow@example.com"}
-        if endpoint.startswith("groups/"):
-            return {"members": [{"username": "gundalow"}]}
+        if endpoint == "u/gundalow/emails.json":
+            return {"email": "gundalow@example.com"}
         raise AssertionError(f"Unexpected endpoint: {endpoint}")
 
     monkeypatch.setattr(check_setup, "discourse_req", request)
@@ -111,11 +111,12 @@ def test_forum_user_identity_and_city_group_membership(monkeypatch: pytest.Monke
     assert actual["Forum Admin API identity: gundalow"] == "PASS"
     for city in CITIES:
         assert actual[f"Forum/Pretix mapping: {city.city}"] == "PASS"
-        assert actual[f"Forum group membership: {city.organiser_group}"] == "PASS"
+        assert f"Forum group membership: {city.organiser_group}" not in actual
+    assert actual["Forum account email set: gundalow"] == "PASS"
     assert calls and all(method == "GET" for method, _endpoint in calls)
 
 
-def test_forum_identity_mismatch_and_missing_membership_fail(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_forum_identity_mismatch_fails_without_checking_city_membership(monkeypatch: pytest.MonkeyPatch) -> None:
     def request(_method: str, endpoint: str, *_args: Any, **_kwargs: Any) -> dict[str, Any]:
         if endpoint == "groups.json?page=0":
             return {"groups": [{"name": city.organiser_group} for city in CITIES]}
@@ -125,8 +126,6 @@ def test_forum_identity_mismatch_and_missing_membership_fail(monkeypatch: pytest
             return {"user": {"id": 42, "username": "gundalow"}}
         if endpoint == "admin/users/42.json":
             return {"id": 84, "username": "someone-else", "email": "hidden@anonymized.invalid"}
-        if endpoint.startswith("groups/"):
-            return {"members": []}
         raise AssertionError(f"Unexpected endpoint: {endpoint}")
 
     monkeypatch.setattr(check_setup, "discourse_req", request)
@@ -138,24 +137,54 @@ def test_forum_identity_mismatch_and_missing_membership_fail(monkeypatch: pytest
 
     actual = statuses(checker)
     assert actual["Forum Admin API identity: gundalow"] == "FAIL"
-    assert actual[f"Forum group membership: {CITIES[0].organiser_group}"] == "FAIL"
+    assert not any(name.startswith("Forum group membership:") for name in actual)
 
 
-def test_omitted_forum_email_is_manual_not_a_claim_that_email_is_missing(
+def test_admin_user_check_does_not_require_email_from_discourse_admin_endpoint(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    responses = {
+        "admin/users/42.json": {"id": 42, "username": "gundalow"},
+        "u/gundalow/emails.json": {"email": "private@example.com"},
+    }
+    calls: list[tuple[str, str, str | None]] = []
+
+    def request(_method: str, endpoint: str, **kwargs: Any) -> dict[str, Any]:
+        calls.append((endpoint, kwargs.get("run_as")))
+        return responses[endpoint]
+
     monkeypatch.setattr(
         check_setup,
         "discourse_req",
-        lambda *_args, **_kwargs: {"id": 42, "username": "gundalow"},
+        request,
     )
     checker = check_setup.SetupChecker()
     checker.forum_user = {"id": 42, "username": "gundalow"}
 
     checker._check_forum_user_admin_record()
 
-    assert checker.results[0].status == "MANUAL"
-    assert "omitted the email field" in checker.results[0].detail
+    assert checker.results[0].status == "PASS"
+    assert "email" not in checker.results[0].detail.casefold()
+    email_result = checker.results[1]
+    assert email_result.status == "PASS"
+    assert "private@example.com" not in email_result.detail
+    assert "set" in email_result.detail
+    assert calls == [("admin/users/42.json", None), ("u/gundalow/emails.json", "gundalow")]
+
+
+@pytest.mark.parametrize("email", ["", "  ", "removed@anonymized.invalid"])
+def test_forum_email_check_fails_for_missing_or_anonymized_primary_email(
+    monkeypatch: pytest.MonkeyPatch, email: str
+) -> None:
+    monkeypatch.setattr(check_setup, "discourse_req", lambda *_args, **_kwargs: {"email": email})
+    checker = check_setup.SetupChecker()
+
+    checker._check_forum_user_email()
+
+    assert checker.results[0].status == "FAIL"
+    if email:
+        assert email not in checker.results[0].detail
+    assert "not displayed" in checker.results[0].detail
 
 
 def test_api_failures_are_sanitized_and_do_not_stop_other_manual_results(
@@ -203,15 +232,27 @@ def test_local_configuration_never_displays_secret_values(monkeypatch: pytest.Mo
     assert "forum-secret" not in checker.results[0].detail
 
 
-def test_print_results_fails_only_for_fail_status(capsys: pytest.CaptureFixture[str]) -> None:
+def test_print_results_uses_hierarchical_status_markers_and_fails_only_on_fail(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     manual = check_setup.CheckResult("MANUAL", "server check", "operator", "unavailable", "inspect")
+    city = check_setup.CheckResult(
+        "PASS",
+        f"Forum/Pretix mapping: {CITIES[0].city}",
+        f"{CITIES[0].organiser_group} → {CITIES[0].team_name}",
+        "mapping is correct",
+        "None.",
+    )
     failure = check_setup.CheckResult("FAIL", "resource", "GET settings", "missing", "reconcile")
 
-    assert check_setup.print_results([manual]) is False
+    assert check_setup.print_results([manual, city]) is False
     manual_output = capsys.readouterr().out
     assert "1 MANUAL" in manual_output
-    assert "🔴" not in manual_output
-    assert check_setup.print_results([manual, failure]) is True
+    assert "Global\n  ❓ MANUAL: server check" in manual_output
+    assert f"{CITIES[0].city}\n  ✅ PASS: Forum/Pretix mapping: {CITIES[0].city}" in manual_output
+    assert "    Target: operator" in manual_output
+    assert "❌ FAIL:" not in manual_output
+    assert check_setup.print_results([manual, city, failure]) is True
     failed_output = capsys.readouterr().out
-    assert "🔴 FAIL: resource" in failed_output
+    assert "  ❌ FAIL: resource" in failed_output
     assert "1 FAIL" in failed_output

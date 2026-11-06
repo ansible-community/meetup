@@ -52,6 +52,28 @@ CATEGORY_PERMISSION_CREATE_POST = 2
 INVITE_PENDING_ENDPOINT = f"u/{INVITE_API_USERNAME}/invited/pending.json"
 INVITE_MAX_REDEMPTIONS = 5_000
 INVITE_EXPIRES_AT = "2030-01-01"
+_LOG_INDENT = 0
+_LOG_SCOPE: str | None = None
+
+
+def set_log_scope(name: str) -> None:
+    """Start a top-level global or city section in provisioning output."""
+    global _LOG_INDENT, _LOG_SCOPE
+    _LOG_INDENT = 0
+    if name != _LOG_SCOPE:
+        logger.info("%s", name)
+        _LOG_SCOPE = name
+    _LOG_INDENT = 2
+
+
+def log_detail(message: str, *args: Any) -> None:
+    """Log an informational detail under the active global or city section."""
+    logger.info("%s" + message, " " * _LOG_INDENT, *args)
+
+
+def log_check(message: str, *args: Any) -> None:
+    """Log an individual field check nested under its resource."""
+    logger.info("%s  " + message, " " * _LOG_INDENT, *args)
 
 
 @dataclass(slots=True)
@@ -169,6 +191,8 @@ def pending_invites_by_description(response: Mapping[str, Any]) -> set[tuple[str
 
 def reconcile_attendee_invites() -> None:
     """Create missing city invite links for attendee and migration groups."""
+    set_log_scope("Global")
+    log_detail("Reconciling attendee invites...")
     response = discourse_req("GET", INVITE_PENDING_ENDPOINT, run_as=INVITE_API_USERNAME)
     invite_targets = pending_invites_by_description(response)
 
@@ -179,7 +203,8 @@ def reconcile_attendee_invites() -> None:
             invite_description == description and set(target_groups).issubset(group_names)
             for invite_description, group_names in invite_targets
         ):
-            logger.info("Invite for %s already exists", city.city)
+            set_log_scope(city.city)
+            log_detail("✅ Invite already exists")
             continue
 
         payload = {
@@ -190,7 +215,8 @@ def reconcile_attendee_invites() -> None:
             "expires_at": INVITE_EXPIRES_AT,
         }
         created = discourse_req("POST", "invites.json", payload, run_as=INVITE_API_USERNAME)
-        logger.info("Created invite for %s: %s", city.city, created.get("link", "link unavailable"))
+        set_log_scope(city.city)
+        log_detail("🟡 Created invite: %s", created.get("link", "link unavailable"))
 
 
 def list_discourse_groups() -> list[dict]:
@@ -314,8 +340,22 @@ def log_resource_status(
         state = "Updated"
     else:
         state = "Already configured"
-    details = ", ".join(f"{field}: {status}" for field, status in statuses.items())
-    logger.info("%s: %s | %s", resource, state, details)
+    marker = "🟡" if state in {"Created", "Updated"} else "✅"
+    log_detail("%s %s: %s", marker, resource, state)
+    for field, status in statuses.items():
+        if status == "OK":
+            marker = "✅"
+            label = "Already correct"
+        elif status == "Changed":
+            marker = "🟡"
+            label = "Updated"
+        elif status.endswith(":MANUAL"):
+            marker = "❓"
+            label = "Manual follow-up"
+        else:
+            marker = "❌"
+            label = status
+        log_check("%s %s: %s", marker, field, label)
 
 
 def is_pretix_choice_error(error: ApiError, field: str) -> bool:
@@ -377,7 +417,8 @@ def reconcile_pretix_event_settings(
             before,
         )
         for field, status in preflight_status.items():
-            logger.info("Pretix event %s setting: %s", field.replace("_", " "), status)
+            marker = "✅" if status == "Already configured" else "🟡"
+            log_check("%s Pretix event setting: %s", marker, field.replace("_", " "))
         return
 
     after = pretix_req("PATCH", endpoint, changes)
@@ -394,7 +435,8 @@ def reconcile_pretix_event_settings(
         before,
     )
     for field, status in preflight_status.items():
-        logger.info("Pretix event %s setting: %s", field.replace("_", " "), status)
+        marker = "✅" if status == "Already configured" else "🟡"
+        log_check("%s Pretix event setting: %s", marker, field.replace("_", " "))
 
 
 def reconcile_pretix_mapping(
@@ -436,7 +478,7 @@ def reconcile_pretix_teams() -> list[dict[str, Any]]:
             raise ApiError("Pretix teams response contains a team without a valid name")
         teams_by_name.setdefault(name, []).append(team)
 
-    desired_teams = [
+    desired_teams: list[tuple[str, dict[str, Any], str | None]] = [
         (
             STAFF_TEAM_NAME,
             {
@@ -449,6 +491,7 @@ def reconcile_pretix_teams() -> list[dict[str, Any]]:
                 "all_organizer_permissions": False,
                 "limit_organizer_permissions": [],
             },
+            None,
         )
     ]
     for city in CITIES:
@@ -479,10 +522,12 @@ def reconcile_pretix_teams() -> list[dict[str, Any]]:
                     "limit_organizer_permissions": [],
                     "limit_events": city_events,
                 },
+                city.city,
             )
         )
 
-    for name, desired in desired_teams:
+    for name, desired, city_name in desired_teams:
+        set_log_scope(city_name or "Global")
         existing = teams_by_name.get(name, [])
         if len(existing) > 1:
             raise ApiError(f"Multiple Pretix teams are named {name!r}")
@@ -509,6 +554,7 @@ def reconcile_pretix_teams() -> list[dict[str, Any]]:
 
 def reconcile_pretix_meta_property() -> None:
     """Ensure the Forum event URL property exists and cannot be edited by organisers."""
+    set_log_scope("Global")
     properties = pretix_list_all("event_meta_properties")
     if any(not isinstance(prop.get("name"), str) for prop in properties):
         raise ApiError("Pretix event metadata response contains a property without a valid name")
@@ -621,6 +667,7 @@ def reconcile_template_item_meta_property() -> None:
 
 def reconcile_pretix_template(events: list[dict[str, Any]]) -> None:
     """Create or reconcile the private clone source and its settings/ticket configuration."""
+    set_log_scope("Global")
     matches = [event for event in events if event.get("slug") == TEMPLATE_SLUG]
     if len(matches) > 1:
         raise ApiError(f"Pretix has multiple events named {TEMPLATE_SLUG!r}")
@@ -633,7 +680,7 @@ def reconcile_pretix_template(events: list[dict[str, Any]]) -> None:
             event = pretix_req("GET", f"events/{TEMPLATE_SLUG}")
         reconcile_pretix_mapping(f"events/{TEMPLATE_SLUG}", TEMPLATE_SLUG, desired_event, event)
     else:
-        logger.info("Creating new master template (%s)...", TEMPLATE_SLUG)
+        log_detail("🟡 Creating new master template (%s)...", TEMPLATE_SLUG)
         event = pretix_req(
             "POST",
             "events",
@@ -649,7 +696,7 @@ def reconcile_pretix_template(events: list[dict[str, Any]]) -> None:
             raise ApiError(f"Pretix template {TEMPLATE_SLUG!r} did not reconcile after creation")
         log_resource_status(TEMPLATE_SLUG, desired_event, None)
 
-    logger.info("Reconciling Pretix template settings...")
+    log_detail("Reconciling Pretix template settings...")
     reconcile_pretix_event_settings(
         TEMPLATE_SLUG,
         {
@@ -880,6 +927,8 @@ def reconcile_city_category_access(
         if not isinstance(category_id, int):
             raise ApiError("Discourse categories response contains an invalid category ID")
         checked_categories += 1
+        plan = plans_by_category_id.get(category_id)
+        set_log_scope(plan.city.city if plan is not None else "Global")
         details_response = discourse_req("GET", f"c/{category_id}/show.json")
         current = details_response.get("category", details_response)
         if not isinstance(current, dict):
@@ -889,7 +938,6 @@ def reconcile_city_category_access(
         if not isinstance(current_ids, list) or any(not isinstance(group_id, int) for group_id in current_ids):
             raise ApiError(f"Discourse category {category_id} returned invalid moderator group IDs")
         current_permissions = category_permission_map(current, category_id)
-        plan = plans_by_category_id.get(category_id)
         city_settings = plan.category_settings() if plan is not None else {}
 
         if plan is not None:
@@ -946,6 +994,7 @@ def reconcile_city_category_access(
                 updated_categories.append(f"{current.get('name', category_id)} ({category_id})")
 
         if plan is not None:
+            set_log_scope(plan.city.city)
             log_resource_status(
                 f"Events > {plan.city.city}",
                 city_settings,
@@ -953,14 +1002,16 @@ def reconcile_city_category_access(
             )
 
     if updated_categories:
-        logger.info(
-            "Discourse organiser access: checked %d categories; updated %d: %s",
+        set_log_scope("Global")
+        log_detail(
+            "🟡 Discourse organiser access: checked %d categories; updated %d: %s",
             checked_categories,
             len(updated_categories),
             ", ".join(updated_categories),
         )
     else:
-        logger.info("Discourse organiser access: checked %d categories; no changes required", checked_categories)
+        set_log_scope("Global")
+        log_detail("✅ Discourse organiser access: checked %d categories; no changes required", checked_categories)
 
 
 def ensure_category_group_moderation_enabled() -> None:
@@ -982,7 +1033,8 @@ def ensure_category_group_moderation_enabled() -> None:
 
 def ensure_user_field_options() -> None:
     """Add any missing city options to the user_event_cities custom field (additive only)."""
-    logger.info("Syncing user field options for city subscriptions...")
+    set_log_scope("Global")
+    log_detail("Syncing user field options for city subscriptions...")
 
     # GET uses hyphenated path, PUT uses underscored path (Discourse routing)
     resp = discourse_req("GET", f"admin/config/user-fields/{USER_CITY_FIELD_ID}.json")
@@ -994,11 +1046,11 @@ def ensure_user_field_options() -> None:
     missing = desired_options - current_options
 
     if not missing:
-        logger.info("User field options up to date (%d options)", len(current_options))
+        log_detail("✅ User field options up to date (%d options)", len(current_options))
         return
 
     updated_options = sorted(current_options | desired_options)
-    logger.info("Adding %d new option(s): %s", len(missing), ", ".join(sorted(missing)))
+    log_detail("🟡 Adding %d new option(s): %s", len(missing), ", ".join(sorted(missing)))
 
     discourse_req(
         "PUT",
@@ -1009,6 +1061,7 @@ def ensure_user_field_options() -> None:
 
 def reconcile_pretix_global_settings() -> None:
     """Reconcile Pretix organizer-wide settings."""
+    set_log_scope("Global")
     organizer_settings = {
         "primary_color": ANSIBLE_PRIMARY_COLOR,
         "imprint_url": {"en": CODE_OF_CONDUCT_URL},
@@ -1039,7 +1092,7 @@ def reconcile_discourse_environment(groups_by_name: dict[str, dict[str, Any]]) -
     categories = discourse_categories()
     plans = build_city_forum_plans()
 
-    logger.info("Ensuring group %s...", MIGRATED_GROUP_NAME)
+    set_log_scope("Global")
     migrated_settings = {
         "name": MIGRATED_GROUP_NAME,
         "full_name": "Ansible Meetup - Migrated from Meetup Pro",
@@ -1085,6 +1138,7 @@ def reconcile_discourse_environment(groups_by_name: dict[str, dict[str, Any]]) -
         plan.category_id = matches[0]["id"]
 
     for plan in plans:
+        set_log_scope(plan.city.city)
         if plan.organiser_group_id is None or plan.category_id is None:
             raise ApiError(f"Could not resolve Discourse resources for city {plan.city.slug!r}")
         reconcile_discourse_group(
@@ -1114,14 +1168,17 @@ def reconcile_discourse_environment(groups_by_name: dict[str, dict[str, Any]]) -
 def reconcile_pretix() -> None:
     """Reconcile Pretix global settings, teams, metadata, and template."""
     pre_flight_checks(require_discourse=False, require_pretix=True)
-    logger.info("--- PRETIX PROVISIONING ---")
+    set_log_scope("Global")
+    log_detail("PRETIX PROVISIONING")
     reconcile_pretix_global_settings()
 
-    logger.info("Reconciling Pretix teams and metadata...")
+    set_log_scope("Global")
+    log_detail("Reconciling Pretix teams and metadata...")
     all_events = reconcile_pretix_teams()
     reconcile_pretix_meta_property()
 
-    logger.info("Reconciling Pretix template...")
+    set_log_scope("Global")
+    log_detail("Reconciling Pretix template...")
     reconcile_pretix_template(all_events)
 
 
@@ -1130,7 +1187,8 @@ def reconcile_forum() -> None:
     pre_flight_checks(require_discourse=True, require_pretix=False)
     # Validate the complete meetup group inventory before making any changes.
     groups_by_name = index_groups_by_name(list_discourse_groups())
-    logger.info("--- FORUM PROVISIONING ---")
+    set_log_scope("Global")
+    log_detail("FORUM PROVISIONING")
     reconcile_discourse_environment(groups_by_name)
 
 
@@ -1150,7 +1208,8 @@ def main() -> None:
     if args.forum:
         reconcile_forum()
 
-    logger.info("--- PROVISIONING COMPLETE ---")
+    set_log_scope("Global")
+    log_detail("PROVISIONING COMPLETE")
 
 
 if __name__ == "__main__":
