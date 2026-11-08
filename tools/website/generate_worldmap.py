@@ -73,7 +73,7 @@ button, .subscribe {{ font: inherit; display: inline-block; padding: 7px 11px; b
 button:hover, .subscribe:hover {{ background: color-mix(in srgb, var(--brand) 24%, var(--surface)); }}
 button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {{ outline: 3px solid var(--link); outline-offset: 2px; }}
 .controls label {{ display: flex; align-items: center; gap: 8px; }}
-.discovery-grid {{ display: grid; grid-template-columns: minmax(340px, .85fr) minmax(0, 1.35fr); gap: 20px; align-items: start; }}
+.discovery-grid {{ display: flex; flex-direction: column; gap: 20px; }}
 .results-panel, .map-panel {{ min-width: 0; }}
 .results-panel h2 {{ margin-top: 0; }}
 #results {{ max-height: min(72vh, 780px); overflow: auto; border: 1px solid var(--line); border-radius: 4px; padding: 8px 12px; }}
@@ -109,17 +109,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .maplibregl-popup-anchor-left .maplibregl-popup-tip {{ border-right-color: var(--surface); }}
 .maplibregl-popup-anchor-right .maplibregl-popup-tip {{ border-left-color: var(--surface); }}
 .maplibregl-ctrl-group {{ border-radius: 4px !important; background: var(--surface) !important; border: 1px solid var(--line) !important; }}
-.mobile-view-switch {{ display: none; }}
 @media (prefers-color-scheme: dark) {{
   :root {{ --ink: #f1f3f4; --muted: #c4c9ce; --line: #4b5258; --surface: #202428; --link: #8ab4f8; }}
   .maplibregl-ctrl button {{ filter: invert(1); }}
 }}
 @media (max-width: 760px) {{
-  .discovery-grid {{ display: block; }}
-  .mobile-view-switch {{ display: flex; gap: 8px; margin: 12px 0; }}
-  .mobile-view-switch button[aria-pressed="true"] {{ background: var(--brand); color: #102326; }}
-  body[data-mobile-view="map"] .results-panel {{ display: none; }}
-  body[data-mobile-view="list"] .map-panel {{ display: none; }}
   #results {{ max-height: none; }}
   #map {{ height: 62vh; min-height: 340px; }}
 }}
@@ -142,19 +136,15 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
     </label>
     <span id="location-count" class="marker-count" aria-live="polite"></span>
   </div>
-  <div class="mobile-view-switch" role="group" aria-label="Choose list or map view">
-    <button type="button" data-view="list" aria-pressed="true">List</button>
-    <button type="button" data-view="map" aria-pressed="false">Map</button>
-  </div>
   <div class="discovery-grid">
+    <section class="map-panel" aria-labelledby="map-heading">
+      <h2 id="map-heading">Meetup map</h2>
+      <div id="map" role="application" aria-label="Interactive map of Ansible meetup locations"></div>
+      <p class="map-note"><span id="map-status" aria-live="polite"></span> Map style <a href="https://openfreemap.org/">OpenFreeMap</a> © <a href="https://openmaptiles.org/">OpenMapTiles</a>; data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+    </section>
     <section class="results-panel" aria-labelledby="results-heading">
       <h2 id="results-heading">Meetup locations</h2>
       <div id="results" aria-live="polite"></div>
-    </section>
-    <section class="map-panel" aria-labelledby="map-heading">
-      <h2 id="map-heading">Map</h2>
-      <div id="map" role="application" aria-label="Interactive map of Ansible meetup locations"></div>
-      <p class="map-note"><span id="map-status" aria-live="polite"></span> Map style <a href="https://openfreemap.org/">OpenFreeMap</a> © <a href="https://openmaptiles.org/">OpenMapTiles</a>; data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
     </section>
   </div>
   <section aria-labelledby="community-links-heading">
@@ -193,7 +183,6 @@ const results = document.getElementById('results');
 let selectedSlug = null;
 let mapReady = false;
 let initialViewSet = false;
-document.body.dataset.mobileView = 'list';
 regions.forEach(region => {{
   const option = document.createElement('option');
   option.value = region;
@@ -295,19 +284,11 @@ function renderLocations() {{
     results.append(details);
   }});
 }}
-function setMobileView(view) {{
-  document.body.dataset.mobileView = view;
-  document.querySelectorAll('.mobile-view-switch button').forEach(button => {{
-    button.setAttribute('aria-pressed', String(button.dataset.view === view));
-  }});
-  if (view === 'map') requestAnimationFrame(() => map.resize());
-}}
 function selectLocation(slug, fromMap = false) {{
   const location = locations.find(candidate => candidate.slug === slug);
   if (!location) return;
   selectedSlug = slug;
   renderLocations();
-  if (window.matchMedia('(max-width: 760px)').matches) setMobileView(fromMap ? 'list' : 'map');
   if (mapReady && !fromMap) map.flyTo({{center: [location.lon, location.lat], zoom: 8}});
   requestAnimationFrame(() => document.getElementById(`location-${{slug}}`)?.scrollIntoView({{block: 'nearest', behavior: 'smooth'}}));
 }}
@@ -377,7 +358,6 @@ colorScheme.addEventListener('change', event => {{
     map.setStyle(nextStyle, {{diff: false}});
   }}
 }});
-document.querySelectorAll('.mobile-view-switch button').forEach(button => button.addEventListener('click', () => setMobileView(button.dataset.view)));
 searchInput.addEventListener('input', renderLocations);
 regionSelect.addEventListener('change', renderLocations);
 renderLocations();

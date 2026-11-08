@@ -97,9 +97,7 @@ def test_rendered_page_uses_ansible_theme_and_map_controls() -> None:
     assert 'placeholder="Search city, country, or region"' in page
     assert "location.region" in page and "location.timezone" in page
     assert "timezone.textContent = formatTimezone(location.timezone)" in page
-    assert "window.matchMedia('(max-width: 760px)').matches" in page
     assert "map.flyTo({center: [location.lon, location.lat], zoom: 8}" in page
-    assert "document.body.dataset.mobileView = 'list'" in page
     assert "scrollIntoView({block: 'nearest'" in page
     assert "value.normalize('NFD')" in page
     assert "location.slug" in page
@@ -109,6 +107,8 @@ def test_rendered_page_uses_ansible_theme_and_map_controls() -> None:
     assert "https://luma.com/ansible-community" in page
     assert "https://forum.ansible.com/c/news/bullhorn/17" in page
     assert "https://forum.ansible.com/discourse-post-event/events.ics" in page
+    assert ".discovery-grid { display: flex; flex-direction: column; gap: 20px; }" in page
+    assert page.index('id="map"') < page.index('id="results-heading"')
     assert 'id="community-links-heading"' in page
     assert page.index('id="map"') < page.index('id="community-links-heading"')
     assert "Subscribe to all Forum events (ICS)" in page
