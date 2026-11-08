@@ -91,6 +91,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .location-select span {{ color: var(--muted); }}
 .location-select small {{ color: var(--muted); font-family: "Red Hat Mono", monospace; font-size: .78rem; }}
 .subscribe {{ font-size: .8rem; padding: 6px 8px; }}
+.luma-subscribe-btn {{ display: inline-flex; align-items: center; gap: 6px; padding: 10px 18px; border: 0; border-radius: 8px; background: #c4121a; color: #fff; font-size: 15px; font-weight: 600; text-decoration: none; transition: background-color .2s ease, transform .1s ease; }}
+.luma-subscribe-btn:hover {{ background: #a80f16; color: #fff; transform: translateY(-1px); }}
+.community-links {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 250px), 1fr)); gap: 12px; margin: 24px 0; }}
+.community-link {{ min-width: 0; padding: 16px; border: 1px solid var(--line); border-radius: 6px; background: color-mix(in srgb, var(--surface) 96%, var(--brand)); }}
+.community-link p {{ margin: 8px 0 0; font-size: .9rem; }}
 #map {{ height: min(72vh, 780px); min-height: 430px; border: 1px solid var(--line); border-radius: 4px; z-index: 0; }}
 .map-panel h2 {{ margin-top: 0; }}
 .map-note {{ font-size: .85rem; margin: .45em 0; }}
@@ -103,10 +108,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .maplibregl-popup-anchor-top .maplibregl-popup-tip {{ border-bottom-color: var(--surface); }}
 .maplibregl-popup-anchor-left .maplibregl-popup-tip {{ border-right-color: var(--surface); }}
 .maplibregl-popup-anchor-right .maplibregl-popup-tip {{ border-left-color: var(--surface); }}
-.maplibregl-ctrl-group {{ border-radius: 4px !important; }}
+.maplibregl-ctrl-group {{ border-radius: 4px !important; background: var(--surface) !important; border: 1px solid var(--line) !important; }}
 .mobile-view-switch {{ display: none; }}
 @media (prefers-color-scheme: dark) {{
   :root {{ --ink: #f1f3f4; --muted: #c4c9ce; --line: #4b5258; --surface: #202428; --link: #8ab4f8; }}
+  .maplibregl-ctrl button {{ filter: invert(1); }}
 }}
 @media (max-width: 760px) {{
   .discovery-grid {{ display: block; }}
@@ -151,6 +157,23 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
       <p class="map-note"><span id="map-status" aria-live="polite"></span> Map style <a href="https://openfreemap.org/">OpenFreeMap</a> © <a href="https://openmaptiles.org/">OpenMapTiles</a>; data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
     </section>
   </div>
+  <section aria-labelledby="community-links-heading">
+    <h2 id="community-links-heading">Stay connected</h2>
+    <div class="community-links">
+      <article class="community-link">
+        <a class="subscribe" href="https://forum.ansible.com/c/news/bullhorn/17" target="_blank" rel="noopener noreferrer">Subscribe to the Ansible Bullhorn</a>
+        <p>Open the Bullhorn category, select the bell, then choose Watching.</p>
+      </article>
+      <article class="community-link">
+        <a class="luma-subscribe-btn" href="https://luma.com/ansible-community" target="_blank" rel="noopener noreferrer"><svg aria-hidden="true" focusable="false" width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z"/></svg>Follow on Luma</a>
+        <p>The Ansible Community calendar shares some, but not all, Ansible events.</p>
+      </article>
+      <article class="community-link">
+        <a class="subscribe" href="https://forum.ansible.com/discourse-post-event/events.ics" target="_blank" rel="noopener noreferrer">Subscribe to all Forum events (ICS)</a>
+        <p>Add the Forum's all-events calendar feed to your calendar app.</p>
+      </article>
+    </div>
+  </section>
   <p class="subtle">Page data generated {html.escape(generated_at)}. Questions? Visit the <a href="{DISCOURSE_URL}/c/ansible-community/">Ansible Community Forum</a>.</p>
 </main>
 <script id="meetup-data" type="application/json">{safe_json}</script>
@@ -158,7 +181,10 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 <script>
 const locations = JSON.parse(document.getElementById('meetup-data').textContent).locations;
 const regions = [...new Set(locations.map(location => location.region))].sort();
-const map = new maplibregl.Map({{container: 'map', style: 'https://tiles.openfreemap.org/styles/liberty', center: [0, 20], zoom: 1.2}});
+const colorScheme = window.matchMedia('(prefers-color-scheme: dark)');
+const styleFor = isDark => `https://tiles.openfreemap.org/styles/${{isDark ? 'dark' : 'liberty'}}`;
+let activeStyle = styleFor(colorScheme.matches);
+const map = new maplibregl.Map({{container: 'map', style: activeStyle, center: [0, 20], zoom: 1.2}});
 map.addControl(new maplibregl.NavigationControl(), 'top-right');
 map.addControl(new maplibregl.FullscreenControl(), 'top-right');
 const regionSelect = document.getElementById('region-filter');
@@ -166,6 +192,7 @@ const searchInput = document.getElementById('search');
 const results = document.getElementById('results');
 let selectedSlug = null;
 let mapReady = false;
+let initialViewSet = false;
 document.body.dataset.mobileView = 'list';
 regions.forEach(region => {{
   const option = document.createElement('option');
@@ -175,6 +202,17 @@ regions.forEach(region => {{
 }});
 function esc(value) {{
   return String(value).replace(/[&<>"']/g, character => ({{'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}}[character]));
+}}
+function normaliseSearch(value) {{
+  return value.normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toLocaleLowerCase();
+}}
+function searchMatches(location, query) {{
+  if (!query) return true;
+  const fields = [location.city, location.slug, location.country, location.region, location.timezone]
+    .map(normaliseSearch);
+  const compactQuery = query.replace(/[^\\p{{L}}\\p{{N}}]/gu, '');
+  if (!compactQuery) return false;
+  return fields.some(field => field.includes(query) || field.replace(/[^\\p{{L}}\\p{{N}}]/gu, '').includes(compactQuery));
 }}
 function formatTimezone(timezone) {{
   const now = new Date();
@@ -195,11 +233,11 @@ function featureCollection(rows) {{
   }};
 }}
 function renderLocations() {{
-  const query = searchInput.value.trim().toLowerCase();
+  const query = normaliseSearch(searchInput.value.trim());
   const selectedRegion = regionSelect.value;
   const shown = locations.filter(location =>
     (!selectedRegion || location.region === selectedRegion) &&
-    (!query || `${{location.city}} ${{location.country}} ${{location.region}} ${{location.timezone}}`.toLowerCase().includes(query))
+    searchMatches(location, query)
   ).sort((first, second) => first.city.localeCompare(second.city));
   document.getElementById('location-count').textContent = `${{shown.length}} of ${{locations.length}} locations`;
   const source = map.getSource('meetup-locations');
@@ -249,11 +287,7 @@ function renderLocations() {{
         timezone.textContent = formatTimezone(location.timezone);
         select.append(city, country, timezone);
         select.addEventListener('click', () => selectLocation(location.slug));
-        const subscribe = document.createElement('a');
-        subscribe.className = 'subscribe';
-        subscribe.href = '{DISCOURSE_URL}/my/preferences/profile#user_event_cities';
-        subscribe.textContent = 'Get event notices';
-        card.append(select, subscribe);
+        card.append(select);
         grid.append(card);
       }});
       details.append(grid);
@@ -283,7 +317,7 @@ async function expandCluster(event) {{
   const zoom = await map.getSource('meetup-locations').getClusterExpansionZoom(feature.properties.cluster_id);
   map.easeTo({{center: feature.geometry.coordinates, zoom}});
 }}
-map.on('load', () => {{
+function addMeetupLayers() {{
   map.addSource('meetup-locations', {{
     type: 'geojson', data: featureCollection(locations), cluster: true, clusterMaxZoom: 5, clusterRadius: 48
   }});
@@ -294,34 +328,54 @@ map.on('load', () => {{
   map.addLayer({{
     id: 'meetup-cluster-count', type: 'symbol', source: 'meetup-locations', filter: ['has', 'point_count'],
     layout: {{'text-field': ['get', 'point_count_abbreviated'], 'text-size': 12}},
-    paint: {{'text-color': '#fff'}}
+    paint: {{'text-color': '#102326'}}
   }});
   map.addLayer({{
     id: 'meetup-points', type: 'circle', source: 'meetup-locations', filter: ['!', ['has', 'point_count']],
-    paint: {{'circle-color': '{MAP_MARKER_COLOR}', 'circle-radius': ['case', ['get', 'selected'], 11, 7], 'circle-stroke-width': ['case', ['get', 'selected'], 3, 2], 'circle-stroke-color': ['case', ['get', 'selected'], '#17202a', '#fff']}}
+    paint: {{'circle-color': '{MAP_MARKER_COLOR}', 'circle-radius': ['case', ['get', 'selected'], 11, 7], 'circle-stroke-width': ['case', ['get', 'selected'], 3, 2], 'circle-stroke-color': '#fff'}}
   }});
 
-  const bounds = new maplibregl.LngLatBounds();
-  locations.forEach(location => bounds.extend([location.lon, location.lat]));
-  map.fitBounds(bounds, {{padding: 24, maxZoom: 1.6, duration: 0}});
-  mapReady = true;
-  if (selectedSlug) {{
-    const selected = locations.find(location => location.slug === selectedSlug);
-    if (selected) map.flyTo({{center: [selected.lon, selected.lat], zoom: 8}});
+  if (!initialViewSet) {{
+    const bounds = new maplibregl.LngLatBounds();
+    locations.forEach(location => bounds.extend([location.lon, location.lat]));
+    map.fitBounds(bounds, {{padding: 24, maxZoom: 1.6, duration: 0}});
+    initialViewSet = true;
+    if (selectedSlug) {{
+      const selected = locations.find(location => location.slug === selectedSlug);
+      if (selected) map.flyTo({{center: [selected.lon, selected.lat], zoom: 8}});
+    }}
   }}
-  map.on('click', 'meetup-clusters', expandCluster);
-  map.on('click', 'meetup-cluster-count', expandCluster);
-  map.on('click', 'meetup-points', event => {{
-    const location = event.features[0].properties;
-    selectLocation(location.slug, true);
-    const popup = `<strong>${{esc(location.city)}}</strong><br>${{esc(location.country)}}<br><a class="subscribe" href="{DISCOURSE_URL}/my/preferences/profile#user_event_cities">Get event notices</a>`;
-    new maplibregl.Popup({{offset: 12}}).setLngLat(event.features[0].geometry.coordinates).setHTML(popup).addTo(map);
-  }});
-  ['meetup-clusters', 'meetup-cluster-count', 'meetup-points'].forEach(layer => {{
-    map.on('mouseenter', layer, () => map.getCanvas().style.cursor = 'pointer');
-    map.on('mouseleave', layer, () => map.getCanvas().style.cursor = '');
-  }});
+  mapReady = true;
   renderLocations();
+}}
+map.on('style.load', addMeetupLayers);
+map.on('click', event => {{
+  const layers = ['meetup-clusters', 'meetup-cluster-count', 'meetup-points'].filter(layer => map.getLayer(layer));
+  if (!layers.length) return;
+  const feature = map.queryRenderedFeatures(event.point, {{layers}})[0];
+  if (!feature) return;
+  if (feature.layer.id === 'meetup-clusters' || feature.layer.id === 'meetup-cluster-count') {{
+    expandCluster({{features: [feature]}});
+    return;
+  }}
+  {{
+    const location = feature.properties;
+    selectLocation(location.slug, true);
+    const popup = `<strong>${{esc(location.city)}}</strong><br>${{esc(location.country)}}`;
+    new maplibregl.Popup({{offset: 12}}).setLngLat(feature.geometry.coordinates).setHTML(popup).addTo(map);
+  }}
+}});
+map.on('mousemove', event => {{
+  const layers = ['meetup-clusters', 'meetup-cluster-count', 'meetup-points'].filter(layer => map.getLayer(layer));
+  if (!layers.length) return;
+  map.getCanvas().style.cursor = map.queryRenderedFeatures(event.point, {{layers}}).length ? 'pointer' : '';
+}});
+colorScheme.addEventListener('change', event => {{
+  const nextStyle = styleFor(event.matches);
+  if (nextStyle !== activeStyle) {{
+    activeStyle = nextStyle;
+    map.setStyle(nextStyle, {{diff: false}});
+  }}
 }});
 document.querySelectorAll('.mobile-view-switch button').forEach(button => button.addEventListener('click', () => setMobileView(button.dataset.view)));
 searchInput.addEventListener('input', renderLocations);

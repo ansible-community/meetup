@@ -90,7 +90,7 @@ def test_rendered_page_uses_ansible_theme_and_map_controls() -> None:
     assert MAP_MARKER_COLOR == "#5bbdbf"
     assert f"'circle-color': '{MAP_MARKER_COLOR}'" in page
     assert "new maplibregl.FullscreenControl()" in page
-    assert "map.on('click', 'meetup-cluster-count', expandCluster)" in page
+    assert "map.on('click', event =>" in page
     assert "async function expandCluster(event)" in page
     assert "await map.getSource('meetup-locations').getClusterExpansionZoom(feature.properties.cluster_id)" in page
     assert OUTPUT.name == "map.html"
@@ -101,13 +101,32 @@ def test_rendered_page_uses_ansible_theme_and_map_controls() -> None:
     assert "map.flyTo({center: [location.lon, location.lat], zoom: 8}" in page
     assert "document.body.dataset.mobileView = 'list'" in page
     assert "scrollIntoView({block: 'nearest'" in page
+    assert "value.normalize('NFD')" in page
+    assert "location.slug" in page
+    assert "function searchMatches(location, query)" in page
     assert ".maplibregl-popup-content { color: var(--ink) !important; background: var(--surface) !important;" in page
     assert "America/Argentina/Buenos_Aires" not in page
-    assert '<br>${esc(location.country)}<br><a class="subscribe"' in page
+    assert "https://luma.com/ansible-community" in page
+    assert "https://forum.ansible.com/c/news/bullhorn/17" in page
+    assert "https://forum.ansible.com/discourse-post-event/events.ics" in page
+    assert 'id="community-links-heading"' in page
+    assert page.index('id="map"') < page.index('id="community-links-heading"')
+    assert "Subscribe to all Forum events (ICS)" in page
+    assert "Subscribe to the Ansible Bullhorn" in page
+    assert 'class="luma-subscribe-btn"' in page
+    assert 'target="_blank" rel="noopener noreferrer"' in page
+    assert ">Follow on Luma</a>" in page
+    assert "The Ansible Community calendar shares some, but not all, Ansible events." in page
+    assert "user_event_cities" not in page
+    assert "Get event notices" not in page
     assert "Upcoming events" not in page
     assert "Location subscriptions are managed" not in page
     assert 'id="meetup-data"' in page
     assert "--surface: #202428" in page
     assert "prefers-color-scheme: dark" in page
+    assert "https://tiles.openfreemap.org/styles/${isDark ? 'dark' : 'liberty'}" in page
+    assert "colorScheme.addEventListener('change'" in page
+    assert "map.setStyle(nextStyle, {diff: false})" in page
+    assert "map.on('style.load', addMeetupLayers)" in page
     assert "tile.openstreetmap.org" not in page
     assert "OpenMapTiles" in page and "OpenStreetMap contributors" in page
