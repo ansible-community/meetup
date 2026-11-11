@@ -8,4 +8,4 @@
 - **Pretix:** The event ticketing service used for free RSVP, attendee management, and check-in.
 - **RSVP:** A registration to attend an event, completed through Pretix.
 - **Backlink:** The link stored on the Pretix event pointing back to its Forum event topic. It does not synchronize event data.
-- **Meetup Pro migration:** The temporary process of moving existing Meetup.com members and group information into the current community services. See [legacy migration guides](legacy/meetup_pro/member-migration.md).
+- **Meetup Pro migration:** The temporary process of moving existing Meetup.com members and group information into the current community services. See the [Meetup Pro migration guides](community-team/meetup-pro/member-migration.md).

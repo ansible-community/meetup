@@ -4,7 +4,7 @@ The combined HTML report provides a point-in-time audit of organiser security an
 
 ## Generate all reports
 
-The checked-in Meetup Pro group-count snapshot is the denominator for the comparison and changes infrequently. Refresh it when planning a new migration wave or when the Meetup Pro groups are known to have changed; the report records the snapshot timestamp. The exporter requires the Meetup Pro credentials listed in the [group export guide](../legacy/meetup_pro/exporting-groups.md).
+The checked-in Meetup Pro group-count snapshot is the denominator for the comparison and changes infrequently. Refresh it when planning a new migration wave or when the Meetup Pro groups are known to have changed; the report records the snapshot timestamp. The exporter requires the Meetup Pro credentials listed in the [group export guide](meetup-pro/exporting-groups.md).
 
 ```console
 uv run python -m tools.meetup_pro.meetup_list_groups

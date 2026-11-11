@@ -16,4 +16,4 @@
 
 ## Close the event
 
-Thank speakers, venue hosts, sponsors, volunteers, and attendees. Invite feedback and point people to the Forum topic for the recap and follow-up discussion. See the [during-event post templates](../resources/social_media_post_templates/during_event_post_templates.md).
+Thank speakers, venue hosts, sponsors, volunteers, and attendees. Invite feedback and point people to the Forum topic for the recap and follow-up discussion. See the [during-event post templates](social_media_post_templates/during_event_post_templates.md).

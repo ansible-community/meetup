@@ -4,7 +4,7 @@
 
 ## 1. Executive Summary
 
-The Ansible Community events tooling supports community-owned Meetups using two external systems. Meetup Pro migration utilities are temporary and documented separately under [Legacy Meetup Pro migration](../legacy/meetup_pro/member-migration.md).
+The Ansible Community events tooling supports community-owned Meetups using two external systems. Meetup Pro migration utilities are temporary and documented separately under [Meetup Pro migration guides](../community-team/meetup-pro/member-migration.md).
 
 - **Pretix** (self-hosted, open-source): Event ticketing, RSVP, QR code generation, check-in, and attendee management. Pretix stores no passwords and has no native user registration.
 - **Discourse** (`forum.ansible.com`): Identity provider (SSO), community discussion, event agenda hosting, group permissions, and moderation. Discourse is the single source of truth for user identity.
