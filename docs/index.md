@@ -11,5 +11,3 @@ Choose the guide for what you want to do:
 Read the [Meetup strategy](ansible_meetup_strategy.md) for the purpose and shared expectations. The [glossary](glossary.md) explains common terms. Technical details live in the [tooling specification](reference/tooling-specification.md) and [Pretix–Discourse authentication specification](reference/pretix-discourse-auth-specification.md).
 
 > **How the services fit together:** The Forum event topic is the canonical event information page. It links to Pretix for RSVP; Pretix links back to the Forum topic. Event details do not synchronize between them. The production registration service is [rsvp.ansible.com](https://rsvp.ansible.com).
-
-The temporary [Meetup Pro migration guides](legacy/meetup_pro/member-migration.md) are kept separate from current attendee and organiser instructions.
