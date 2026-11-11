@@ -37,7 +37,6 @@ from tools.common.ansible_events_lib import (
     INVITE_API_USERNAME,
     PRIVACY_POLICY_URL,
     TEMPLATE_SLUG,
-    USER_CITY_FIELD_ID,
     discourse_req,
     discourse_categories,
     logger,
@@ -1031,34 +1030,6 @@ def ensure_category_group_moderation_enabled() -> None:
         raise ApiError("Discourse enable_category_group_moderation must be enabled to assign city organisers")
 
 
-def ensure_user_field_options() -> None:
-    """Add any missing city options to the user_event_cities custom field (additive only)."""
-    set_log_scope("Global")
-    log_detail("Syncing user field options for city subscriptions...")
-
-    # GET uses hyphenated path, PUT uses underscored path (Discourse routing)
-    resp = discourse_req("GET", f"admin/config/user-fields/{USER_CITY_FIELD_ID}.json")
-    if not resp:
-        raise RuntimeError(f"Could not fetch user field {USER_CITY_FIELD_ID}")
-
-    current_options = set(resp.get("user_field", {}).get("options", []))
-    desired_options = {city.field_value for city in CITIES}
-    missing = desired_options - current_options
-
-    if not missing:
-        log_detail("✅ User field options up to date (%d options)", len(current_options))
-        return
-
-    updated_options = sorted(current_options | desired_options)
-    log_detail("🟡 Adding %d new option(s): %s", len(missing), ", ".join(sorted(missing)))
-
-    discourse_req(
-        "PUT",
-        f"admin/config/user_fields/{USER_CITY_FIELD_ID}.json",
-        {"user_field": {"options": updated_options}},
-    )
-
-
 def reconcile_pretix_global_settings() -> None:
     """Reconcile Pretix organizer-wide settings."""
     set_log_scope("Global")
@@ -1084,7 +1055,7 @@ def reconcile_pretix_global_settings() -> None:
 
 
 def reconcile_discourse_environment(groups_by_name: dict[str, dict[str, Any]]) -> None:
-    """Reconcile meetup groups, city subcategories, access, and user fields."""
+    """Reconcile meetup groups, city subcategories, and access."""
     ensure_category_group_moderation_enabled()
 
     # Read each collection once. Subsequent create/update operations maintain
@@ -1161,8 +1132,6 @@ def reconcile_discourse_environment(groups_by_name: dict[str, dict[str, Any]]) -
 
     plans_by_category_id = {plan.category_id: plan for plan in plans if plan.category_id is not None}
     reconcile_city_category_access(categories, plans_by_category_id, groups_by_name)
-
-    ensure_user_field_options()
 
 
 def reconcile_pretix() -> None:

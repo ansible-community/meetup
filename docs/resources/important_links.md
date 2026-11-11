@@ -3,7 +3,6 @@
 ## Current Meetup workflow
 
 - [Ansible Forum Events](https://forum.ansible.com/c/events/8) — browse event topics; each topic is the event information page.
-- [Forum profile event locations](https://forum.ansible.com/my/preferences/profile) — set locations for event notifications.
 - [Pretix RSVP](https://rsvp.ansible.com) — production event registration.
 - [Bullhorn](https://forum.ansible.com/c/news/bullhorn/17) — weekly community newsletter.
 - [Ansible Community Forum](https://forum.ansible.com/)
