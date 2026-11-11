@@ -1,0 +1,6 @@
+/* Give navigation section headings stronger contrast in both color schemes. */
+.md-nav--primary .md-nav__item--section > .md-nav__link {
+  color: var(--md-typeset-a-color);
+  font-size: 0.8rem;
+  font-weight: 700;
+}

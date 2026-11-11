@@ -20,4 +20,4 @@ The Forum topic links to Pretix for RSVP, and Pretix links back to the Forum top
 - [Ansible ambassadors](https://github.com/ansible/ambassadors)
 - [Ansible community outreach](https://github.com/ansible/community/wiki/Outreach)
 
-For Meetup Pro migration links, see the separate [temporary migration guides](../legacy/meetup_pro/member-migration.md).
+For Meetup Pro migration links, see the [temporary migration guides](../community-team/meetup-pro/member-migration.md).
