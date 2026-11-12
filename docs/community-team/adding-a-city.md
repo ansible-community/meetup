@@ -17,7 +17,7 @@ Adding a city establishes the Forum space, organiser access, and Pretix team use
 4. Add the agreed organisers using [Managing organiser access](managing-organisers.md).
 5. Confirm the Forum topic is visible and that an organiser can access the correct Pretix dashboard.
 
-Each `CityInfo` entry stores the region, country, slug, display name, IANA time zone, latitude, and longitude, in that order. Coordinates are decimal degrees (WGS 84): latitude ranges from -90 to 90, and longitude from -180 to 180. Both coordinate values are required for every record in `CITIES`; the registry validates that they are paired and in range, while tests running in CI also check that they are finite floats. The city registry rejects duplicate slugs and display names. Coordinates are recorded for map use; no geocoding is performed. For a regional meetup such as NOVA, use a representative point for the area.
+Each `CityInfo` entry stores the region, country, slug, display name, IANA time zone, latitude, and longitude, in that order. Coordinates are decimal degrees (WGS 84): latitude ranges from -90 to 90, and longitude from -180 to 180. Both coordinate values are required for every record in `CITIES`; the registry validates that they are paired, finite, and in range, and rejects duplicate slugs and display names. Coordinates are recorded for map use; no geocoding is performed. For a regional meetup such as NOVA, use a representative point for the area.
 
 For example, add a Meetup Pro city to `MEETUP_PRO_CITIES` as a `CityInfo` entry, keeping the section sorted by region, country, and city:
 
