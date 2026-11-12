@@ -987,7 +987,9 @@ class TestProvisioningPermissions:
 
         plans = provision_environment.build_city_forum_plans()
 
-        assert [plan.city for plan in plans] == list(provision_environment.CITIES)
+        assert [plan.city for plan in plans] == sorted(
+            provision_environment.CITIES, key=lambda city: city.city.casefold()
+        )
         london_plan = next(plan for plan in plans if plan.city.slug == "london")
         assert london_plan.organiser_group_name == "meetup-organisers-london"
         assert london_plan.attendee_group_name == "meetup-attendee-london"

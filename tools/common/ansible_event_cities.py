@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import dataclasses
 import math
+from collections.abc import Iterable
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from tools.common.ansible_events_lib import (
@@ -73,6 +74,11 @@ class CityInfo:
     def attendee_group(self) -> str:
         """Return the canonical Discourse attendee group name."""
         return f"{ATTENDEE_GROUP_PREFIX}-{self.slug}"
+
+
+def sort_cities(cities: Iterable[CityInfo]) -> list[CityInfo]:
+    """Return cities in stable alphabetical display-name order."""
+    return sorted(cities, key=lambda city: city.city.casefold())
 
 
 # Current cities
