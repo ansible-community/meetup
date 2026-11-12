@@ -9,9 +9,9 @@ from typing import Any
 from urllib.parse import urlparse
 
 from tools.common import ansible_events_lib as api
+from tools.common.ansible_event_cities import CITIES, sort_cities
 from tools.common.ansible_events_lib import (
     ANSIBLE_PRIMARY_COLOR,
-    CITIES,
     CODE_OF_CONDUCT_URL,
     DEFAULT_ITEM_NAME,
     DEFAULT_ITEM_PRICE,
@@ -221,7 +221,7 @@ class SetupChecker:
                 },
             )
         ]
-        for city in CITIES:
+        for city in sort_cities(CITIES):
             invalid_city_slugs = [
                 slug
                 for slug in all_event_slugs
@@ -645,7 +645,7 @@ class SetupChecker:
 
     def _check_forum_city_groups(self) -> None:
         group_names = [group.get("name") for group in self.forum_groups if isinstance(group.get("name"), str)]
-        for city in CITIES:
+        for city in sort_cities(CITIES):
             group_name = city.organiser_group
             if group_names.count(group_name) != 1:
                 self.add(
@@ -765,7 +765,7 @@ class SetupChecker:
 def result_scope(result: CheckResult) -> str:
     """Return the city section for a city-specific check, or Global."""
     searchable = f"{result.name} {result.target}".casefold()
-    for city in CITIES:
+    for city in sort_cities(CITIES):
         if any(
             identifier.casefold() in searchable
             for identifier in (city.city, city.slug, city.organiser_group, city.team_name)
@@ -777,11 +777,11 @@ def result_scope(result: CheckResult) -> str:
 def print_results(results: list[CheckResult]) -> bool:
     """Print sanitized, hierarchically grouped results and report whether any failed."""
     grouped: dict[str, list[CheckResult]] = {"Global": []}
-    grouped.update({city.city: [] for city in CITIES})
+    grouped.update({city.city: [] for city in sort_cities(CITIES)})
     for result in results:
         grouped[result_scope(result)].append(result)
 
-    for scope in ("Global", *(city.city for city in CITIES)):
+    for scope in ("Global", *(city.city for city in sort_cities(CITIES))):
         scoped_results = grouped[scope]
         if not scoped_results:
             continue

@@ -12,7 +12,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from tools.common.ansible_event_cities import CITIES, CityInfo
+from tools.common.ansible_event_cities import CITIES, CityInfo, sort_cities
 from tools.common.ansible_events_lib import (
     ANSIBLE_PRIMARY_COLOR,
     ApiError,
@@ -162,7 +162,7 @@ class CityForumPlan:
 
 def build_city_forum_plans() -> list[CityForumPlan]:
     """Build the full city-level desired state from the central CITIES registry."""
-    return [CityForumPlan(city=city) for city in CITIES]
+    return [CityForumPlan(city=city) for city in sort_cities(CITIES)]
 
 
 def pending_invites_by_description(response: Mapping[str, Any]) -> set[tuple[str, frozenset[str]]]:
@@ -195,7 +195,7 @@ def reconcile_attendee_invites() -> None:
     response = discourse_req("GET", INVITE_PENDING_ENDPOINT, run_as=INVITE_API_USERNAME)
     invite_targets = pending_invites_by_description(response)
 
-    for city in CITIES:
+    for city in sort_cities(CITIES):
         description = f"{MEETUP_INVITE_DESCRIPTION_PREFIX}{city.city}"
         target_groups = (city.attendee_group, MIGRATED_GROUP_NAME)
         if any(
@@ -493,7 +493,7 @@ def reconcile_pretix_teams() -> list[dict[str, Any]]:
             None,
         )
     ]
-    for city in CITIES:
+    for city in sort_cities(CITIES):
         if any(
             isinstance(event.get("slug"), str)
             and event["slug"].startswith(f"{city.slug}-")
