@@ -111,7 +111,9 @@ MEETUP_PRO_CITIES: tuple[CityInfo, ...] = (
     CityInfo("Europe", "Germany", "stuttgart", "Stuttgart", "Europe/Berlin", 48.778449, 9.180013),
     CityInfo("Europe", "Ireland", "dublin", "Dublin", "Europe/Dublin", 53.349379, -6.260559),
     CityInfo("Europe", "Italy", "roma", "Roma", "Europe/Rome", 41.89332, 12.482932),
-    CityInfo("Europe", "Netherlands", "amsterdam", "Amsterdam", "Europe/Amsterdam", 52.37308, 4.892453),
+    # Ansible Benelux meets in Amsterdam and Nieuwegein; use Amsterdam as the
+    # representative map point.
+    CityInfo("Europe", "Netherlands", "benelux", "Ansible Benelux", "Europe/Amsterdam", 52.37308, 4.892453),
     CityInfo("Europe", "Spain", "barcelona", "Barcelona", "Europe/Madrid", 41.38258, 2.177073),
     CityInfo("Europe", "Spain", "madrid", "Madrid", "Europe/Madrid", 40.416782, -3.703507),
     CityInfo("Europe", "Sweden", "stockholm", "Stockholm", "Europe/Stockholm", 59.325117, 18.071093),
