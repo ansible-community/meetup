@@ -717,9 +717,9 @@ tinycss2==1.5.1 \
     # via
     #   cairosvg
     #   cssselect2
-types-requests==2.33.0.20261006 \
-    --hash=sha256:0652999e9306aea345f40732d58fa49a7f6cade6a0d74d92119c5c8d82eddaf0 \
-    --hash=sha256:26cc8146505cab33cda9737991929e4144c559bebe05078ccc6998f27c4ca2c1
+types-requests==2.33.0.20261030 \
+    --hash=sha256:06cfc2e92399bf46eda78a65cd0e2203d29ebbeede78b4ab0a5922f749ce1492 \
+    --hash=sha256:42d75eb02ed0f8220904c8fc08d3129742e7fce42fd5cf706395c8bb4c0ad990
 typing-extensions==4.16.0 \
     --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8 \
     --hash=sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5
