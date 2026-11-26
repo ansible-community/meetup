@@ -292,9 +292,9 @@ markdown==3.11.2 \
     #   mkdocstrings
     #   properdocs
     #   pymdown-extensions
-markdown-exec==1.12.5 \
-    --hash=sha256:a0d73755b90e712b3324b189bff39327f3e2800f1e024b04ed353c000fc3b48e \
-    --hash=sha256:f1546befc436da8bd5aacf82ce241fbee40611c7251a3e71d3280aba23b1403d
+markdown-exec==1.14.0 \
+    --hash=sha256:7248ece93373078e691132d0c82b9fd7d056c4e849401ba9910b1df978758693 \
+    --hash=sha256:f3b297b031d6be9bef001de8e1801c4a992957b9e17bdc2db534a4ba0b54625a
     # via mkdocs-ansible
 markdown-include==0.8.1 \
     --hash=sha256:1d0623e0fc2757c38d35df53752768356162284259d259c486b4ab6285cdbbe3 \
